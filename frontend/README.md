@@ -1,16 +1,30 @@
-# React + Vite
+# StayNest Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend của StayNest sử dụng React, Vite và Tailwind CSS.
 
-Currently, two official plugins are available:
+## Lệnh thường dùng
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```powershell
+npm install
+npm run dev
+npm run build
+```
 
-## React Compiler
+## Màn hình chính
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `/`: Trang chủ
+- `/rooms`: Tìm chỗ ở
+- `/rooms/:roomId`: Chi tiết khách sạn
+- `/auth`: Đăng nhập / đăng ký
+- `/booking`: Giữ chỗ, yêu cầu đăng nhập
+- `/my-bookings`: Đặt chỗ của tôi, yêu cầu đăng nhập
+- `/history`: Lịch sử xem và yêu thích
 
-## Expanding the ESLint configuration
+## Dữ liệu lưu trên trình duyệt
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Một số phần demo được lưu bằng `localStorage`:
+
+- Lịch sử tìm kiếm
+- Khách sạn đã xem
+- Khách sạn yêu thích
+- Đặt chỗ mẫu

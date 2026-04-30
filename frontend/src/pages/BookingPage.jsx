@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getRoomById } from '../services/roomApi';
 import useAuthStore from '../store/authStore';
-import { saveMyBooking } from '../utils/bookingHistory';
+import { calculateNights, saveMyBooking } from '../utils/bookingHistory';
 import { formatCurrency } from '../utils/format';
 
 const ADD_ONS = [
@@ -24,13 +24,25 @@ const ADD_ONS = [
   },
 ];
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function addDaysISO(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
 function BookingPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roomId = searchParams.get('roomId');
   const user = useAuthStore((state) => state.user);
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const [checkIn, setCheckIn] = useState(searchParams.get('checkIn') || todayISO());
+  const [checkOut, setCheckOut] = useState(searchParams.get('checkOut') || addDaysISO(1));
+  const [guests, setGuests] = useState(searchParams.get('guests') || '2');
+  const [rooms, setRooms] = useState(searchParams.get('rooms') || '1');
 
   const roomQuery = useQuery({
     queryKey: ['booking-room', roomId],
@@ -49,7 +61,10 @@ function BookingPage() {
           <p className="mt-3 text-sm leading-7 text-slate-500">
             Quay lại danh sách, mở chi tiết một phòng phù hợp rồi tiếp tục từ đó.
           </p>
-          <Link to="/rooms" className="mt-6 inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-700">
+          <Link
+            to="/rooms"
+            className="mt-6 inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-700"
+          >
             Xem danh sách chỗ ở
           </Link>
         </div>
@@ -76,7 +91,10 @@ function BookingPage() {
           <p className="mt-3 text-sm leading-7 text-slate-500">
             Dữ liệu phòng không còn hợp lệ hoặc phiên làm việc vừa thay đổi.
           </p>
-          <Link to="/rooms" className="mt-6 inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-700">
+          <Link
+            to="/rooms"
+            className="mt-6 inline-flex rounded-md bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-700"
+          >
             Quay lại danh sách
           </Link>
         </div>
@@ -85,9 +103,11 @@ function BookingPage() {
   }
 
   const room = roomQuery.data;
+  const nights = calculateNights(checkIn, checkOut);
+  const totalPrice = Number(room.price_per_night || 0) * nights * Number(rooms || 1);
 
   const handleSaveBooking = () => {
-    saveMyBooking({ room, user, checkIn, checkOut });
+    saveMyBooking({ room, user, checkIn, checkOut, guests, rooms });
     navigate('/my-bookings');
   };
 
@@ -100,26 +120,85 @@ function BookingPage() {
             Kiểm tra thông tin trước khi giữ chỗ
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
-            Bạn đã đăng nhập nên có thể giữ chỗ. Đơn mẫu sẽ được lưu vào tab Đặt chỗ của tôi.
+            Bạn đã đăng nhập nên có thể giữ chỗ. Đơn mẫu sẽ được lưu vào tab Đặt chỗ của tôi để theo dõi trạng thái.
           </p>
 
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Khách đặt phòng</span>
-              <input type="text" value={user?.full_name || ''} readOnly className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none" />
+              <input
+                type="text"
+                value={user?.full_name || ''}
+                readOnly
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
             </label>
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Email liên hệ</span>
-              <input type="email" value={user?.email || ''} readOnly className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none" />
+              <input
+                type="email"
+                value={user?.email || ''}
+                readOnly
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
             </label>
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Ngày nhận phòng</span>
-              <input type="date" value={checkIn} onChange={(event) => setCheckIn(event.target.value)} className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none" />
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(event) => setCheckIn(event.target.value)}
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
             </label>
             <label className="grid gap-2">
               <span className="text-sm font-bold text-slate-700">Ngày trả phòng</span>
-              <input type="date" value={checkOut} onChange={(event) => setCheckOut(event.target.value)} className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none" />
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(event) => setCheckOut(event.target.value)}
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
             </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-bold text-slate-700">Số khách</span>
+              <input
+                type="number"
+                min="1"
+                max="12"
+                value={guests}
+                onChange={(event) => setGuests(event.target.value)}
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
+            </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-bold text-slate-700">Số phòng</span>
+              <input
+                type="number"
+                min="1"
+                max="5"
+                value={rooms}
+                onChange={(event) => setRooms(event.target.value)}
+                className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none"
+              />
+            </label>
+          </div>
+
+          <div className="mt-8 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Số đêm</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">{nights}</p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Giá mỗi đêm</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">
+                {formatCurrency(room.price_per_night)}
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-500">Tạm tính</p>
+              <p className="mt-2 text-2xl font-black text-brand-700">{formatCurrency(totalPrice)}</p>
+            </div>
           </div>
 
           <div className="mt-8 rounded-lg border border-brand-100 bg-brand-50/70 p-5">
@@ -151,7 +230,11 @@ function BookingPage() {
         </div>
 
         <aside className="subtle-card p-5 lg:sticky lg:top-24 lg:self-start">
-          <img src={room.image_url} alt={`${room.hotel_name} ${room.room_name}`} className="h-56 w-full rounded-md object-cover" />
+          <img
+            src={room.image_url}
+            alt={`${room.hotel_name} ${room.room_name}`}
+            className="h-56 w-full rounded-md object-cover"
+          />
           <div className="mt-5">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-700">Chỗ ở đã chọn</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{room.hotel_name}</h2>
@@ -174,7 +257,10 @@ function BookingPage() {
             Đây là giao diện giữ chỗ mẫu. Dữ liệu được lưu trên trình duyệt để kiểm tra luồng UI.
           </div>
 
-          <Link to={`/rooms/${room.id}`} className="mt-6 inline-flex w-full items-center justify-center rounded-md border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-brand-600 hover:text-brand-700">
+          <Link
+            to={`/rooms/${room.id}`}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-md border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 transition hover:border-brand-600 hover:text-brand-700"
+          >
             Quay lại chi tiết
           </Link>
         </aside>

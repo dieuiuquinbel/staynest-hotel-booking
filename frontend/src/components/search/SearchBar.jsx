@@ -149,10 +149,7 @@ function SearchBar({ defaultValues, onSubmit, submitLabel = 'Tìm', compact = fa
   const guestSummary = `${form.adults} người lớn · ${form.children} trẻ em · ${form.rooms} phòng`;
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className={`booking-search ${compact ? 'booking-search-compact' : ''}`}
-    >
+    <form onSubmit={handleSubmit} className={`booking-search ${compact ? 'booking-search-compact' : ''}`}>
       <div className="grid gap-0 md:grid-cols-[1.25fr_1fr_1fr_1.2fr_auto]">
         <Field label="Bạn muốn đến đâu?">
           <input
@@ -166,31 +163,15 @@ function SearchBar({ defaultValues, onSubmit, submitLabel = 'Tìm', compact = fa
         </Field>
 
         <Field label="Nhận phòng">
-          <input
-            type="date"
-            name="checkIn"
-            value={form.checkIn}
-            onChange={handleChange}
-            className="booking-input"
-          />
+          <input type="date" name="checkIn" value={form.checkIn} onChange={handleChange} className="booking-input" />
         </Field>
 
         <Field label="Trả phòng">
-          <input
-            type="date"
-            name="checkOut"
-            value={form.checkOut}
-            onChange={handleChange}
-            className="booking-input"
-          />
+          <input type="date" name="checkOut" value={form.checkOut} onChange={handleChange} className="booking-input" />
         </Field>
 
         <div className="relative">
-          <button
-            type="button"
-            onClick={() => setGuestOpen((current) => !current)}
-            className="booking-field w-full text-left"
-          >
+          <button type="button" onClick={() => setGuestOpen((current) => !current)} className="booking-field w-full text-left">
             <span>Khách & phòng</span>
             <strong className="block truncate text-sm text-slate-950">{guestSummary}</strong>
           </button>
@@ -198,23 +179,9 @@ function SearchBar({ defaultValues, onSubmit, submitLabel = 'Tìm', compact = fa
           {guestOpen ? (
             <div className="absolute right-0 top-[calc(100%+10px)] z-30 w-full min-w-[300px] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-950/15">
               <div className="grid gap-4">
-                <GuestStepper
-                  label="Người lớn"
-                  value={form.adults}
-                  min={1}
-                  onChange={(value) => setFormValue('adults', String(value))}
-                />
-                <GuestStepper
-                  label="Trẻ em"
-                  value={form.children}
-                  onChange={(value) => setFormValue('children', String(value))}
-                />
-                <GuestStepper
-                  label="Phòng"
-                  value={form.rooms}
-                  min={1}
-                  onChange={(value) => setFormValue('rooms', String(value))}
-                />
+                <GuestStepper label="Người lớn" value={form.adults} min={1} onChange={(value) => setFormValue('adults', String(value))} />
+                <GuestStepper label="Trẻ em" value={form.children} onChange={(value) => setFormValue('children', String(value))} />
+                <GuestStepper label="Phòng" value={form.rooms} min={1} onChange={(value) => setFormValue('rooms', String(value))} />
               </div>
               <button
                 type="button"

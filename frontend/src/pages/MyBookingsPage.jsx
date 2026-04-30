@@ -1,13 +1,28 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import useAuthStore from '../store/authStore';
-import { cancelMyBooking, readMyBookings } from '../utils/bookingHistory';
+import { BOOKING_STATUS, cancelMyBooking, completeMyBooking, readMyBookings } from '../utils/bookingHistory';
 import { formatCurrency } from '../utils/format';
+
+const TABS = [
+  { key: 'all', label: 'Tất cả' },
+  { key: BOOKING_STATUS.HOLDING, label: 'Đang giữ chỗ' },
+  { key: BOOKING_STATUS.COMPLETED, label: 'Đã hoàn tất' },
+  { key: BOOKING_STATUS.CANCELLED, label: 'Đã hủy' },
+];
+
+function statusClass(status) {
+  if (status === BOOKING_STATUS.CANCELLED) return 'bg-rose-50 text-rose-700';
+  if (status === BOOKING_STATUS.COMPLETED) return 'bg-sky-50 text-sky-700';
+  return 'bg-emerald-50 text-emerald-700';
+}
 
 function MyBookingsPage() {
   const user = useAuthStore((state) => state.user);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeTab, setActiveTab] = useState('all');
   const bookings = useMemo(() => readMyBookings(user?.id || user?.email), [refreshKey, user]);
+  const filteredBookings = activeTab === 'all' ? bookings : bookings.filter((booking) => booking.status === activeTab);
 
   const refresh = () => setRefreshKey((current) => current + 1);
 
@@ -32,37 +47,42 @@ function MyBookingsPage() {
           </Link>
         </div>
 
-        {bookings.length ? (
-          <div className="mt-8 grid gap-5">
-            {bookings.map((booking) => (
-              <article key={booking.id} className="subtle-card grid overflow-hidden lg:grid-cols-[240px_minmax(0,1fr)_220px]">
-                <img
-                  src={booking.image_url}
-                  alt={booking.hotel_name}
-                  className="h-56 w-full object-cover lg:h-full"
-                />
+        <div className="mt-8 flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-white p-2">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setActiveTab(tab.key)}
+              className={`rounded-xl px-4 py-2.5 text-sm font-bold transition ${
+                activeTab === tab.key
+                  ? 'bg-slate-950 text-white'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-brand-700'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredBookings.length ? (
+          <div className="mt-6 grid gap-5">
+            {filteredBookings.map((booking) => (
+              <article key={booking.id} className="subtle-card grid overflow-hidden lg:grid-cols-[240px_minmax(0,1fr)_240px]">
+                <img src={booking.image_url} alt={booking.hotel_name} className="h-56 w-full object-cover lg:h-full" />
                 <div className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span
-                      className={`rounded-full px-3 py-1 text-xs font-bold ${
-                        booking.status === 'Đã hủy'
-                          ? 'bg-rose-50 text-rose-700'
-                          : 'bg-emerald-50 text-emerald-700'
-                      }`}
-                    >
+                    <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusClass(booking.status)}`}>
                       {booking.status}
                     </span>
                     <span className="rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-brand-700">
                       {booking.id}
                     </span>
                   </div>
-                  <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
-                    {booking.hotel_name}
-                  </h2>
+                  <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">{booking.hotel_name}</h2>
                   <p className="mt-1 text-sm font-bold text-slate-600">{booking.room_name}</p>
                   <p className="mt-2 text-sm leading-7 text-slate-500">{booking.address}</p>
 
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                  <div className="mt-5 grid gap-3 sm:grid-cols-4">
                     <div className="rounded-xl bg-slate-50 px-4 py-3">
                       <p className="text-xs font-bold text-slate-500">Nhận phòng</p>
                       <p className="mt-1 text-sm font-black text-slate-950">{booking.checkIn || 'Chưa chọn'}</p>
@@ -72,9 +92,13 @@ function MyBookingsPage() {
                       <p className="mt-1 text-sm font-black text-slate-950">{booking.checkOut || 'Chưa chọn'}</p>
                     </div>
                     <div className="rounded-xl bg-slate-50 px-4 py-3">
-                      <p className="text-xs font-bold text-slate-500">Giá mỗi đêm</p>
+                      <p className="text-xs font-bold text-slate-500">Số đêm</p>
+                      <p className="mt-1 text-sm font-black text-slate-950">{booking.nights || 1}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 px-4 py-3">
+                      <p className="text-xs font-bold text-slate-500">Tạm tính</p>
                       <p className="mt-1 text-sm font-black text-slate-950">
-                        {formatCurrency(booking.price_per_night)}
+                        {formatCurrency(booking.totalPrice || booking.price_per_night)}
                       </p>
                     </div>
                   </div>
@@ -83,7 +107,9 @@ function MyBookingsPage() {
                 <div className="grid content-between gap-3 border-t border-sky-100 bg-sky-50/60 p-5 lg:border-l lg:border-t-0">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Khách đặt</p>
-                    <p className="mt-2 text-sm font-black text-slate-950">{booking.guestName || 'Tài khoản hiện tại'}</p>
+                    <p className="mt-2 text-sm font-black text-slate-950">
+                      {booking.guestName || 'Tài khoản hiện tại'}
+                    </p>
                     <p className="mt-1 text-sm text-slate-500">{booking.guestEmail}</p>
                   </div>
                   <div className="grid gap-3">
@@ -95,14 +121,25 @@ function MyBookingsPage() {
                     </Link>
                     <button
                       type="button"
-                      disabled={booking.status === 'Đã hủy'}
+                      disabled={booking.status !== BOOKING_STATUS.HOLDING}
+                      onClick={() => {
+                        completeMyBooking(booking.id);
+                        refresh();
+                      }}
+                      className="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      Đánh dấu hoàn tất
+                    </button>
+                    <button
+                      type="button"
+                      disabled={booking.status !== BOOKING_STATUS.HOLDING}
                       onClick={() => {
                         cancelMyBooking(booking.id);
                         refresh();
                       }}
                       className="rounded-xl bg-slate-950 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
                     >
-                      {booking.status === 'Đã hủy' ? 'Đã hủy' : 'Hủy giữ chỗ'}
+                      Hủy giữ chỗ
                     </button>
                   </div>
                 </div>

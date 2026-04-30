@@ -89,7 +89,10 @@ function AuthPage() {
             <img src={AUTH_IMAGE} alt="Không gian nghỉ dưỡng" className="absolute inset-0 h-full w-full object-cover opacity-85" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-slate-950/10" />
             <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
-              <Link to="/" className="inline-flex w-fit rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur transition hover:bg-white/25">
+              <Link
+                to="/"
+                className="inline-flex w-fit rounded-full border border-white/30 bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur transition hover:bg-white/25"
+              >
                 Về trang chủ
               </Link>
               <div>
@@ -122,14 +125,18 @@ function AuthPage() {
                 <button
                   type="button"
                   onClick={() => switchMode('login')}
-                  className={`rounded-full px-4 py-2 transition ${mode === 'login' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'}`}
+                  className={`rounded-full px-4 py-2 transition ${
+                    mode === 'login' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'
+                  }`}
                 >
                   Đăng nhập
                 </button>
                 <button
                   type="button"
                   onClick={() => switchMode('register')}
-                  className={`rounded-full px-4 py-2 transition ${mode === 'register' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'}`}
+                  className={`rounded-full px-4 py-2 transition ${
+                    mode === 'register' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'
+                  }`}
                 >
                   Đăng ký
                 </button>
@@ -163,7 +170,11 @@ function AuthPage() {
                       className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
                     />
                   </label>
-                  {loginError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">{loginError}</div> : null}
+                  {loginError ? (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+                      {loginError}
+                    </div>
+                  ) : null}
                   <button
                     type="submit"
                     disabled={loginMutation.isPending}
@@ -233,7 +244,11 @@ function AuthPage() {
                       className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
                     />
                   </label>
-                  {registerError ? <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 md:col-span-2">{registerError}</div> : null}
+                  {registerError ? (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 md:col-span-2">
+                      {registerError}
+                    </div>
+                  ) : null}
                   <button
                     type="submit"
                     disabled={registerMutation.isPending}

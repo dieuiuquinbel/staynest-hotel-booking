@@ -49,7 +49,9 @@ function HistoryPage() {
           ) : (
             <div className="surface-card mt-5 p-8 text-center">
               <p className="text-sm font-bold text-brand-700">Chưa có khách sạn yêu thích</p>
-              <p className="mt-2 text-sm text-slate-500">Nhấn nút Yêu thích ở trang chi tiết hoặc thẻ khách sạn để lưu lại.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Nhấn nút Yêu thích ở trang chi tiết hoặc thẻ khách sạn để lưu lại.
+              </p>
               <Link to="/rooms" className="mt-5 inline-flex rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white">
                 Tìm khách sạn
               </Link>
@@ -71,7 +73,9 @@ function HistoryPage() {
           ) : (
             <div className="surface-card mt-5 p-8 text-center">
               <p className="text-sm font-bold text-brand-700">Chưa có lịch sử xem</p>
-              <p className="mt-2 text-sm text-slate-500">Mở một khách sạn bất kỳ để hệ thống lưu vào tab này.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                Mở một khách sạn bất kỳ để hệ thống lưu vào tab này.
+              </p>
             </div>
           )}
         </section>

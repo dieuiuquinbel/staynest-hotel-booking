@@ -38,7 +38,7 @@ function signToken(user) {
     JWT_SECRET,
     {
       expiresIn: JWT_EXPIRES_IN,
-    }
+    },
   );
 }
 
@@ -58,7 +58,7 @@ async function findUserByEmail(email) {
      FROM users
      WHERE email = ?
      LIMIT 1`,
-    [normalizedEmail]
+    [normalizedEmail],
   );
 
   return rows[0] || null;
@@ -78,7 +78,7 @@ async function findUserById(userId) {
      FROM users
      WHERE id = ?
      LIMIT 1`,
-    [userId]
+    [userId],
   );
 
   if (rows.length === 0) {
@@ -111,7 +111,7 @@ async function registerUser({ fullName, email, password, phone }) {
   const [result] = await pool.query(
     `INSERT INTO users (full_name, email, password_hash, phone, role, status)
      VALUES (?, ?, ?, ?, 'customer', 'active')`,
-    [trimmedName, normalizedEmail, passwordHash, trimmedPhone]
+    [trimmedName, normalizedEmail, passwordHash, trimmedPhone],
   );
 
   const user = await findUserById(result.insertId);
