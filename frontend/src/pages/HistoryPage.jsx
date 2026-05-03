@@ -1,17 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import RoomCard from '../components/rooms/RoomCard';
 import { clearViewedRooms, readFavoriteRooms, readViewedRooms } from '../utils/viewHistory';
 
 function HistoryPage() {
-  const [refreshKey, setRefreshKey] = useState(0);
-  const viewedRooms = useMemo(() => readViewedRooms(), [refreshKey]);
-  const favoriteRooms = useMemo(() => readFavoriteRooms(), [refreshKey]);
+  const [, setRefreshKey] = useState(0);
+  const viewedRooms = readViewedRooms();
+  const favoriteRooms = readFavoriteRooms();
 
   const refresh = () => setRefreshKey((current) => current + 1);
 
   return (
-    <main className="history-page-bg">
+    <main className="history-page-bg flex-1">
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>

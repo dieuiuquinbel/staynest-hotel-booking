@@ -18,7 +18,7 @@ function ActiveFilterChips({ chips, onRemove, onReset }) {
         onClick={onReset}
         className="rounded-full border border-slate-300 px-3 py-2 text-sm font-bold text-slate-600 transition hover:border-brand-500 hover:text-brand-700"
       >
-        Xóa bộ lọc
+        Làm mới
       </button>
     </div>
   );

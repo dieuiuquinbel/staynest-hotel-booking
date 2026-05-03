@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import ActiveFilterChips from '../components/rooms/ActiveFilterChips';
 import FilterSidebar from '../components/rooms/FilterSidebar';
 import RoomCard from '../components/rooms/RoomCard';
 import RoomCardSkeleton from '../components/rooms/RoomCardSkeleton';
 import SearchBar from '../components/search/SearchBar';
+import MemberPromptBanner from '../components/layout/MemberPromptBanner';
 import useRecentSearches from '../hooks/useRecentSearches';
 import { getFeaturedRooms, getRooms } from '../services/roomApi';
 import { formatCurrency } from '../utils/format';
@@ -36,6 +37,7 @@ function RoomListPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { addSearch } = useRecentSearches();
+  const [viewMode, setViewMode] = useState('horizontal');
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams);
@@ -143,13 +145,9 @@ function RoomListPage() {
   };
   const resetFilters = () => {
     const next = new URLSearchParams();
-    if (filters.city) next.set('city', filters.city);
-    if (filters.checkIn) next.set('checkIn', filters.checkIn);
-    if (filters.checkOut) next.set('checkOut', filters.checkOut);
-    if (rawGuests) next.set('guests', rawGuests);
     next.set('sort', 'popular');
     next.set('limit', '12');
-    setSearchParams(next);
+    setSearchParams(next, { replace: true });
   };
 
   const chips = [
@@ -182,7 +180,7 @@ function RoomListPage() {
   const totalItems = roomQuery.data?.pagination?.totalItems ?? 0;
 
   return (
-    <main className="search-page-bg">
+    <main className="search-page-bg flex-1">
       <section className="border-b border-sky-100 bg-white/85 backdrop-blur">
         <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6">
           <div className="mb-5">
@@ -234,6 +232,7 @@ function RoomListPage() {
             </p>
           </div>
 
+          <div className="flex flex-wrap items-center gap-3">
           <label className="rounded-xl border border-sky-100 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
             <span className="mr-3 text-slate-500">Sắp xếp</span>
             <select
@@ -248,6 +247,27 @@ function RoomListPage() {
               <option value="newest">Mới nhất</option>
             </select>
           </label>
+            <div className="grid grid-cols-2 rounded-xl border border-sky-100 bg-white p-1 text-sm font-bold shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode('horizontal')}
+                className={`rounded-lg px-3 py-2 transition ${
+                  viewMode === 'horizontal' ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20' : 'text-slate-600 hover:bg-sky-50 hover:text-brand-700'
+                }`}
+              >
+                Xem ngang
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('vertical')}
+                className={`rounded-lg px-3 py-2 transition ${
+                  viewMode === 'vertical' ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20' : 'text-slate-600 hover:bg-sky-50 hover:text-brand-700'
+                }`}
+              >
+                Xem dọc
+              </button>
+            </div>
+          </div>
         </div>
 
         {chips.length > 0 ? (
@@ -260,12 +280,13 @@ function RoomListPage() {
           <FilterSidebar
             filters={filters}
             onFieldChange={handleFieldChange}
+            onBudgetChange={updateParams}
             onToggleRoomType={(value) => toggleArrayParam('roomType', roomTypes, value)}
             onToggleAmenity={(value) => toggleArrayParam('amenities', amenities, value)}
             onReset={resetFilters}
           />
 
-          <div className="max-h-[calc(100vh-116px)] space-y-5 overflow-y-auto pr-1">
+          <div className={viewMode === 'vertical' ? 'grid gap-5 xl:grid-cols-2' : 'space-y-5'}>
             {roomQuery.isLoading ? (
               Array.from({ length: 4 }).map((_, index) => <RoomCardSkeleton key={`list-skeleton-${index}`} />)
             ) : roomQuery.isError ? (
@@ -279,7 +300,7 @@ function RoomListPage() {
                 </p>
               </div>
             ) : roomQuery.data?.data?.length ? (
-              roomQuery.data.data.map((room) => <RoomCard key={room.id} room={room} />)
+              roomQuery.data.data.map((room) => <RoomCard key={room.id} room={room} layout={viewMode === 'vertical' ? 'vertical' : 'horizontal'} />)
             ) : (
               <div className="surface-card p-8 text-center">
                 <p className="text-sm font-bold text-brand-700">Không có kết quả</p>
@@ -308,7 +329,7 @@ function RoomListPage() {
               </div>
             )}
 
-            <section className="surface-card p-5 sm:p-6">
+            <section className={`surface-card p-5 sm:p-6 ${viewMode === 'vertical' ? 'xl:col-span-2' : ''}`}>
               <div className="flex items-end justify-between gap-4">
                 <div>
                   <p className="text-sm font-bold text-brand-700">Gợi ý</p>
@@ -341,6 +362,8 @@ function RoomListPage() {
                 </div>
               )}
             </section>
+
+            <MemberPromptBanner className={viewMode === 'vertical' ? 'xl:col-span-2' : ''} />
           </div>
         </div>
       </section>

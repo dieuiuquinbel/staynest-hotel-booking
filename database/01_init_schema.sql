@@ -1,13 +1,27 @@
 CREATE TABLE users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     full_name VARCHAR(120) NOT NULL,
+    username VARCHAR(80) NOT NULL UNIQUE,
     email VARCHAR(150) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
     role ENUM('customer', 'admin') NOT NULL DEFAULT 'customer',
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE email_otps (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    otp_hash VARCHAR(255) NOT NULL,
+    purpose ENUM('register_verify') NOT NULL DEFAULT 'register_verify',
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_email_otps_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE TABLE rooms (
@@ -36,11 +50,13 @@ CREATE TABLE rooms (
 
 CREATE TABLE bookings (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    booking_code VARCHAR(50) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     room_id BIGINT NOT NULL,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
     guests INT NOT NULL,
+    rooms_count INT NOT NULL DEFAULT 1,
     nights INT NOT NULL,
     room_price DECIMAL(12,2) NOT NULL,
     service_price DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -53,6 +69,16 @@ CREATE TABLE bookings (
     note VARCHAR(255) NULL,
     CONSTRAINT fk_bookings_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_bookings_room FOREIGN KEY (room_id) REFERENCES rooms(id)
+);
+
+CREATE TABLE invoices (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    booking_id BIGINT NOT NULL,
+    invoice_code VARCHAR(50) NOT NULL UNIQUE,
+    file_path VARCHAR(500) NOT NULL,
+    total_amount DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_invoices_booking FOREIGN KEY (booking_id) REFERENCES bookings(id)
 );
 
 CREATE TABLE services (

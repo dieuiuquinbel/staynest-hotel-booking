@@ -7,7 +7,7 @@ import { formatCurrency } from "../utils/format";
 import { buildBookingPath, buildLoginRedirectPath } from "../utils/routes";
 import { getAvailabilityMeta } from "../utils/roomStatus";
 import {
-  isFavoriteRoom,
+  readFavoriteRooms,
   saveViewedRoom,
   toggleFavoriteRoom,
 } from "../utils/viewHistory";
@@ -36,7 +36,10 @@ function formatAmenity(amenity) {
 function RoomDetailPage() {
   const { roomId } = useParams();
   const token = useAuthStore((state) => state.token);
-  const [favorite, setFavorite] = useState(false);
+  const [favoriteRoomIds, setFavoriteRoomIds] = useState(() =>
+    new Set(readFavoriteRooms().map((item) => String(item.id))),
+  );
+  const favorite = favoriteRoomIds.has(String(roomId));
   const {
     data: room,
     isLoading,
@@ -50,7 +53,6 @@ function RoomDetailPage() {
   useEffect(() => {
     if (!room) return;
     saveViewedRoom(room);
-    setFavorite(isFavoriteRoom(room.id));
   }, [room]);
 
   if (isLoading) {
@@ -139,11 +141,9 @@ function RoomDetailPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        const next = toggleFavoriteRoom(room);
-                        setFavorite(
-                          next.some(
-                            (item) => String(item.id) === String(room.id),
-                          ),
+                        const nextFavorites = toggleFavoriteRoom(room);
+                        setFavoriteRoomIds(
+                          new Set(nextFavorites.map((item) => String(item.id))),
                         );
                       }}
                       className={`rounded-full border px-3 py-1 text-xs font-extrabold transition ${

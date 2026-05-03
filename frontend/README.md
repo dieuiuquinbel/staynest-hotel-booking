@@ -1,6 +1,6 @@
-# StayNest Frontend
+# DieuBel Frontend
 
-Frontend của StayNest sử dụng React, Vite và Tailwind CSS.
+Frontend của DieuBel sử dụng React, Vite và Tailwind CSS.
 
 ## Lệnh thường dùng
 

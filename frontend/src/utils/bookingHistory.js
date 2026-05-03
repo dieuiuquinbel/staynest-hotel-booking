@@ -38,15 +38,15 @@ export function readMyBookings(userId) {
   return bookings.filter((booking) => String(booking.userId) === String(userId));
 }
 
-export function saveMyBooking({ room, user, checkIn, checkOut, guests = '2', rooms = '1' }) {
+export function saveMyBooking({ room, user, checkIn, checkOut, guests = '2', rooms = '1', services = [], totalPriceOverride }) {
   const current = readArray();
   const nights = calculateNights(checkIn, checkOut);
   const pricePerNight = Number(room.price_per_night || 0);
-  const totalPrice = pricePerNight * nights;
+  const totalPrice = Number(totalPriceOverride || 0) || pricePerNight * nights * Number(rooms || 1);
   const createdAt = new Date();
 
   const booking = {
-    id: `SN-${createdAt.getFullYear()}${String(createdAt.getMonth() + 1).padStart(2, '0')}${String(
+    id: `DB-${createdAt.getFullYear()}${String(createdAt.getMonth() + 1).padStart(2, '0')}${String(
       createdAt.getDate(),
     ).padStart(2, '0')}-${String(createdAt.getTime()).slice(-5)}`,
     userId: user?.id || user?.email || 'guest',
@@ -63,6 +63,7 @@ export function saveMyBooking({ room, user, checkIn, checkOut, guests = '2', roo
     nights,
     guests,
     rooms,
+    services,
     checkIn: checkIn || '',
     checkOut: checkOut || '',
     status: BOOKING_STATUS.HOLDING,
