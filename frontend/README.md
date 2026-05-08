@@ -1,10 +1,10 @@
 # DieuBel Frontend
 
-Frontend của DieuBel sử dụng React, Vite và Tailwind CSS.
+Giao diện đặt phòng khách sạn dùng React, Vite và Tailwind CSS.
 
-## Lệnh thường dùng
+## Lệnh chính
 
-```powershell
+```bash
 npm install
 npm run dev
 npm run build
@@ -12,19 +12,30 @@ npm run build
 
 ## Màn hình chính
 
-- `/`: Trang chủ
-- `/rooms`: Tìm chỗ ở
-- `/rooms/:roomId`: Chi tiết khách sạn
-- `/auth`: Đăng nhập / đăng ký
-- `/booking`: Giữ chỗ, yêu cầu đăng nhập
-- `/my-bookings`: Đặt chỗ của tôi, yêu cầu đăng nhập
-- `/history`: Lịch sử xem và yêu thích
+- `/`: `TrangChu`
+- `/rooms`: `DanhSachPhong`
+- `/rooms/:roomId`: `ChiTietPhong`
+- `/auth`: `DangNhapDangKy`
+- `/booking`: `DatPhong`
+- `/my-bookings`: `DatPhongCuaToi`
+- `/me`: `TaiKhoan`
+- `/admin/bookings`: `QuanLyDatPhong`
+- `/history`: `LichSu`
+
+## Quy ước đặt tên
+
+File, component và các hàm export trong `src` dùng tiếng Việt không dấu để dễ tìm logic:
+
+```text
+components/rooms/ThePhong.jsx
+components/search/ThanhTimKiem.jsx
+services/xacThucApi.js
+services/phongApi.js
+utils/lichSuDatPhong.js
+utils/diemThuong.js
+store/khoXacThuc.js
+```
 
 ## Dữ liệu lưu trên trình duyệt
 
-Một số phần demo được lưu bằng `localStorage`:
-
-- Lịch sử tìm kiếm
-- Khách sạn đã xem
-- Khách sạn yêu thích
-- Đặt chỗ mẫu
+Một số dữ liệu demo được lưu bằng `localStorage`: lịch sử tìm kiếm, phòng đã xem, phòng yêu thích, đặt phòng mẫu, điểm thưởng và voucher.

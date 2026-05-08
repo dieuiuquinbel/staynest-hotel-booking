@@ -1,13 +1,13 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Airbnb Cereal VF', Circular, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #111827;
-  background: #f7f8fa;
+  color: #222222;
+  background: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -27,11 +27,8 @@ body,
 body {
   margin: 0;
   min-width: 320px;
-  background:
-    radial-gradient(circle at top left, rgba(14, 165, 233, 0.12), transparent 28%),
-    radial-gradient(circle at 82% 14%, rgba(212, 175, 55, 0.12), transparent 24%),
-    linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 38%, #ffffff 100%);
-  color: #111827;
+  background: #ffffff;
+  color: #222222;
 }
 
 a {
@@ -47,57 +44,64 @@ textarea {
 }
 
 ::selection {
-  background: rgba(20, 184, 166, 0.18);
+  background: rgba(255, 56, 92, 0.16);
 }
 
 @layer components {
   .surface-card {
-    @apply rounded-2xl border border-slate-200/80 bg-white/95;
-    box-shadow: 0 22px 55px -42px rgba(15, 23, 42, 0.38);
+    @apply rounded-[14px] border border-[#dddddd] bg-white;
+    box-shadow: none;
   }
 
   .subtle-card {
-    @apply rounded-2xl border border-slate-200/80 bg-white;
-    box-shadow: 0 18px 38px -34px rgba(15, 23, 42, 0.34);
+    @apply rounded-[14px] border border-[#dddddd] bg-white;
+    box-shadow: none;
     transition: border-color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
   }
 
   .subtle-card:hover {
-    border-color: rgba(43, 107, 232, 0.28);
+    border-color: #c1c1c1;
     transform: translateY(-2px);
-    box-shadow: 0 24px 52px -38px rgba(15, 23, 42, 0.46);
+    box-shadow: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
   }
 
   .eyebrow {
-    @apply inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-sm font-bold text-amber-700;
+    @apply inline-flex rounded-full border border-[#dddddd] bg-white px-3 py-1.5 text-xs font-semibold text-[#222222];
   }
 
   .section-title {
-    @apply text-2xl font-extrabold tracking-tight text-slate-950 sm:text-3xl;
+    @apply text-[28px] font-bold tracking-normal text-[#222222];
   }
 
   .field-shell {
-    @apply rounded-xl border border-slate-200 bg-white transition focus-within:border-brand-500 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(43,107,232,0.1)];
+    @apply rounded-lg border border-[#dddddd] bg-white transition focus-within:border-[#222222] focus-within:bg-white;
   }
 
   .booking-search {
-    @apply rounded-2xl border border-white/80 bg-white p-1 text-left shadow-2xl shadow-slate-950/25;
+    @apply rounded-[32px] border border-[#dddddd] bg-white p-2 text-left;
+    box-shadow: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
   }
 
   .booking-search-compact {
-    @apply shadow-xl shadow-sky-950/10;
+    @apply rounded-[14px];
+    box-shadow: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
+  }
+
+  .booking-search-expanded {
+    @apply rounded-[14px] p-1;
+    box-shadow: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
   }
 
   .booking-field {
-    @apply grid min-h-[70px] gap-1 border-b border-slate-200 bg-white px-4 py-3 transition focus-within:bg-sky-50/70 md:border-b-0 md:border-r;
+    @apply grid min-h-[70px] gap-1 border-b border-[#dddddd] bg-white px-4 py-3 transition focus-within:bg-[#f7f7f7] md:border-b-0 md:border-r;
   }
 
   .booking-field span {
-    @apply text-xs font-bold text-slate-600;
+    @apply text-xs font-semibold text-[#222222];
   }
 
   .booking-input {
-    @apply w-full border-none bg-transparent text-sm font-bold text-slate-950 outline-none placeholder:text-slate-400;
+    @apply w-full border-none bg-transparent text-sm font-normal text-[#222222] outline-none placeholder:text-[#6a6a6a];
   }
 
   .auth-form-stage {
@@ -108,22 +112,75 @@ textarea {
     animation: formSlideIn 260ms ease-out both;
   }
 
+  .review-stream-panel::before {
+    content: '';
+    position: absolute;
+    inset: -26% -16% auto auto;
+    width: 310px;
+    height: 310px;
+    border-radius: 9999px;
+    background: rgba(255, 56, 92, 0.22);
+    filter: blur(42px);
+    pointer-events: none;
+  }
+
+  .review-stream-panel::after {
+    content: '';
+    position: absolute;
+    inset: auto auto -24% -14%;
+    width: 280px;
+    height: 280px;
+    border-radius: 9999px;
+    background: rgba(14, 165, 233, 0.16);
+    filter: blur(44px);
+    pointer-events: none;
+  }
+
+  .review-bubble {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.075));
+    padding: 0.9rem;
+    box-shadow: 0 18px 42px -34px rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(16px);
+    opacity: 1;
+    animation: reviewBubbleDrift 5.2s ease-in-out infinite;
+  }
+
+  .review-stack-stage {
+    contain: paint;
+    mask-image: linear-gradient(to bottom, transparent 0, #000 8%, #000 92%, transparent 100%);
+  }
+
+  .review-stream-track {
+    animation: reviewStream 30s linear infinite;
+  }
+
+  .review-bubble-left {
+    margin-right: 2.25rem;
+  }
+
+  .review-bubble-right {
+    margin-left: 2rem;
+  }
+
+  .review-bubble-mid {
+    margin-left: 0.85rem;
+    margin-right: 0.85rem;
+  }
+
   .premium-header {
-    @apply sticky top-0 z-50 border-b border-slate-200/70 bg-white/90 backdrop-blur-xl;
-    box-shadow: 0 16px 45px -42px rgba(15, 23, 42, 0.55);
+    @apply sticky top-0 z-50 border-b border-[#ebebeb] bg-white;
+    box-shadow: none;
   }
 
   .premium-logo {
-    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-sm font-black text-white;
-    background: linear-gradient(135deg, #0f766e 0%, #1f59d8 52%, #172554 100%);
-    box-shadow: 0 14px 28px -18px rgba(15, 23, 42, 0.75);
+    @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white;
+    box-shadow: none;
   }
 
   .premium-band {
-    background:
-      radial-gradient(circle at 12% 20%, rgba(20, 184, 166, 0.18), transparent 26%),
-      radial-gradient(circle at 88% 10%, rgba(212, 175, 55, 0.18), transparent 26%),
-      linear-gradient(135deg, #07111f 0%, #0f2f45 46%, #0f766e 100%);
+    background: #222222;
   }
 }
 
@@ -131,10 +188,7 @@ textarea {
 .detail-page-bg,
 .history-page-bg,
 .auth-page-bg {
-  background:
-    radial-gradient(circle at top right, rgba(20, 184, 166, 0.12), transparent 28%),
-    radial-gradient(circle at top left, rgba(212, 175, 55, 0.1), transparent 24%),
-    linear-gradient(180deg, #fbfcfe 0%, #f6f8fb 42%, #ffffff 100%);
+  background: #ffffff;
 }
 
 @keyframes formSlideIn {
@@ -145,5 +199,31 @@ textarea {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes reviewStream {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(-50% - 0.375rem));
+  }
+}
+
+@keyframes reviewBubbleDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -4px, 0) scale(1.012);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .review-stream-track,
+  .review-bubble {
+    animation: none;
   }
 }

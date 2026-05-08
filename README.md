@@ -1,109 +1,144 @@
 # DieuBel Hotel Booking
 
-DieuBel là website đặt phòng khách sạn demo gồm frontend React, backend Express và database MySQL.
+Website đặt phòng khách sạn demo gồm frontend React, backend Express và database MySQL.
 
-## Khởi chạy backend bằng terminal trong VS Code
+## Công nghệ
 
-- cd "D:\Website khách sạn final\backend"
-- npm install
-- npm run dev
+- Frontend: React, Vite, Tailwind CSS
+- Backend: Node.js, Express
+- Database: MySQL
+- Xác thực: JWT, OTP email qua SMTP
+- Thanh toán demo: VietQR
 
-## Chức năng chính
-
-- Trang chủ với hero tìm kiếm, điểm đến nổi bật, ưu đãi và khách sạn được yêu thích.
-- Trang tìm chỗ ở với search nâng cao và bộ lọc cố định bên trái.
-- Trang chi tiết khách sạn, tiện nghi, trạng thái còn phòng và nút yêu thích.
-- Đăng ký, đăng nhập, kiểm tra phiên người dùng bằng JWT.
-- Luồng đặt phòng yêu cầu đăng nhập.
-- Trang Đặt chỗ của tôi với trạng thái đang giữ chỗ, đã hoàn tất, đã hủy.
-- Trang Lịch sử lưu khách sạn đã xem và đã yêu thích trên trình duyệt.
-
-## Cấu trúc thư mục
+## Cấu trúc chính
 
 ```text
-backend/   API Express, auth, rooms service
-database/  SQL schema và dữ liệu mẫu
-frontend/  React + Vite + Tailwind
+backend/   API, xác thực, đặt phòng, hóa đơn, thanh toán demo
+frontend/  Giao diện người dùng React
+database/  Schema và dữ liệu mẫu MySQL
 ```
 
-## Yêu cầu môi trường
+Tên file và module chính đã được đổi sang tiếng Việt không dấu để dễ tìm logic.
 
-- Node.js 18 trở lên
-- MySQL 8
-- npm
+Frontend:
 
-## Cài đặt database
+```text
+pages/TrangChu.jsx
+pages/DanhSachPhong.jsx
+pages/ChiTietPhong.jsx
+pages/DatPhong.jsx
+pages/DatPhongCuaToi.jsx
+pages/QuanLyDatPhong.jsx
+components/rooms/ThePhong.jsx
+utils/lichSuDatPhong.js
+services/phongApi.js
+```
 
-Tạo database MySQL:
+Backend:
+
+```text
+src/mayChu.js
+src/ungDung.js
+src/config/coSoDuLieu.js
+src/middleware/xacThuc.middleware.js
+src/services/xacThuc.service.js
+src/services/phong.service.js
+src/services/datPhong.service.js
+src/services/thanhToan.service.js
+```
+
+## Cài đặt
+
+Tạo database:
 
 ```sql
 CREATE DATABASE hotel_booking_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Import lần lượt:
+Import các file SQL trong `database/` theo thứ tự số đầu file.
 
-```text
-database/01_init_schema.sql
-database/02_seed_sample_data.sql
-```
+Cài dependencies:
 
-## Chạy backend
-
-```powershell
+```bash
 cd backend
 npm install
-copy .env.example .env
-npm run dev
+
+cd ../frontend
+npm install
 ```
 
-Kiểm tra file `backend/.env`:
+## Biến môi trường
+
+Backend cần file `backend/.env`:
 
 ```env
 PORT=5000
-DB_HOST=localhost
-DB_PORT=3307
+DB_HOST=127.0.0.1
+DB_PORT=3306
 DB_NAME=hotel_booking_db
 DB_USER=root
 DB_PASSWORD=123456
 JWT_SECRET=staynest_jwt_dev_secret_2026
-JWT_EXPIRES_IN=7d
 FRONTEND_URL=http://localhost:5173
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_gmail_app_password
+INVOICE_DIR=storage/invoices
+PAYMENT_HISTORY_DIR=storage/lich-su-ck
 ```
 
-Test API:
+Frontend cần file `frontend/.env` nếu dùng VietQR:
 
-```text
-http://localhost:5000/api/health
+```env
+VITE_VIETQR_BANK_ID=970407
+VITE_VIETQR_ACCOUNT_NO=722710020058888
+VITE_VIETQR_ACCOUNT_NAME=NGUYEN XUAN DIEU
+VITE_VIETQR_TEMPLATE=compact2
 ```
 
-## Chạy frontend
+## Chạy project
 
-```powershell
-cd frontend
-npm install
+Terminal backend:
+
+```bash
+cd backend
 npm run dev
 ```
 
-Mở:
+Terminal frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Địa chỉ:
 
 ```text
-http://127.0.0.1:5173
+Frontend: http://localhost:5173
+Backend:  http://localhost:5000
 ```
 
-Frontend đang gọi API qua `/api`. Khi chạy dev, cần backend hoạt động ở cổng `5000` và cấu hình proxy trong Vite nếu cần triển khai đầy đủ.
+## Route chính
 
-## Build kiểm tra
+- `/`: trang chủ
+- `/rooms`: danh sách và tìm kiếm phòng
+- `/rooms/:roomId`: chi tiết phòng
+- `/auth`: đăng nhập, đăng ký, xác minh OTP
+- `/booking`: đặt phòng
+- `/my-bookings`: đặt phòng của tôi, thanh toán demo, QR nhận phòng
+- `/me`: tài khoản, điểm thưởng, voucher
+- `/admin/bookings`: quản lý đặt phòng
+- `/history`: lịch sử xem, yêu thích, đánh giá
 
-```powershell
+## Kiểm tra
+
+```bash
 cd frontend
 npm run build
+
+cd ../backend
+node --check src/mayChu.js
+node -e "require('./src/ungDung'); console.log('backend module load ok')"
 ```
-
-## Ghi chú triển khai
-
-Khi deploy production:
-
-- Backend cần biến `FRONTEND_URL` trỏ tới domain frontend thật.
-- Database nên dùng MySQL cloud và import đủ 2 file SQL.
-- Frontend có thể deploy Vercel/Netlify; backend có thể deploy Render/Railway.
-- Nếu frontend và backend ở 2 domain khác nhau, cần cấu hình rewrite hoặc đổi API base URL phù hợp.
