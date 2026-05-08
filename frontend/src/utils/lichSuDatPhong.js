@@ -196,18 +196,66 @@ export function capNhatTrangThaiDatPhong(bookingId, bookingStatus) {
     if (booking.id !== bookingId) return booking;
 
     const isCheckedOut = bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_OUT;
+    const isCheckedIn = bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN;
+    const isCancelled = bookingStatus === TRANG_THAI_DAT_PHONG.CANCELLED;
+    const isNoShow = bookingStatus === TRANG_THAI_DAT_PHONG.NO_SHOW;
 
     return {
       ...booking,
       bookingStatus,
-      checkedInAt: bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN ? new Date().toISOString() : booking.checkedInAt,
+      checkedInAt: isCheckedIn ? new Date().toISOString() : booking.checkedInAt,
       completedAt: isCheckedOut ? new Date().toISOString() : booking.completedAt,
-      cancelledAt: bookingStatus === TRANG_THAI_DAT_PHONG.CANCELLED ? new Date().toISOString() : booking.cancelledAt,
+      cancelledAt: isCancelled || isNoShow ? new Date().toISOString() : booking.cancelledAt,
+      cancelReason: isNoShow ? 'Khách không đến nhận phòng' : isCancelled ? booking.cancelReason || 'Admin hủy đơn' : booking.cancelReason,
       paymentStatus: isCheckedOut ? TRANG_THAI_THANH_TOAN.PAID : booking.paymentStatus,
       paidAmount: isCheckedOut ? Number(booking.totalPrice || 0) : booking.paidAmount,
       remainingAmount: isCheckedOut ? 0 : booking.remainingAmount,
     };
   });
+
+  ghiMang(next);
+  return next;
+}
+
+export function xacNhanThanhToanAdmin(bookingId, loaiThanhToan) {
+  const next = docMangDaChuanHoa().map((booking) => {
+    if (booking.id !== bookingId) return booking;
+
+    const totalPrice = Number(booking.totalPrice || 0);
+    const depositAmount = Number(booking.depositAmount || Math.ceil(totalPrice * 0.1));
+    const isDeposit = loaiThanhToan === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT;
+    const paidAmount = isDeposit ? depositAmount : totalPrice;
+    const paymentCode = booking.paymentCode || `ADMIN-${String(Date.now()).slice(-6)}`;
+
+    return {
+      ...booking,
+      bookingStatus: TRANG_THAI_DAT_PHONG.CONFIRMED,
+      paymentStatus: isDeposit ? TRANG_THAI_THANH_TOAN.DEPOSIT_PAID : TRANG_THAI_THANH_TOAN.PAID,
+      paymentMethod: loaiThanhToan,
+      paymentCode,
+      transferContent: booking.transferContent || paymentCode,
+      paidAmount,
+      remainingAmount: Math.max(0, totalPrice - paidAmount),
+      qrToken: booking.qrToken || taoMaQr(booking.id),
+      paidAt: new Date().toISOString(),
+      adminConfirmedAt: new Date().toISOString(),
+    };
+  });
+
+  ghiMang(next);
+  return next;
+}
+
+export function luuGhiChuAdmin(bookingId, note) {
+  const next = docMangDaChuanHoa().map((booking) =>
+    booking.id === bookingId
+      ? {
+          ...booking,
+          adminNote: String(note || '').trim(),
+          adminNoteUpdatedAt: new Date().toISOString(),
+        }
+      : booking,
+  );
 
   ghiMang(next);
   return next;
