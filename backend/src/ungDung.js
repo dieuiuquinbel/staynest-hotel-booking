@@ -6,10 +6,23 @@ const { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } = re
 const { taoDatPhong, layHoaDonTheoId, layDanhSachHoaDon } = require('./services/datPhong.service');
 const { xacNhanThanhToanDemo } = require('./services/thanhToan.service');
 const {
+  layDatPhongCuaNguoiDung,
+  layTatCaDatPhong,
+  capNhatTrangThaiDatPhong,
+  xacNhanThanhToan,
+  luuGhiChuAdmin,
+  guiPhanHoiKhachHang,
+} = require('./services/quanLyDatPhong.service');
+const {
   layDanhSachPhong,
   layPhongNoiBat,
   layPhongTheoId,
 } = require('./services/phong.service');
+const {
+  layDanhSachVoucher,
+  layVoucherCuaNguoiDung,
+  luuVoucherChoNguoiDung,
+} = require('./services/voucher.service');
 
 const ungDung = express();
 
@@ -25,7 +38,7 @@ ungDung.use(express.json());
 function yeuCauQuanTri(req, res, next) {
   if (req.user?.role !== 'admin') {
     return res.status(403).json({
-      message: 'Chi admin moi co quyen xem hoa don.',
+      message: 'Ban khong co quyen han nay.',
     });
   }
 
@@ -153,6 +166,39 @@ ungDung.get('/api/rooms/:id', async (req, res) => {
   }
 });
 
+ungDung.get('/api/vouchers', async (req, res) => {
+  try {
+    const data = await layDanhSachVoucher(req.user?.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai danh sach voucher',
+    });
+  }
+});
+
+ungDung.get('/api/me/vouchers', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await layVoucherCuaNguoiDung(req.user.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai kho voucher',
+    });
+  }
+});
+
+ungDung.post('/api/me/vouchers', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await luuVoucherChoNguoiDung(req.user.id, req.body.code);
+    res.status(201).json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the luu voucher',
+    });
+  }
+});
+
 ungDung.post('/api/bookings', yeuCauDangNhap, async (req, res) => {
   try {
     const result = await taoDatPhong({
@@ -167,6 +213,71 @@ ungDung.post('/api/bookings', yeuCauDangNhap, async (req, res) => {
   } catch (error) {
     res.status(error.status || 500).json({
       message: error.message || 'Khong the dat phong',
+    });
+  }
+});
+
+ungDung.get('/api/bookings/my', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await layDatPhongCuaNguoiDung(req.user.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai danh sach dat phong',
+    });
+  }
+});
+
+ungDung.post('/api/bookings/:id/feedbacks', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await guiPhanHoiKhachHang({
+      user: req.user,
+      bookingCode: req.params.id,
+      payload: req.body,
+    });
+
+    res.status(201).json({
+      message: 'Da gui phan hoi',
+      data,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the gui phan hoi',
+    });
+  }
+});
+
+ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await capNhatTrangThaiDatPhong({
+      bookingCode: req.params.id,
+      status: req.body.status,
+      note: req.body.note,
+      adminId: req.user.role === 'admin' ? req.user.id : null,
+    });
+
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat trang thai',
+    });
+  }
+});
+
+ungDung.post('/api/bookings/:id/payments/confirm', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await xacNhanThanhToan({
+      bookingCode: req.params.id,
+      method: req.body.method,
+      paymentCode: req.body.paymentCode,
+      voucherCode: req.body.voucherCode,
+      adminId: req.user.role === 'admin' ? req.user.id : null,
+    });
+
+    res.status(201).json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the xac nhan thanh toan',
     });
   }
 });
@@ -197,6 +308,65 @@ ungDung.get('/api/admin/invoices', yeuCauDangNhap, yeuCauQuanTri, async (req, re
     res.status(500).json({
       message: 'Khong the tai danh sach hoa don',
       error: error.message,
+    });
+  }
+});
+
+ungDung.get('/api/admin/bookings', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layTatCaDatPhong();
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai danh sach dat phong',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/bookings/:id/status', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await capNhatTrangThaiDatPhong({
+      bookingCode: req.params.id,
+      status: req.body.status,
+      note: req.body.note,
+      adminId: req.user.id,
+    });
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat trang thai',
+    });
+  }
+});
+
+ungDung.post('/api/admin/bookings/:id/payments/confirm', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await xacNhanThanhToan({
+      bookingCode: req.params.id,
+      method: req.body.method,
+      paymentCode: req.body.paymentCode,
+      voucherCode: req.body.voucherCode,
+      adminId: req.user.id,
+    });
+    res.status(201).json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the xac nhan thanh toan',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/bookings/:id/note', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await luuGhiChuAdmin({
+      bookingCode: req.params.id,
+      note: req.body.note,
+      adminId: req.user.id,
+    });
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the luu ghi chu',
     });
   }
 });

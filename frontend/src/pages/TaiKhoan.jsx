@@ -1,9 +1,11 @@
 ﻿import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import useKhoXacThuc from '../store/khoXacThuc';
 import { TRANG_THAI_DAT_PHONG, docDatPhongCuaToi } from '../utils/lichSuDatPhong';
 import { docPhongYeuThich, docPhongDaXem } from '../utils/lichSuXemPhong';
 import { QUA_THANH_VIEN, docQuaDaDoi, docDiemThuong, docNhiemVuNhanThuong, doiQuaThuong } from '../utils/diemThuong';
+import { layKhoVoucherApi } from '../services/voucherApi';
 
 const GOI_Y_DANH_GIA = [
   'Chưa có đánh giá nào. Sau khi hoàn tất đặt phòng, bạn có thể quay lại để viết cảm nhận.',
@@ -29,6 +31,14 @@ function TaiKhoan() {
   const [message, setMessage] = useState('');
   const [points, setPoints] = useState(() => docDiemThuong());
   const [redeemed, setRedeemed] = useState(() => docQuaDaDoi());
+
+  useEffect(() => {
+    layKhoVoucherApi()
+      .then((vouchers) => {
+        if (Array.isArray(vouchers)) setRedeemed(vouchers);
+      })
+      .catch(() => setRedeemed(docQuaDaDoi()));
+  }, [user?.id, user?.email]);
 
   const bookings = useMemo(() => docDatPhongCuaToi(user?.id || user?.email), [user]);
   const viewedRooms = useMemo(() => docPhongDaXem(), []);

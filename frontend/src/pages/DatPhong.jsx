@@ -12,6 +12,7 @@ import {
 } from '../utils/lichSuDatPhong';
 import { dinhDangTien } from '../utils/dinhDang';
 import { congDiemThuong } from '../utils/diemThuong';
+import { taoDatPhong } from '../services/datPhongApi';
 
 const DICH_VU_THEM = [
   {
@@ -233,7 +234,22 @@ function DatPhong() {
     setIsSubmitting(true);
 
     try {
-      luuDatPhongCuaToi({
+      const payload = {
+        roomId: room.id,
+        checkIn,
+        checkOut,
+        guests,
+        rooms,
+        services: selectedServices,
+        bookingType,
+        timeSlotId,
+        paymentMethod: 'online_later',
+      };
+
+      try {
+        await taoDatPhong(payload);
+      } catch {
+        luuDatPhongCuaToi({
         room,
         user,
         checkIn,
@@ -244,7 +260,8 @@ function DatPhong() {
         totalPriceOverride: totalPrice,
         bookingType,
         timeSlotId,
-      });
+        });
+      }
       congDiemThuong(100);
       navigate('/my-bookings');
     } catch (error) {

@@ -261,6 +261,33 @@ export function luuGhiChuAdmin(bookingId, note) {
   return next;
 }
 
+export function luuPhanHoiKhachHang(bookingId, feedback) {
+  const cleanContent = String(feedback?.content || '').trim();
+  if (!cleanContent) return docMangDaChuanHoa();
+
+  const createdAt = new Date().toISOString();
+  const next = docMangDaChuanHoa().map((booking) => {
+    if (booking.id !== bookingId) return booking;
+
+    const nextFeedback = {
+      id: `FB-${createdAt.replace(/\D/g, '').slice(0, 14)}`,
+      type: feedback?.type || 'feedback',
+      content: cleanContent,
+      createdAt,
+      status: 'new',
+    };
+
+    return {
+      ...booking,
+      customerFeedbacks: [nextFeedback, ...(booking.customerFeedbacks || [])].slice(0, 10),
+      latestCustomerFeedback: nextFeedback,
+    };
+  });
+
+  ghiMang(next);
+  return next;
+}
+
 export function tinhGiamGiaVoucher(totalPrice, voucher) {
   if (!voucher) return 0;
 

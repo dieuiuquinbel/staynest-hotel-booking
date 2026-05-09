@@ -202,6 +202,7 @@ function UngDung() {
             <Route path="/me" element={<TaiKhoan />} />
           </Route>
           <Route element={<TuyenDuongBaoVe yeuCauAdmin />}>
+            <Route path="/admin" element={<Navigate to="/admin/bookings" replace />} />
             <Route path="/admin/bookings" element={<QuanLyDatPhong />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import QuanLyDatPhongBangTongQuan from './QuanLyDatPhong-BangTongQuan';
 import QuanLyDatPhongChiTietDon from './QuanLyDatPhong-ChiTietDon';
 import QuanLyDatPhongDanhSachDon from './QuanLyDatPhong-DanhSachDon';
@@ -15,6 +15,12 @@ import {
   xacNhanThanhToanAdmin,
 } from '../utils/lichSuDatPhong';
 import { laQuanTriVien } from '../utils/phanQuyen';
+import {
+  capNhatTrangThaiDatPhongAdminApi,
+  layTatCaDatPhongAdminApi,
+  luuGhiChuAdminApi,
+  xacNhanThanhToanAdminApi,
+} from '../services/datPhongApi';
 
 const TAB_QUAN_TRI = [
   { key: 'can_xu_ly', label: 'Cần xử lý' },
@@ -41,6 +47,8 @@ function datPhongKhopTimKiem(booking, query) {
     booking.room_name,
     booking.city,
     booking.adminNote,
+    booking.latestCustomerFeedback?.content,
+    ...(booking.customerFeedbacks || []).map((feedback) => feedback.content),
   ]
     .filter(Boolean)
     .some((item) => String(item).toLowerCase().includes(value));
@@ -133,27 +141,55 @@ function QuanLyDatPhong() {
   const selectedBooking = filteredBookings.find((booking) => booking.id === selectedId) || filteredBookings[0] || null;
   const stats = useMemo(() => tinhThongKe(bookings), [bookings]);
 
-  const refresh = () => setBookings(docTatCaDatPhong());
+  const refresh = async () => {
+    try {
+      const data = await layTatCaDatPhongAdminApi();
+      setBookings(data);
+    } catch {
+      setBookings(docTatCaDatPhong());
+    }
+  };
 
-  const handleStatus = (bookingId, status) => {
-    capNhatTrangThaiDatPhong(bookingId, status);
+  useEffect(() => {
+    if (laQuanTriVien(user)) {
+      refresh();
+    }
+  }, [user?.id, user?.email, user?.role]);
+
+  const handleStatus = async (bookingId, status) => {
+    try {
+      const data = await capNhatTrangThaiDatPhongAdminApi(bookingId, status);
+      setBookings(data);
+    } catch {
+      capNhatTrangThaiDatPhong(bookingId, status);
+      setBookings(docTatCaDatPhong());
+    }
     setSelectedId(bookingId);
     setNotice('Đã cập nhật trạng thái đơn.');
-    refresh();
   };
 
-  const handlePayment = (bookingId, method) => {
-    xacNhanThanhToanAdmin(bookingId, method);
+  const handlePayment = async (bookingId, method) => {
+    try {
+      const data = await xacNhanThanhToanAdminApi(bookingId, method);
+      setBookings(data);
+    } catch {
+      xacNhanThanhToanAdmin(bookingId, method);
+      setBookings(docTatCaDatPhong());
+    }
     setSelectedId(bookingId);
     setNotice(method === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT ? 'Đã xác nhận khách đã cọc.' : 'Đã xác nhận khách thanh toán đủ.');
-    refresh();
   };
 
-  const handleSaveNote = (bookingId, note) => {
-    luuGhiChuAdmin(bookingId, note);
+  const handleSaveNote = async (bookingId, note) => {
+    try {
+      const data = await luuGhiChuAdminApi(bookingId, note);
+      setBookings(data);
+    } catch {
+      luuGhiChuAdmin(bookingId, note);
+      setBookings(docTatCaDatPhong());
+    }
     setSelectedId(bookingId);
     setNotice('Đã lưu ghi chú admin.');
-    refresh();
   };
 
   const openInvoice = (booking) => {
@@ -168,9 +204,9 @@ function QuanLyDatPhong() {
         <section className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
           <div className="surface-card p-8 text-center">
             <span className="eyebrow">Admin</span>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Bạn không có quyền truy cập trang quản lý</h1>
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950">Bạn không có quyền hạn này</h1>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Trang này chỉ dành cho tài khoản quản trị viên.
+              Tài khoản khách hàng vẫn sử dụng được các chức năng đặt phòng, nhưng không thể vào khu vực quản trị.
             </p>
           </div>
         </section>

@@ -7,6 +7,7 @@ import ThanhTimKiem from '../components/search/ThanhTimKiem';
 import BangMoiThanhVien from '../components/layout/BangMoiThanhVien';
 import useTimKiemGanDay from '../hooks/useTimKiemGanDay';
 import { layPhongNoiBat } from '../services/phongApi';
+import { layDanhSachVoucherApi, luuVoucherApi } from '../services/voucherApi';
 import useKhoXacThuc from '../store/khoXacThuc';
 import { VOUCHER_KHUYEN_MAI, docQuaDaDoi, luuVoucherKhuyenMai } from '../utils/diemThuong';
 
@@ -312,6 +313,7 @@ function TrangChu() {
   const [showLoginOffer, setShowLoginOffer] = useState(false);
   const [showHopThoaiVoucher, setShowHopThoaiVoucher] = useState(false);
   const [savedCodes, setSavedCodes] = useState(() => docQuaDaDoi().map((reward) => reward.code));
+  const [vouchers, setVouchers] = useState(VOUCHER_KHUYEN_MAI);
   const [voucherMessage, setVoucherMessage] = useState('');
   const { data, isLoading, isError } = useQuery({
     queryKey: ['featured-rooms'],
@@ -340,6 +342,24 @@ function TrangChu() {
     const popupTimer = window.setTimeout(() => setShowLoginOffer(true), 450);
     return () => window.clearTimeout(popupTimer);
   }, [token]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    layDanhSachVoucherApi()
+      .then((nextVouchers) => {
+        if (!cancelled && Array.isArray(nextVouchers) && nextVouchers.length) {
+          setVouchers(nextVouchers);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setVouchers(VOUCHER_KHUYEN_MAI);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const refreshSavedCodes = () => {
@@ -415,9 +435,14 @@ function TrangChu() {
     setShowHopThoaiVoucher(true);
   };
 
-  const handleSaveVoucher = (voucher) => {
-    const next = luuVoucherKhuyenMai(voucher);
-    setSavedCodes(next.map((reward) => reward.code));
+  const handleSaveVoucher = async (voucher) => {
+    try {
+      const saved = await luuVoucherApi(voucher.code);
+      setSavedCodes(saved.map((reward) => reward.code));
+    } catch {
+      const next = luuVoucherKhuyenMai(voucher);
+      setSavedCodes(next.map((reward) => reward.code));
+    }
     setVoucherMessage('Đã lưu mã thành công, vui lòng kiểm tra trong kho voucher của bạn ở Page Tôi.');
     if (voucherMessageTimerRef.current) {
       window.clearTimeout(voucherMessageTimerRef.current);
@@ -430,7 +455,7 @@ function TrangChu() {
       <PopupMoiDangNhap open={showLoginOffer && !token} onClose={closeLoginOffer} onAuth={goToAuthOffer} />
       <HopThoaiVoucher
         open={showHopThoaiVoucher}
-        vouchers={VOUCHER_KHUYEN_MAI}
+        vouchers={vouchers}
         savedCodes={savedCodes}
         onClose={() => setShowHopThoaiVoucher(false)}
         onSave={handleSaveVoucher}
@@ -688,7 +713,7 @@ function TrangChu() {
           </div>
 
           <div className="mt-6 flex gap-5 overflow-x-auto pb-3">
-            {VOUCHER_KHUYEN_MAI.slice(0, 5).map((voucher) => (
+            {vouchers.slice(0, 5).map((voucher) => (
               <button
                 key={voucher.id}
                 type="button"
@@ -701,7 +726,7 @@ function TrangChu() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {VOUCHER_KHUYEN_MAI.slice(0, 3).map((voucher) => (
+            {vouchers.slice(0, 3).map((voucher) => (
               <TheVoucher
                 key={voucher.id}
                 voucher={voucher}

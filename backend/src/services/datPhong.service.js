@@ -82,12 +82,17 @@ async function taoDatPhong({ user, payload }) {
         nights,
         room_price,
         service_price,
+        original_total_price,
+        deposit_amount,
+        paid_amount,
+        remaining_amount,
         total_price,
         booking_status,
         payment_status,
         payment_method,
+        payment_deadline,
         note
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', 'unpaid', ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 'holding', 'unpaid', ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE), ?)`,
       [
         bookingCode,
         user.id,
@@ -99,6 +104,9 @@ async function taoDatPhong({ user, payload }) {
         nights,
         roomPrice,
         servicePrice,
+        totalPrice,
+        Math.ceil(totalPrice * 0.1),
+        totalPrice,
         totalPrice,
         payload.paymentMethod || 'pay_at_hotel',
         servicesText,
@@ -118,6 +126,9 @@ async function taoDatPhong({ user, payload }) {
       room_price: roomPrice,
       service_price: servicePrice,
       total_price: totalPrice,
+      deposit_amount: Math.ceil(totalPrice * 0.1),
+      paid_amount: 0,
+      remaining_amount: totalPrice,
       payment_method: payload.paymentMethod || 'pay_at_hotel',
     };
 

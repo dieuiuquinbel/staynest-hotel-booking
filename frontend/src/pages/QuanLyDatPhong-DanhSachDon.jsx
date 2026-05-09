@@ -36,6 +36,11 @@ function QuanLyDatPhongDanhSachDon({ bookings, selectedId, onSelect }) {
                 <p className="truncate text-sm font-black text-slate-950">{booking.id}</p>
                 <p className="mt-1 truncate text-sm font-bold text-slate-700">{booking.guestName || 'Khách hàng'}</p>
                 <p className="mt-1 truncate text-xs font-semibold text-slate-500">{booking.guestEmail || 'Chưa có email'}</p>
+                {booking.latestCustomerFeedback ? (
+                  <span className="mt-2 inline-flex rounded-full bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-700">
+                    Có phản hồi / khiếu nại
+                  </span>
+                ) : null}
               </div>
 
               <div className="min-w-0">

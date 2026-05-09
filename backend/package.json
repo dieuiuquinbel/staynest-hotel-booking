@@ -4,7 +4,7 @@
   "description": "Backend API for hotel booking website",
   "main": "src/mayChu.js",
   "scripts": {
-    "dev": "nodemon src/mayChu.js",
+    "dev": "node src/mayChu.js",
     "start": "node src/mayChu.js"
   },
   "dependencies": {
