@@ -6,6 +6,7 @@ import { TRANG_THAI_DAT_PHONG, docDatPhongCuaToi } from '../utils/lichSuDatPhong
 import { docPhongYeuThich, docPhongDaXem } from '../utils/lichSuXemPhong';
 import { QUA_THANH_VIEN, docQuaDaDoi, docDiemThuong, docNhiemVuNhanThuong, doiQuaThuong } from '../utils/diemThuong';
 import { layKhoVoucherApi } from '../services/voucherApi';
+import { layDatPhongCuaToiApi } from '../services/datPhongApi';
 
 const GOI_Y_DANH_GIA = [
   'Chưa có đánh giá nào. Sau khi hoàn tất đặt phòng, bạn có thể quay lại để viết cảm nhận.',
@@ -31,6 +32,7 @@ function TaiKhoan() {
   const [message, setMessage] = useState('');
   const [points, setPoints] = useState(() => docDiemThuong());
   const [redeemed, setRedeemed] = useState(() => docQuaDaDoi());
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     layKhoVoucherApi()
@@ -40,7 +42,23 @@ function TaiKhoan() {
       .catch(() => setRedeemed(docQuaDaDoi()));
   }, [user?.id, user?.email]);
 
-  const bookings = useMemo(() => docDatPhongCuaToi(user?.id || user?.email), [user]);
+  useEffect(() => {
+    let isMounted = true;
+
+    // Trang tai khoan cung doc tu MySQL de so don/voucher khop voi "Dat cho cua toi".
+    layDatPhongCuaToiApi()
+      .then((data) => {
+        if (isMounted) setBookings(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (isMounted) setBookings(docDatPhongCuaToi(user?.id || user?.email));
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, user?.email]);
+
   const viewedRooms = useMemo(() => docPhongDaXem(), []);
   const favoriteRooms = useMemo(() => docPhongYeuThich(), []);
   const completedBookings = bookings.filter((booking) =>

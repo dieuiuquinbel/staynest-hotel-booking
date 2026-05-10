@@ -154,7 +154,7 @@ function QuanLyDatPhong() {
     if (laQuanTriVien(user)) {
       refresh();
     }
-  }, [user?.id, user?.email, user?.role]);
+  }, [user]);
 
   const handleStatus = async (bookingId, status) => {
     try {

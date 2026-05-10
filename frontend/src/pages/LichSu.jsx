@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import ThePhong from '../components/rooms/ThePhong';
 import useKhoXacThuc from '../store/khoXacThuc';
 import {
@@ -13,6 +14,7 @@ import {
 } from '../utils/lichSuDatPhong';
 import { dinhDangTien } from '../utils/dinhDang';
 import { xoaPhongDaXem, docPhongYeuThich, docPhongDaXem } from '../utils/lichSuXemPhong';
+import { layDatPhongCuaToiApi } from '../services/datPhongApi';
 
 const TAB_LICH_SU = [
   { key: 'viewed', label: 'Phòng đã xem' },
@@ -108,12 +110,29 @@ function BangTrong({ title, description }) {
 
 function LichSu() {
   const user = useKhoXacThuc((state) => state.user);
-  const [, setRefreshKey] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState('viewed');
   const [reviewByBooking, setReviewByBooking] = useState({});
+  const [bookings, setBookings] = useState([]);
   const viewedRooms = docPhongDaXem();
   const favoriteRooms = docPhongYeuThich();
-  const bookings = docDatPhongCuaToi(user?.id || user?.email);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    // Uu tien du lieu MySQL de cac trang nhin cung mot nguon; localStorage chi la du phong khi backend chua chay.
+    layDatPhongCuaToiApi()
+      .then((data) => {
+        if (isMounted) setBookings(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (isMounted) setBookings(docDatPhongCuaToi(user?.id || user?.email));
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [refreshKey, user?.id, user?.email]);
   const completedBookings = bookings.filter((booking) =>
     [TRANG_THAI_DAT_PHONG.CONFIRMED, TRANG_THAI_DAT_PHONG.CHECKED_IN, TRANG_THAI_DAT_PHONG.CHECKED_OUT].includes(booking.bookingStatus),
   );

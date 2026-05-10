@@ -6,6 +6,7 @@ const { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } = re
 const { taoDatPhong, layHoaDonTheoId, layDanhSachHoaDon } = require('./services/datPhong.service');
 const { xacNhanThanhToanDemo } = require('./services/thanhToan.service');
 const {
+  TRANG_THAI_DAT_PHONG,
   layDatPhongCuaNguoiDung,
   layTatCaDatPhong,
   capNhatTrangThaiDatPhong,
@@ -249,6 +250,13 @@ ungDung.post('/api/bookings/:id/feedbacks', yeuCauDangNhap, async (req, res) => 
 
 ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
   try {
+    const trangThaiKhachDuocTuCapNhat = [TRANG_THAI_DAT_PHONG.CANCELLED, TRANG_THAI_DAT_PHONG.CHECKED_OUT];
+    if (!trangThaiKhachDuocTuCapNhat.includes(req.body.status)) {
+      return res.status(403).json({
+        message: 'Ban khong co quyen cap nhat trang thai nay.',
+      });
+    }
+
     const data = await capNhatTrangThaiDatPhong({
       bookingCode: req.params.id,
       status: req.body.status,
@@ -266,6 +274,8 @@ ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
 
 ungDung.post('/api/bookings/:id/payments/confirm', yeuCauDangNhap, async (req, res) => {
   try {
+    // Ban demo cho phep khach bam xac nhan thanh toan de cap nhat ngay.
+    // Khi trien khai that, nen doi sang trang thai "cho xac nhan" va de admin duyet.
     const data = await xacNhanThanhToan({
       bookingCode: req.params.id,
       method: req.body.method,
