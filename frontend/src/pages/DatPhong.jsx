@@ -1,5 +1,5 @@
 ﻿import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { layPhongTheoId } from '../services/phongApi';
 import useKhoXacThuc from '../store/khoXacThuc';
@@ -8,9 +8,8 @@ import {
   NHAN_KIEU_DAT_PHONG,
   KHUNG_GIO_THUE_NGAY,
   tinhTienPhong,
-  luuDatPhongCuaToi,
 } from '../utils/lichSuDatPhong';
-import { dinhDangTien } from '../utils/dinhDang';
+import { chuyenNgayHienThiSangIso, dinhDangNgay, dinhDangTien } from '../utils/dinhDang';
 import { congDiemThuong } from '../utils/diemThuong';
 import { taoDatPhong } from '../services/datPhongApi';
 
@@ -119,15 +118,38 @@ function TruongSo({ label, value, onChange, min, max }) {
 }
 
 function TruongNgay({ label, value, onChange, min, disabled = false }) {
+  const [draft, setDraft] = useState(dinhDangNgay(value));
+
+  useEffect(() => {
+    setDraft(dinhDangNgay(value));
+  }, [value]);
+
+  const commitDraft = (nextValue) => {
+    const nextIso = chuyenNgayHienThiSangIso(nextValue);
+    if (nextIso && (!min || nextIso >= min)) {
+      onChange(nextIso);
+      return true;
+    }
+
+    return false;
+  };
+
   return (
     <label className="grid gap-2">
       <span className="text-sm font-bold text-slate-700">{label}</span>
       <input
-        type="date"
-        min={min}
-        value={value}
+        type="text"
+        inputMode="numeric"
+        placeholder="dd/mm/yy"
+        value={draft}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => {
+          setDraft(event.target.value);
+          commitDraft(event.target.value);
+        }}
+        onBlur={() => {
+          if (!commitDraft(draft)) setDraft(dinhDangNgay(value));
+        }}
         className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none disabled:bg-slate-100 disabled:text-slate-500"
       />
     </label>
@@ -188,6 +210,9 @@ function DatPhong() {
   }
 
   const room = roomQuery.data;
+  const inventoryCount = Math.max(Number(room.inventory_count || 0), 0);
+  const requestedRooms = Math.max(Number(rooms || 1), 1);
+  const hasEnoughRooms = inventoryCount > 0 && requestedRooms <= inventoryCount;
   const minCheckOut = bookingType === KIEU_DAT_PHONG.DAY_USE ? checkIn : congNgayIso(1, checkIn);
   const hasValidDates =
     bookingType === KIEU_DAT_PHONG.DAY_USE
@@ -203,7 +228,7 @@ function DatPhong() {
   });
   const serviceTotalPrice = selectedServices.reduce((sum, service) => sum + service.priceValue, 0);
   const totalPrice = roomCharge.roomPrice + serviceTotalPrice;
-  const canSubmit = Boolean(user?.email_verified) && hasValidDates && !isSubmitting;
+  const canSubmit = Boolean(user?.email_verified) && hasValidDates && hasEnoughRooms && !isSubmitting;
 
   const handleBookingTypeChange = (nextType) => {
     setBookingType(nextType);
@@ -219,6 +244,12 @@ function DatPhong() {
     const nextCheckIn = value >= isoHomNay() ? value : isoHomNay();
     setCheckIn(nextCheckIn);
     setCheckOut(bookingType === KIEU_DAT_PHONG.DAY_USE ? nextCheckIn : congNgayIso(1, nextCheckIn));
+  };
+
+  const handleRoomsChange = (value) => {
+    const numericValue = Math.max(Number(value || 1), 1);
+    const nextValue = inventoryCount > 0 ? Math.min(numericValue, inventoryCount) : numericValue;
+    setRooms(String(nextValue));
   };
 
   const toggleService = (service) => {
@@ -246,22 +277,7 @@ function DatPhong() {
         paymentMethod: 'online_later',
       };
 
-      try {
-        await taoDatPhong(payload);
-      } catch {
-        luuDatPhongCuaToi({
-        room,
-        user,
-        checkIn,
-        checkOut,
-        guests,
-        rooms,
-        services: selectedServices,
-        totalPriceOverride: totalPrice,
-        bookingType,
-        timeSlotId,
-        });
-      }
+      await taoDatPhong(payload);
       congDiemThuong(100);
       navigate('/my-bookings');
     } catch (error) {
@@ -292,6 +308,12 @@ function DatPhong() {
           {!hasValidDates ? (
             <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
               Ngày nhận phòng không được ở quá khứ. Nếu đặt qua đêm, ngày trả phòng phải sau ngày nhận phòng.
+            </div>
+          ) : null}
+
+          {!hasEnoughRooms ? (
+            <div className="mt-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700">
+              MySQL bảng rooms hiện chỉ còn {inventoryCount} phòng. Vui lòng giảm số phòng trước khi giữ chỗ.
             </div>
           ) : null}
 
@@ -333,7 +355,7 @@ function DatPhong() {
               disabled={bookingType === KIEU_DAT_PHONG.DAY_USE}
             />
             <TruongSo label="Số khách" min="1" max="12" value={guests} onChange={setGuests} />
-            <TruongSo label="Số phòng" min="1" max="5" value={rooms} onChange={setRooms} />
+            <TruongSo label="Số phòng" min="1" max={Math.max(inventoryCount, 1)} value={rooms} onChange={handleRoomsChange} />
           </div>
 
           {bookingType === KIEU_DAT_PHONG.DAY_USE ? (
@@ -459,6 +481,10 @@ function DatPhong() {
             <div className="rounded-lg bg-slate-50 px-4 py-4">
               <p className="text-sm font-bold text-slate-500">Sức chứa</p>
               <p className="mt-2 text-lg font-black text-slate-950">{room.max_guests} khách</p>
+            </div>
+            <div className="rounded-lg bg-slate-50 px-4 py-4">
+              <p className="text-sm font-bold text-slate-500">Phòng còn lại</p>
+              <p className="mt-2 text-lg font-black text-slate-950">{inventoryCount} phòng</p>
             </div>
           </div>
 

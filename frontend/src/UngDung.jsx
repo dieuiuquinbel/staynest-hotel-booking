@@ -2,6 +2,7 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import TuyenDuongBaoVe from './components/auth/TuyenDuongBaoVe';
+import AdminLayout from './components/admin/AdminLayout';
 import ChanTrang from './components/layout/ChanTrang';
 import DauTrang from './components/layout/DauTrang';
 import { layNguoiDungHienTai } from './services/xacThucApi';
@@ -15,6 +16,10 @@ const DatPhong = lazy(() => import('./pages/DatPhong'));
 const DatPhongCuaToi = lazy(() => import('./pages/DatPhongCuaToi'));
 const TaiKhoan = lazy(() => import('./pages/TaiKhoan'));
 const QuanLyDatPhong = lazy(() => import('./pages/QuanLyDatPhong'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const AdminCustomers = lazy(() => import('./pages/AdminCustomers'));
+const AdminInvoices = lazy(() => import('./pages/AdminInvoices'));
+const AdminOperations = lazy(() => import('./pages/AdminOperations'));
 
 function CuonLenDauTrang() {
   const { pathname } = useLocation();
@@ -143,6 +148,7 @@ function NutCuonTrangNoi() {
 }
 
 function UngDung() {
+  const location = useLocation();
   const token = useKhoXacThuc((state) => state.token);
   const user = useKhoXacThuc((state) => state.user);
   const setUser = useKhoXacThuc((state) => state.setUser);
@@ -185,10 +191,12 @@ function UngDung() {
     }
   }, [authQuery.data, authQuery.isError, authQuery.isSuccess, clearSession, markReady, setUser, token, user]);
 
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
   return (
     <div className="flex min-h-screen flex-col text-slate-900">
       <CuonLenDauTrang />
-      <DauTrang />
+      {!isAdminRoute ? <DauTrang /> : null}
       <Suspense fallback={<DangTaiTrang />}>
         <Routes>
           <Route path="/" element={<TrangChu />} />
@@ -196,21 +204,27 @@ function UngDung() {
           <Route path="/rooms/:roomId" element={<ChiTietPhong />} />
           <Route path="/history" element={<LichSu />} />
           <Route path="/auth" element={<DangNhapDangKy />} />
-          <Route element={<TuyenDuongBaoVe />}>
+          <Route element={<TuyenDuongBaoVe chanAdmin />}>
             <Route path="/booking" element={<DatPhong />} />
             <Route path="/my-bookings" element={<DatPhongCuaToi />} />
             <Route path="/me" element={<TaiKhoan />} />
           </Route>
           <Route element={<TuyenDuongBaoVe yeuCauAdmin />}>
-            <Route path="/admin" element={<Navigate to="/admin/bookings" replace />} />
-            <Route path="/admin/bookings" element={<QuanLyDatPhong />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route index element={<Navigate to="/admin/overview" replace />} />
+              <Route path="overview" element={<AdminDashboard />} />
+              <Route path="bookings" element={<QuanLyDatPhong />} />
+              <Route path="operations" element={<AdminOperations />} />
+              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="invoices" element={<AdminInvoices />} />
+            </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-      <NutCuonTrangNoi />
-      <NutLienHeNoi />
-      <ChanTrang />
+      {!isAdminRoute ? <NutCuonTrangNoi /> : null}
+      {!isAdminRoute ? <NutLienHeNoi /> : null}
+      {!isAdminRoute ? <ChanTrang /> : null}
     </div>
   );
 }

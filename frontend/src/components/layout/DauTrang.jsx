@@ -13,6 +13,7 @@ function DauTrang() {
   const currentPath = location.pathname === '/auth' ? authRedirect || '/' : `${location.pathname}${location.search}`;
   const isAdmin = laQuanTriVien(user);
   const firstName = user?.full_name?.split(' ').at(-1) || 'bạn';
+  const accountPath = isAdmin ? '/admin/overview' : '/me';
 
   useEffect(() => {
     if (user?.id && previousUserId.current !== user.id) {
@@ -53,27 +54,36 @@ function DauTrang() {
             <NavLink to="/rooms" className={navClass}>
               Tìm chỗ ở
             </NavLink>
-            <NavLink to="/my-bookings" className={navClass}>
-              Đặt chỗ của tôi
-            </NavLink>
-            <NavLink to="/history" className={navClass}>
-              Lịch sử
-            </NavLink>
+            {!isAdmin ? (
+              <>
+                <NavLink to="/my-bookings" className={navClass}>
+                  Đặt chỗ của tôi
+                </NavLink>
+                <NavLink to="/history" className={navClass}>
+                  Lịch sử
+                </NavLink>
+              </>
+            ) : null}
             {user ? (
-              <NavLink to="/me" className={navClass}>
-                Tôi
+              <NavLink to={accountPath} className={navClass}>
+                {isAdmin ? 'Admin' : 'Tôi'}
+              </NavLink>
+            ) : null}
+            {isAdmin ? (
+              <NavLink to="/admin/customers" className={navClass}>
+                Khách hàng
               </NavLink>
             ) : null}
             {isAdmin ? (
               <NavLink to="/admin/bookings" className={navClass}>
-                Admin
+                Đặt phòng
               </NavLink>
             ) : null}
           </nav>
 
           {user ? (
             <Link
-              to="/me"
+              to={accountPath}
               className="rounded-full border border-[#dddddd] bg-white px-4 py-2 text-right transition hover:border-[#222222]"
             >
               <p className="text-xs font-medium text-[#6a6a6a]">Đã đăng nhập</p>

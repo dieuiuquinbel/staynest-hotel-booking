@@ -1,6 +1,5 @@
 ﻿import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
 import ThePhong from '../components/rooms/ThePhong';
 import useKhoXacThuc from '../store/khoXacThuc';
 import {
@@ -9,12 +8,11 @@ import {
   KIEU_DAT_PHONG,
   NHAN_KIEU_DAT_PHONG,
   NHAN_TRANG_THAI_THANH_TOAN,
-  docDatPhongCuaToi,
   luuDanhGiaDatPhong,
 } from '../utils/lichSuDatPhong';
-import { dinhDangTien } from '../utils/dinhDang';
+import { dinhDangNgay, dinhDangTien } from '../utils/dinhDang';
 import { xoaPhongDaXem, docPhongYeuThich, docPhongDaXem } from '../utils/lichSuXemPhong';
-import { layDatPhongCuaToiApi } from '../services/datPhongApi';
+import { useDatPhongCuaToi } from '../hooks/useDatPhongCuaToi';
 
 const TAB_LICH_SU = [
   { key: 'viewed', label: 'Phòng đã xem' },
@@ -49,11 +47,11 @@ function TheLichSuDatPhong({ booking, reviewDraft, onReviewChange, onSubmitRevie
           </div>
           <div className="rounded-xl bg-slate-50 px-4 py-3">
             <p className="text-xs font-bold text-slate-500">Thời gian</p>
-            <p className="mt-1 text-sm font-black text-slate-950">{booking.checkIn || 'Chưa chọn'}</p>
+            <p className="mt-1 text-sm font-black text-slate-950">{dinhDangNgay(booking.checkIn) || 'Chưa chọn'}</p>
             {booking.bookingType === KIEU_DAT_PHONG.DAY_USE ? (
               <p className="mt-1 text-xs font-bold text-slate-500">{booking.timeSlot?.label} · {booking.timeSlot?.time}</p>
             ) : (
-              <p className="mt-1 text-xs font-bold text-slate-500">Trả: {booking.checkOut || 'Chưa chọn'}</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">Trả: {dinhDangNgay(booking.checkOut) || 'Chưa chọn'}</p>
             )}
           </div>
           <div className="rounded-xl bg-slate-50 px-4 py-3">
@@ -110,29 +108,11 @@ function BangTrong({ title, description }) {
 
 function LichSu() {
   const user = useKhoXacThuc((state) => state.user);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [activeTab, setActiveTab] = useState('viewed');
   const [reviewByBooking, setReviewByBooking] = useState({});
-  const [bookings, setBookings] = useState([]);
+  const { bookings, refreshLocalBookings } = useDatPhongCuaToi(user);
   const viewedRooms = docPhongDaXem();
   const favoriteRooms = docPhongYeuThich();
-
-  useEffect(() => {
-    let isMounted = true;
-
-    // Uu tien du lieu MySQL de cac trang nhin cung mot nguon; localStorage chi la du phong khi backend chua chay.
-    layDatPhongCuaToiApi()
-      .then((data) => {
-        if (isMounted) setBookings(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (isMounted) setBookings(docDatPhongCuaToi(user?.id || user?.email));
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [refreshKey, user?.id, user?.email]);
   const completedBookings = bookings.filter((booking) =>
     [TRANG_THAI_DAT_PHONG.CONFIRMED, TRANG_THAI_DAT_PHONG.CHECKED_IN, TRANG_THAI_DAT_PHONG.CHECKED_OUT].includes(booking.bookingStatus),
   );
@@ -140,7 +120,7 @@ function LichSu() {
     [TRANG_THAI_DAT_PHONG.CANCELLED, TRANG_THAI_DAT_PHONG.NO_SHOW].includes(booking.bookingStatus),
   );
 
-  const refresh = () => setRefreshKey((current) => current + 1);
+  const refresh = () => refreshLocalBookings();
   const updateReviewDraft = (bookingId, draft) => setReviewByBooking((current) => ({ ...current, [bookingId]: draft }));
   const submitReview = (booking) => {
     luuDanhGiaDatPhong({ booking, ...(reviewByBooking[booking.id] || { rating: 5, content: '' }) });

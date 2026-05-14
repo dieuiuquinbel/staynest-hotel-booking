@@ -1,14 +1,18 @@
 ﻿import { KHOA_LUU_TRU } from './khoaLuuTru';
 
+import { dinhDangNgay } from './dinhDang';
+
 const KHOA_DAT_PHONG = KHOA_LUU_TRU.bookings;
 const KHOA_DANH_GIA = KHOA_LUU_TRU.reviews;
 
 export const TRANG_THAI_DAT_PHONG = {
   HOLDING: 'holding',
   CONFIRMED: 'confirmed',
+  CANCEL_REQUESTED: 'cancel_requested',
   CHECKED_IN: 'checked_in',
   CHECKED_OUT: 'checked_out',
   CANCELLED: 'cancelled',
+  EXPIRED: 'expired',
   NO_SHOW: 'no_show',
 };
 
@@ -24,6 +28,19 @@ export const PHUONG_THUC_THANH_TOAN = {
   ONLINE_FULL: 'online_full',
   COUNTER_DEPOSIT: 'counter_deposit',
 };
+
+export const TY_LE_PHI_HUY_HOAN_TIEN = 0.2;
+
+export function tinhChinhSachHoanTien(paidAmount) {
+  const safePaidAmount = Math.max(0, Number(paidAmount || 0));
+  const cancelFeeAmount = Math.round(safePaidAmount * TY_LE_PHI_HUY_HOAN_TIEN);
+
+  return {
+    paidAmount: safePaidAmount,
+    cancelFeeAmount,
+    refundAmount: Math.max(0, safePaidAmount - cancelFeeAmount),
+  };
+}
 
 export const KIEU_DAT_PHONG = {
   OVERNIGHT: 'overnight',
@@ -46,9 +63,11 @@ export const KHUNG_GIO_THUE_NGAY = [
 export const NHAN_TRANG_THAI_DAT_PHONG = {
   [TRANG_THAI_DAT_PHONG.HOLDING]: 'Đang giữ chỗ',
   [TRANG_THAI_DAT_PHONG.CONFIRMED]: 'Đã xác nhận',
+  [TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED]: 'Chờ duyệt hủy/hoàn tiền',
   [TRANG_THAI_DAT_PHONG.CHECKED_IN]: 'Đã nhận phòng',
   [TRANG_THAI_DAT_PHONG.CHECKED_OUT]: 'Đã trả phòng',
   [TRANG_THAI_DAT_PHONG.CANCELLED]: 'Đã hủy',
+  [TRANG_THAI_DAT_PHONG.EXPIRED]: 'Quá hạn thanh toán',
   [TRANG_THAI_DAT_PHONG.NO_SHOW]: 'Không đến nhận phòng',
 };
 
@@ -342,8 +361,8 @@ export function taoHtmlHoaDon(booking) {
     ['Email', booking.guestEmail],
     ['Khách sạn', booking.hotel_name],
     ['Phòng', booking.room_name],
-    ['Ngày nhận', booking.checkIn],
-    ['Ngày trả', booking.checkOut],
+    ['Ngày nhận', dinhDangNgay(booking.checkIn)],
+    ['Ngày trả', dinhDangNgay(booking.checkOut)],
     ['Tổng tiền', Number(booking.totalPrice || 0).toLocaleString('vi-VN') + ' đ'],
     ['Đã thanh toán', Number(booking.paidAmount || 0).toLocaleString('vi-VN') + ' đ'],
     ['Còn lại', Number(booking.remainingAmount || 0).toLocaleString('vi-VN') + ' đ'],

@@ -13,6 +13,15 @@ const {
   xacNhanThanhToan,
   luuGhiChuAdmin,
   guiPhanHoiKhachHang,
+  taoYeuCauHoanTien,
+  layYeuCauHoanTienCuaToi,
+  layTatCaYeuCauHoanTien,
+  capNhatYeuCauHoanTien,
+  guiYeuCauHoTro,
+  layYeuCauHoTroCuaToi,
+  layTatCaYeuCauHoTro,
+  capNhatYeuCauHoTro,
+  layBaoCaoDoanhThu,
 } = require('./services/quanLyDatPhong.service');
 const {
   layDanhSachPhong,
@@ -24,6 +33,14 @@ const {
   layVoucherCuaNguoiDung,
   luuVoucherChoNguoiDung,
 } = require('./services/voucher.service');
+const {
+  layTongQuanQuanTri,
+  layDanhSachKhachHang,
+  layChiTietKhachHang,
+  capNhatKhachHang,
+  capNhatTrangThaiKhachHang,
+  xoaKhachHang,
+} = require('./services/quanTri.service');
 
 const ungDung = express();
 
@@ -248,6 +265,65 @@ ungDung.post('/api/bookings/:id/feedbacks', yeuCauDangNhap, async (req, res) => 
   }
 });
 
+ungDung.get('/api/me/refund-requests', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await layYeuCauHoanTienCuaToi(req.user.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai danh sach yeu cau hoan tien',
+    });
+  }
+});
+
+ungDung.post('/api/bookings/:id/refund-requests', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await taoYeuCauHoanTien({
+      user: req.user,
+      bookingCode: req.params.id,
+      payload: req.body,
+    });
+
+    res.status(201).json({
+      message: 'Da tao yeu cau huy/hoan tien',
+      data,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tao yeu cau hoan tien',
+    });
+  }
+});
+
+ungDung.get('/api/me/support-tickets', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await layYeuCauHoTroCuaToi(req.user.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai yeu cau ho tro',
+    });
+  }
+});
+
+ungDung.post('/api/me/support-tickets', yeuCauDangNhap, async (req, res) => {
+  try {
+    const data = await guiYeuCauHoTro({
+      user: req.user,
+      payload: req.body,
+    });
+
+    res.status(201).json({
+      message: 'Da gui yeu cau ho tro',
+      data,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the gui yeu cau ho tro',
+    });
+  }
+});
+
 ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
   try {
     const trangThaiKhachDuocTuCapNhat = [TRANG_THAI_DAT_PHONG.CANCELLED, TRANG_THAI_DAT_PHONG.CHECKED_OUT];
@@ -322,6 +398,83 @@ ungDung.get('/api/admin/invoices', yeuCauDangNhap, yeuCauQuanTri, async (req, re
   }
 });
 
+ungDung.get('/api/admin/overview', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layTongQuanQuanTri();
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai tong quan quan tri',
+    });
+  }
+});
+
+ungDung.get('/api/admin/customers', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layDanhSachKhachHang(req.query);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai danh sach khach hang',
+    });
+  }
+});
+
+ungDung.get('/api/admin/customers/:id', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layChiTietKhachHang(req.params.id);
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai thong tin khach hang',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/customers/:id', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await capNhatKhachHang({
+      userId: req.params.id,
+      payload: req.body,
+      adminId: req.user.id,
+    });
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat khach hang',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/customers/:id/status', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await capNhatTrangThaiKhachHang({
+      userId: req.params.id,
+      status: req.body.status,
+      adminId: req.user.id,
+    });
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat trang thai khach hang',
+    });
+  }
+});
+
+ungDung.delete('/api/admin/customers/:id', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await xoaKhachHang({
+      userId: req.params.id,
+      adminId: req.user.id,
+    });
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the xoa khach hang',
+    });
+  }
+});
+
 ungDung.get('/api/admin/bookings', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
   try {
     const data = await layTatCaDatPhong();
@@ -329,6 +482,73 @@ ungDung.get('/api/admin/bookings', yeuCauDangNhap, yeuCauQuanTri, async (req, re
   } catch (error) {
     res.status(error.status || 500).json({
       message: error.message || 'Khong the tai danh sach dat phong',
+    });
+  }
+});
+
+ungDung.get('/api/admin/refund-requests', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layTatCaYeuCauHoanTien();
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai yeu cau hoan tien',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/refund-requests/:id', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await capNhatYeuCauHoanTien({
+      refundId: req.params.id,
+      status: req.body.status,
+      note: req.body.note,
+      adminId: req.user.id,
+    });
+
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat yeu cau hoan tien',
+    });
+  }
+});
+
+ungDung.get('/api/admin/support-tickets', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layTatCaYeuCauHoTro();
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai yeu cau ho tro',
+    });
+  }
+});
+
+ungDung.patch('/api/admin/support-tickets/:id', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await capNhatYeuCauHoTro({
+      ticketId: req.params.id,
+      status: req.body.status,
+      reply: req.body.reply,
+      adminId: req.user.id,
+    });
+
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the cap nhat yeu cau ho tro',
+    });
+  }
+});
+
+ungDung.get('/api/admin/revenue-report', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await layBaoCaoDoanhThu();
+    res.json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tai bao cao doanh thu',
     });
   }
 });

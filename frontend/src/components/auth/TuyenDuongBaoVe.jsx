@@ -3,7 +3,7 @@ import useKhoXacThuc from '../../store/khoXacThuc';
 import { taoDuongDanDangNhapChuyenHuong } from '../../utils/duongDan';
 import { laQuanTriVien } from '../../utils/phanQuyen';
 
-function TuyenDuongBaoVe({ yeuCauAdmin = false }) {
+function TuyenDuongBaoVe({ yeuCauAdmin = false, chanAdmin = false }) {
   const location = useLocation();
   const token = useKhoXacThuc((state) => state.token);
   const user = useKhoXacThuc((state) => state.user);
@@ -22,6 +22,10 @@ function TuyenDuongBaoVe({ yeuCauAdmin = false }) {
   if (!token) {
     const redirectPath = `${location.pathname}${location.search}`;
     return <Navigate to={taoDuongDanDangNhapChuyenHuong(redirectPath)} replace />;
+  }
+
+  if (chanAdmin && laQuanTriVien(user)) {
+    return <Navigate to="/admin/overview" replace />;
   }
 
   if (yeuCauAdmin && !laQuanTriVien(user)) {

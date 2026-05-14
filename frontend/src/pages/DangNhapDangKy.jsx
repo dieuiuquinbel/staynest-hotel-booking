@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } from '../services/xacThucApi';
 import useKhoXacThuc from '../store/khoXacThuc';
+import { laQuanTriVien } from '../utils/phanQuyen';
 
 const ANH_XAC_THUC =
   'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1400&q=85';
@@ -27,8 +28,12 @@ const XAC_MINH_BAN_DAU = {
   devOtp: '',
 };
 
-function docThongBaoLoi(error, fallbackMessage) {
-  return error?.response?.data?.message || fallbackMessage;
+function docThongBaoLoi(error, defaultMessage) {
+  if (!error?.response) {
+    return 'Không kết nối được backend. Hãy chạy backend bằng `npm run dev` trong thư mục backend rồi thử lại.';
+  }
+
+  return error?.response?.data?.message || defaultMessage;
 }
 
 function TruongBieuMau({ label, className = '', ...inputProps }) {
@@ -77,7 +82,12 @@ function DangNhapDangKy() {
   const verifyMutation = useMutation({ mutationFn: xacMinhOtpEmail });
   const resendMutation = useMutation({ mutationFn: guiLaiOtpEmail });
 
-  if (token && user) return <Navigate to={redirectPath} replace />;
+  const resolveRedirectPath = (sessionUser) => {
+    if (!laQuanTriVien(sessionUser)) return redirectPath;
+    return redirectPath.startsWith('/admin') ? redirectPath : '/admin/overview';
+  };
+
+  if (token && user) return <Navigate to={resolveRedirectPath(user)} replace />;
 
   const resetErrors = () => {
     setLoginError('');
@@ -109,7 +119,7 @@ function DangNhapDangKy() {
     try {
       const session = await loginMutation.mutateAsync(loginForm);
       setSession(session);
-      navigate(redirectPath, { replace: true });
+      navigate(resolveRedirectPath(session.user), { replace: true });
     } catch (error) {
       setLoginError(docThongBaoLoi(error, 'Không thể đăng nhập. Vui lòng kiểm tra thông tin.'));
     }
@@ -154,7 +164,7 @@ function DangNhapDangKy() {
         otp: verification.otp,
       });
       setSession(session);
-      navigate(redirectPath, { replace: true });
+      navigate(resolveRedirectPath(session.user), { replace: true });
     } catch (error) {
       setVerifyError(docThongBaoLoi(error, 'Không thể xác minh OTP. Vui lòng thử lại.'));
     }

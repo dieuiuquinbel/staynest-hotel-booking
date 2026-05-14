@@ -36,7 +36,7 @@ WHERE email = 'quinquin04052005@gmail.com';
 
 -- 2. Bo sung trang thai va cot nghiep vu cho bookings.
 ALTER TABLE bookings
-  MODIFY booking_status ENUM('pending', 'holding', 'confirmed', 'checked_in', 'checked_out', 'cancelled', 'completed', 'no_show') NOT NULL DEFAULT 'holding',
+  MODIFY booking_status ENUM('pending', 'holding', 'confirmed', 'cancel_requested', 'checked_in', 'checked_out', 'cancelled', 'expired', 'completed', 'no_show') NOT NULL DEFAULT 'holding',
   MODIFY payment_status ENUM('unpaid', 'deposit_paid', 'paid', 'pay_at_counter', 'refunded') NOT NULL DEFAULT 'unpaid';
 
 CALL add_column_if_missing('bookings', 'booking_type', '`booking_type` ENUM(''overnight'', ''day_use'') NOT NULL DEFAULT ''overnight'' AFTER `rooms_count`');
@@ -140,6 +140,54 @@ CREATE TABLE IF NOT EXISTS booking_status_logs (
   changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_booking_status_logs_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
   CONSTRAINT fk_booking_status_logs_user FOREIGN KEY (changed_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- 6A. Yeu cau huy phong / hoan tien.
+CREATE TABLE IF NOT EXISTS refund_requests (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  refund_code VARCHAR(50) NOT NULL UNIQUE,
+  booking_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  cancel_fee_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  refund_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+  bank_name VARCHAR(120) NOT NULL,
+  bank_account_name VARCHAR(160) NOT NULL,
+  bank_account_number VARCHAR(80) NOT NULL,
+  phone VARCHAR(30) NOT NULL,
+  email VARCHAR(160) NOT NULL,
+  reason TEXT NULL,
+  status ENUM('pending', 'approved', 'rejected', 'completed') NOT NULL DEFAULT 'pending',
+  admin_note TEXT NULL,
+  processed_by BIGINT NULL,
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  approved_at TIMESTAMP NULL,
+  completed_at TIMESTAMP NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_refund_requests_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+  CONSTRAINT fk_refund_requests_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_refund_requests_admin FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
+  UNIQUE KEY uq_refund_requests_booking (booking_id)
+);
+
+-- 6B. Trung tam ho tro / khieu nai tren MePage.
+CREATE TABLE IF NOT EXISTS support_tickets (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  ticket_code VARCHAR(50) NOT NULL UNIQUE,
+  user_id BIGINT NOT NULL,
+  booking_id BIGINT NULL,
+  category ENUM('booking', 'payment', 'refund', 'service', 'account', 'other') NOT NULL DEFAULT 'other',
+  title VARCHAR(160) NOT NULL,
+  content TEXT NOT NULL,
+  status ENUM('new', 'processing', 'resolved', 'closed') NOT NULL DEFAULT 'new',
+  admin_reply TEXT NULL,
+  replied_by BIGINT NULL,
+  replied_at TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_support_tickets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_support_tickets_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
+  CONSTRAINT fk_support_tickets_admin FOREIGN KEY (replied_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- 6. Phan hoi / khieu nai cua khach hang.

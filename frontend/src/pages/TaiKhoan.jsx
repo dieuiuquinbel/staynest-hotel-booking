@@ -1,12 +1,14 @@
 ﻿import { useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import useKhoXacThuc from '../store/khoXacThuc';
-import { TRANG_THAI_DAT_PHONG, docDatPhongCuaToi } from '../utils/lichSuDatPhong';
+import { TRANG_THAI_DAT_PHONG } from '../utils/lichSuDatPhong';
+import { dinhDangNgay, dinhDangTien } from '../utils/dinhDang';
 import { docPhongYeuThich, docPhongDaXem } from '../utils/lichSuXemPhong';
-import { QUA_THANH_VIEN, docQuaDaDoi, docDiemThuong, docNhiemVuNhanThuong, doiQuaThuong } from '../utils/diemThuong';
-import { layKhoVoucherApi } from '../services/voucherApi';
-import { layDatPhongCuaToiApi } from '../services/datPhongApi';
+import { QUA_THANH_VIEN, docDiemThuong, docNhiemVuNhanThuong, doiQuaThuong } from '../utils/diemThuong';
+import { useDatPhongCuaToi } from '../hooks/useDatPhongCuaToi';
+import { useKhoVoucherCuaToi } from '../hooks/useKhoVoucherCuaToi';
+import { guiYeuCauHoTroApi, layYeuCauHoanTienCuaToiApi, layYeuCauHoTroCuaToiApi } from '../services/datPhongApi';
 
 const GOI_Y_DANH_GIA = [
   'Chưa có đánh giá nào. Sau khi hoàn tất đặt phòng, bạn có thể quay lại để viết cảm nhận.',
@@ -19,45 +21,31 @@ const MUC_THANH_BEN = [
   { id: 'reviews', label: 'Đánh giá' },
   { id: 'rewards', label: 'Đổi thưởng' },
   { id: 'wallet', label: 'Kho voucher' },
+  { id: 'refunds', label: 'Hoàn tiền' },
+  { id: 'support', label: 'Hỗ trợ / khiếu nại' },
   { id: 'tasks', label: 'Nhiệm vụ' },
 ];
 
 function TaiKhoan() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const user = useKhoXacThuc((state) => state.user);
   const setUser = useKhoXacThuc((state) => state.setUser);
   const clearSession = useKhoXacThuc((state) => state.clearSession);
-  const [activeSection, setActiveSection] = useState('profile');
+  const [activeSection, setActiveSection] = useState(searchParams.get('supportBooking') ? 'support' : 'profile');
   const [displayName, setDisplayName] = useState(user?.full_name || '');
   const [message, setMessage] = useState('');
   const [points, setPoints] = useState(() => docDiemThuong());
-  const [redeemed, setRedeemed] = useState(() => docQuaDaDoi());
-  const [bookings, setBookings] = useState([]);
-
-  useEffect(() => {
-    layKhoVoucherApi()
-      .then((vouchers) => {
-        if (Array.isArray(vouchers)) setRedeemed(vouchers);
-      })
-      .catch(() => setRedeemed(docQuaDaDoi()));
-  }, [user?.id, user?.email]);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    // Trang tai khoan cung doc tu MySQL de so don/voucher khop voi "Dat cho cua toi".
-    layDatPhongCuaToiApi()
-      .then((data) => {
-        if (isMounted) setBookings(Array.isArray(data) ? data : []);
-      })
-      .catch(() => {
-        if (isMounted) setBookings(docDatPhongCuaToi(user?.id || user?.email));
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user?.id, user?.email]);
+  const [redeemed, setRedeemed] = useKhoVoucherCuaToi(user);
+  const [supportTickets, setSupportTickets] = useState([]);
+  const [refundRequests, setRefundRequests] = useState([]);
+  const [supportForm, setSupportForm] = useState({
+    bookingCode: searchParams.get('supportBooking') || '',
+    category: 'booking',
+    title: '',
+    content: '',
+  });
+  const { bookings } = useDatPhongCuaToi(user);
 
   const viewedRooms = useMemo(() => docPhongDaXem(), []);
   const favoriteRooms = useMemo(() => docPhongYeuThich(), []);
@@ -71,6 +59,23 @@ function TaiKhoan() {
     reviews: bookings.filter((booking) => booking.reviewId),
   });
   const membership = points >= 500 ? 'Vàng' : points >= 200 ? 'Bạc' : 'Cơ bản';
+
+  const refreshRequests = async () => {
+    try {
+      const [nextTickets, nextRefunds] = await Promise.all([
+        layYeuCauHoTroCuaToiApi(),
+        layYeuCauHoanTienCuaToiApi(),
+      ]);
+      setSupportTickets(nextTickets);
+      setRefundRequests(nextRefunds);
+    } catch {
+      setMessage('Không tải được yêu cầu hỗ trợ/hoàn tiền từ MySQL.');
+    }
+  };
+
+  useEffect(() => {
+    refreshRequests();
+  }, []);
 
   const handleSaveProfile = () => {
     const nextName = displayName.trim();
@@ -88,6 +93,22 @@ function TaiKhoan() {
     setPoints(result.points);
     setRedeemed(result.redeemed);
     setMessage(result.ok ? `Đã đổi ${reward.title}.` : 'Bạn chưa đủ điểm để đổi phần thưởng này.');
+  };
+
+  const handleSubmitSupport = async () => {
+    if (!supportForm.title.trim() || !supportForm.content.trim()) {
+      setMessage('Vui lòng nhập tiêu đề và nội dung hỗ trợ.');
+      return;
+    }
+
+    try {
+      const nextTickets = await guiYeuCauHoTroApi(supportForm);
+      setSupportTickets(nextTickets);
+      setSupportForm((current) => ({ ...current, title: '', content: '' }));
+      setMessage('Đã gửi yêu cầu hỗ trợ. Admin sẽ phản hồi trong khu quản trị.');
+    } catch (error) {
+      setMessage(error?.response?.data?.message || 'Không gửi được yêu cầu hỗ trợ.');
+    }
   };
 
   const handleLogout = () => {
@@ -230,7 +251,7 @@ function TaiKhoan() {
   const renderRewards = () => (
     <section className="rounded-2xl border border-slate-200 bg-white p-5">
       <h2 className="text-xl font-black text-slate-950">Đổi thưởng</h2>
-      <p className="mt-1 text-sm text-slate-500">Danh sách voucher demo. Điểm hiện có: {points}</p>
+      <p className="mt-1 text-sm text-slate-500">Danh sách voucher có thể đổi. Điểm hiện có: {points}</p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
         {QUA_THANH_VIEN.map((reward) => (
           <article key={reward.id} className="rounded-2xl border border-sky-100 bg-sky-50/60 p-4">
@@ -276,6 +297,123 @@ function TaiKhoan() {
     </section>
   );
 
+  const renderRefunds = () => (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-xl font-black text-slate-950">Yêu cầu hoàn tiền</h2>
+          <p className="mt-1 text-sm text-slate-500">Theo dõi các yêu cầu hủy/hoàn tiền đã gửi từ trang Đặt chỗ của tôi.</p>
+        </div>
+        <button type="button" onClick={refreshRequests} className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-black text-slate-700">
+          Tải lại
+        </button>
+      </div>
+      <div className="mt-5 grid gap-3">
+        {refundRequests.length ? (
+          refundRequests.map((refund) => (
+            <article key={refund.id} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="font-black text-slate-950">{refund.code} · {refund.bookingId}</p>
+                  <p className="mt-1 text-sm font-bold text-slate-600">{refund.hotelName} · {dinhDangNgay(refund.checkIn)} - {dinhDangNgay(refund.checkOut)}</p>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-brand-700">{refund.status}</span>
+              </div>
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                <p><strong>Đã thanh toán:</strong> {dinhDangTien(refund.paidAmount)}</p>
+                <p><strong>Phí hủy 20%:</strong> {dinhDangTien(refund.cancelFeeAmount)}</p>
+                <p><strong>Dự kiến hoàn:</strong> {dinhDangTien(refund.refundAmount)}</p>
+              </div>
+              {refund.adminNote ? <p className="mt-3 rounded-xl bg-white p-3 text-sm font-bold text-slate-600">Admin: {refund.adminNote}</p> : null}
+            </article>
+          ))
+        ) : (
+          <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Chưa có yêu cầu hoàn tiền.</p>
+        )}
+      </div>
+    </section>
+  );
+
+  const renderSupport = () => (
+    <section className="grid gap-5">
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h2 className="text-xl font-black text-slate-950">Hỗ trợ / khiếu nại</h2>
+        <p className="mt-1 text-sm text-slate-500">Gửi vấn đề tổng quát về đặt phòng, thanh toán, hoàn tiền, dịch vụ hoặc tài khoản.</p>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          <label className="grid gap-2">
+            <span className="text-sm font-bold text-slate-700">Đơn liên quan</span>
+            <select
+              value={supportForm.bookingCode}
+              onChange={(event) => setSupportForm((current) => ({ ...current, bookingCode: event.target.value }))}
+              className="field-shell px-4 py-4 text-sm font-semibold outline-none"
+            >
+              <option value="">Không gắn với đơn cụ thể</option>
+              {bookings.map((booking) => (
+                <option key={booking.id} value={booking.id}>{booking.id} · {booking.hotel_name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-2">
+            <span className="text-sm font-bold text-slate-700">Loại vấn đề</span>
+            <select
+              value={supportForm.category}
+              onChange={(event) => setSupportForm((current) => ({ ...current, category: event.target.value }))}
+              className="field-shell px-4 py-4 text-sm font-semibold outline-none"
+            >
+              <option value="booking">Đặt phòng</option>
+              <option value="payment">Thanh toán</option>
+              <option value="refund">Hoàn tiền</option>
+              <option value="service">Dịch vụ</option>
+              <option value="account">Tài khoản</option>
+              <option value="other">Khác</option>
+            </select>
+          </label>
+          <label className="grid gap-2 md:col-span-2">
+            <span className="text-sm font-bold text-slate-700">Tiêu đề</span>
+            <input
+              value={supportForm.title}
+              onChange={(event) => setSupportForm((current) => ({ ...current, title: event.target.value }))}
+              className="field-shell px-4 py-4 text-sm font-semibold outline-none"
+            />
+          </label>
+          <label className="grid gap-2 md:col-span-2">
+            <span className="text-sm font-bold text-slate-700">Nội dung</span>
+            <textarea
+              rows={5}
+              value={supportForm.content}
+              onChange={(event) => setSupportForm((current) => ({ ...current, content: event.target.value }))}
+              className="field-shell px-4 py-4 text-sm font-semibold outline-none"
+            />
+          </label>
+        </div>
+        <button type="button" onClick={handleSubmitSupport} className="mt-4 rounded-xl bg-brand-600 px-5 py-3 text-sm font-black text-white">
+          Gửi yêu cầu
+        </button>
+        {message ? <p className="mt-4 text-sm font-bold text-brand-700">{message}</p> : null}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-5">
+        <h3 className="text-lg font-black text-slate-950">Yêu cầu đã gửi</h3>
+        <div className="mt-4 grid gap-3">
+          {supportTickets.length ? (
+            supportTickets.map((ticket) => (
+              <article key={ticket.id} className="rounded-2xl bg-slate-50 p-4 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-black text-slate-950">{ticket.code} · {ticket.title}</p>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-slate-700">{ticket.status}</span>
+                </div>
+                <p className="mt-2 leading-6 text-slate-600">{ticket.content}</p>
+                {ticket.adminReply ? <p className="mt-3 rounded-xl bg-white p-3 font-bold text-brand-700">Admin: {ticket.adminReply}</p> : null}
+              </article>
+            ))
+          ) : (
+            <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">Chưa có yêu cầu hỗ trợ.</p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
   const renderTasks = () => (
     <section className="rounded-2xl border border-slate-200 bg-white p-5">
       <h2 className="text-xl font-black text-slate-950">Nhiệm vụ nhận điểm</h2>
@@ -302,6 +440,8 @@ function TaiKhoan() {
     reviews: renderReviews,
     rewards: renderRewards,
     wallet: renderWallet,
+    refunds: renderRefunds,
+    support: renderSupport,
     tasks: renderTasks,
   };
 

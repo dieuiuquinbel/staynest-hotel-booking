@@ -1,53 +1,50 @@
 # DieuBel Hotel Booking
 
-Website đặt phòng khách sạn demo gồm frontend React, backend Express và database MySQL.
+Website đặt phòng khách sạn gồm frontend React, backend Express và database MySQL.
 
-## Công nghệ
-
-- Frontend: React, Vite, Tailwind CSS
-- Backend: Node.js, Express
-- Database: MySQL
-- Xác thực: JWT, OTP email qua SMTP
-- Thanh toán demo: VietQR
-
-## Cấu trúc chính
+## 1. Cấu trúc dự án
 
 ```text
-backend/   API, xác thực, đặt phòng, hóa đơn, thanh toán demo
-frontend/  Giao diện người dùng React
-database/  Schema và dữ liệu mẫu MySQL
+frontend/   Giao diện người dùng và trang quản trị
+backend/    API, xác thực, đặt phòng, thanh toán demo, hóa đơn
+database/   File tạo bảng, seed dữ liệu và mở rộng schema
 ```
 
-Tên file và module chính đã được đổi sang tiếng Việt không dấu để dễ tìm logic.
+## 2. Công nghệ sử dụng
 
 Frontend:
 
-```text
-pages/TrangChu.jsx
-pages/DanhSachPhong.jsx
-pages/ChiTietPhong.jsx
-pages/DatPhong.jsx
-pages/DatPhongCuaToi.jsx
-pages/QuanLyDatPhong.jsx
-components/rooms/ThePhong.jsx
-utils/lichSuDatPhong.js
-services/phongApi.js
-```
+- React 19
+- Vite
+- React Router
+- Axios
+- Zustand
+- TanStack Query
+- Tailwind CSS
 
 Backend:
 
-```text
-src/mayChu.js
-src/ungDung.js
-src/config/coSoDuLieu.js
-src/middleware/xacThuc.middleware.js
-src/services/xacThuc.service.js
-src/services/phong.service.js
-src/services/datPhong.service.js
-src/services/thanhToan.service.js
-```
+- Node.js
+- Express
+- MySQL2
+- JWT
+- bcryptjs
+- Nodemailer
+- dotenv
 
-## Cài đặt
+Database:
+
+- MySQL
+- Các bảng chính: `users`, `rooms`, `bookings`, `invoices`, `vouchers`, `payment_transactions`, `booking_status_logs`, `customer_feedbacks`
+
+Chức năng phụ:
+
+- OTP email qua SMTP Gmail
+- Hóa đơn HTML lưu trong `backend/storage/invoices`
+- Lịch sử chuyển khoản demo lưu trong `backend/storage/lich-su-ck`
+- VietQR tạo từ biến môi trường frontend
+
+## 3. Cài đặt database
 
 Tạo database:
 
@@ -55,90 +52,63 @@ Tạo database:
 CREATE DATABASE hotel_booking_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Import các file SQL trong `database/` theo thứ tự số đầu file.
+Import các file trong `database/` theo thứ tự tên file:
+
+```text
+01_init_schema.sql
+02_seed_sample_data.sql
+03_add_auth_booking_invoice.sql
+03_seed_more_rooms.sql
+05_clean_demo_data.sql
+06_expand_hotel_booking_system.sql
+```
+
+## 4. Cấu hình backend
+
+Tạo file `backend/.env`:
+
+Nếu chưa cấu hình SMTP, backend vẫn trả `devOtp` khi đăng ký để test local.
+
+## 5. Cấu hình frontend
+
+Tạo file `frontend/.env` nếu muốn bật VietQR:
+
+## 6. Chạy dự án
 
 Cài dependencies:
 
 ```bash
 cd backend
 npm install
+```
 
-cd ../frontend
+```bash
+cd frontend
 npm install
 ```
 
-## Biến môi trường
-
-Backend cần file `backend/.env`:
-
-```env
-PORT=5000
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=hotel_booking_db
-DB_USER=root
-DB_PASSWORD=123456
-JWT_SECRET=staynest_jwt_dev_secret_2026
-FRONTEND_URL=http://localhost:5173
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_gmail_app_password
-INVOICE_DIR=storage/invoices
-PAYMENT_HISTORY_DIR=storage/lich-su-ck
-```
-
-Frontend cần file `frontend/.env` nếu dùng VietQR:
-
-```env
-VITE_VIETQR_BANK_ID=970407
-VITE_VIETQR_ACCOUNT_NO=722710020058888
-VITE_VIETQR_ACCOUNT_NAME=NGUYEN XUAN DIEU
-VITE_VIETQR_TEMPLATE=compact2
-```
-
-## Chạy project
-
-Terminal backend:
+Chạy backend:
 
 ```bash
 cd backend
 npm run dev
 ```
 
-Terminal frontend:
+Chạy frontend:
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Địa chỉ:
+Địa chỉ mặc định:
 
-```text
-Frontend: http://localhost:5173
-Backend:  http://localhost:5000
-```
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
+- Health check: `GET http://localhost:5000/api/health`
 
-## Route chính
+## 7. Ba tài liệu cần đọc
 
-- `/`: trang chủ
-- `/rooms`: danh sách và tìm kiếm phòng
-- `/rooms/:roomId`: chi tiết phòng
-- `/auth`: đăng nhập, đăng ký, xác minh OTP
-- `/booking`: đặt phòng
-- `/my-bookings`: đặt phòng của tôi, thanh toán demo, QR nhận phòng
-- `/me`: tài khoản, điểm thưởng, voucher
-- `/admin/bookings`: quản lý đặt phòng
-- `/history`: lịch sử xem, yêu thích, đánh giá
-
-## Kiểm tra
-
-```bash
-cd frontend
-npm run build
-
-cd ../backend
-node --check src/mayChu.js
-node -e "require('./src/ungDung'); console.log('backend module load ok')"
-```
+- `README.md`: công nghệ, cấu trúc và cách chạy dự án.
+- `HUONG_DAN_HAM.md`: danh sách API, service và hàm quan trọng.
+- `LUONG_DU_LIEU.md`: luồng phân tích và xử lý dữ liệu.

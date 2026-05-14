@@ -5,7 +5,7 @@ function DatPhongCuaToiThanhToanVietQr({ amount, bookingId, paymentMethod, payme
 
   if (!daCauHinhVietQr()) {
     return (
-      <div className="grid min-h-48 w-full max-w-xs place-items-center rounded-2xl border border-amber-200 bg-amber-50 p-5 text-center">
+      <div className="grid aspect-square w-full max-w-[220px] place-items-center rounded-xl border border-amber-200 bg-amber-50 p-4 text-center">
         <div>
           <p className="text-sm font-black text-amber-800">Chưa cấu hình VietQR</p>
           <p className="mt-2 text-xs leading-5 text-amber-700">
@@ -20,7 +20,7 @@ function DatPhongCuaToiThanhToanVietQr({ amount, bookingId, paymentMethod, payme
     <img
       src={qrUrl}
       alt={`VietQR thanh toán ${bookingId}`}
-      className="w-full max-w-xs rounded-2xl border border-slate-200 bg-white object-contain p-3 shadow-sm"
+      className="aspect-square w-full max-w-[220px] rounded-xl border border-slate-200 bg-white object-contain p-2 shadow-sm"
     />
   );
 }

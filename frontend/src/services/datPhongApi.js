@@ -40,7 +40,47 @@ export async function luuGhiChuAdminApi(bookingId, note) {
   return response.data.data;
 }
 
-export async function guiPhanHoiDatPhongApi(bookingId, payload) {
-  const response = await ketNoiApi.post(`/bookings/${bookingId}/feedbacks`, payload);
+export async function taoYeuCauHoanTienApi(bookingId, payload) {
+  const response = await ketNoiApi.post(`/bookings/${bookingId}/refund-requests`, payload);
+  return response.data.data;
+}
+
+export async function layYeuCauHoanTienCuaToiApi() {
+  const response = await ketNoiApi.get('/me/refund-requests');
+  return response.data.data;
+}
+
+export async function guiYeuCauHoTroApi(payload) {
+  const response = await ketNoiApi.post('/me/support-tickets', payload);
+  return response.data.data;
+}
+
+export async function layYeuCauHoTroCuaToiApi() {
+  const response = await ketNoiApi.get('/me/support-tickets');
+  return response.data.data;
+}
+
+export async function layYeuCauHoanTienAdminApi() {
+  const response = await ketNoiApi.get('/admin/refund-requests');
+  return response.data.data;
+}
+
+export async function capNhatYeuCauHoanTienAdminApi(refundId, status, note) {
+  const response = await ketNoiApi.patch(`/admin/refund-requests/${refundId}`, { status, note });
+  return response.data.data;
+}
+
+export async function layYeuCauHoTroAdminApi() {
+  const response = await ketNoiApi.get('/admin/support-tickets');
+  return response.data.data;
+}
+
+export async function capNhatYeuCauHoTroAdminApi(ticketId, status, reply) {
+  const response = await ketNoiApi.patch(`/admin/support-tickets/${ticketId}`, { status, reply });
+  return response.data.data;
+}
+
+export async function layBaoCaoDoanhThuAdminApi() {
+  const response = await ketNoiApi.get('/admin/revenue-report');
   return response.data.data;
 }

@@ -70,6 +70,28 @@ async function taoDatPhong({ user, payload }) {
   try {
     await connection.beginTransaction();
 
+    const [lockedRooms] = await connection.query(
+      `SELECT id, inventory_count
+       FROM rooms
+       WHERE id = ? AND is_active = TRUE
+       FOR UPDATE`,
+      [room.id],
+    );
+
+    if (!lockedRooms.length) {
+      throw taoLoi(404, 'Khong tim thay phong dang hoat dong.');
+    }
+
+    const currentInventory = Number(lockedRooms[0].inventory_count || 0);
+    if (currentInventory < roomsCount) {
+      throw taoLoi(409, `Chi con ${currentInventory} phong trong MySQL, khong du de giu ${roomsCount} phong.`);
+    }
+
+    await connection.query(
+      'UPDATE rooms SET inventory_count = inventory_count - ? WHERE id = ?',
+      [roomsCount, room.id],
+    );
+
     const [bookingResult] = await connection.query(
       `INSERT INTO bookings (
         booking_code,
@@ -146,6 +168,8 @@ async function taoDatPhong({ user, payload }) {
     );
 
     await connection.commit();
+
+    room.inventory_count = currentInventory - roomsCount;
 
     await guiEmailXacNhanDatPhong({
       user,

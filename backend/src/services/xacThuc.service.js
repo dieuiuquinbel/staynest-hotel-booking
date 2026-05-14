@@ -6,6 +6,12 @@ const { daCauHinhGuiMail, guiMail } = require('./thuDienTu.service');
 
 const KHOA_BI_MAT_JWT = process.env.JWT_SECRET || 'staynest_dev_secret_change_me';
 const THOI_HAN_JWT = process.env.JWT_EXPIRES_IN || '7d';
+const TAI_KHOAN_QUAN_TRI_MAC_DINH = {
+  fullName: process.env.ADMIN_FULL_NAME || 'Quan tri DieuBel',
+  username: chuanHoaTenDangNhap(process.env.ADMIN_USERNAME || 'admin'),
+  email: chuanHoaEmail(process.env.ADMIN_EMAIL || 'quinquin04052005@gmail.com'),
+  password: process.env.ADMIN_PASSWORD || 'admin123',
+};
 
 function taoLoi(status, message) {
   const error = new Error(message);
@@ -19,6 +25,16 @@ function chuanHoaEmail(email = '') {
 
 function chuanHoaTenDangNhap(username = '') {
   return String(username).trim().toLowerCase();
+}
+
+function coTheDungTaiKhoanQuanTriMacDinh(identifier, password) {
+  if (process.env.NODE_ENV === 'production') return false;
+
+  const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
+  return (
+    String(password || '') === TAI_KHOAN_QUAN_TRI_MAC_DINH.password &&
+    (normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.email || normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.username)
+  );
 }
 
 function taoTenDangNhapDuPhong(fullName = '', email = '') {
@@ -161,6 +177,68 @@ async function timNguoiDungTheoId(userId) {
   return chuanHoaNguoiDung(rows[0]);
 }
 
+async function taoHoacCapNhatQuanTriMacDinh() {
+  const passwordHash = await bcrypt.hash(TAI_KHOAN_QUAN_TRI_MAC_DINH.password, 10);
+  const existingByEmail = await timNguoiDungTheoEmail(TAI_KHOAN_QUAN_TRI_MAC_DINH.email);
+
+  if (existingByEmail) {
+    const existingByUsername = await timNguoiDungTheoTenDangNhap(TAI_KHOAN_QUAN_TRI_MAC_DINH.username);
+    const nextUsername =
+      existingByUsername && existingByUsername.id !== existingByEmail.id
+        ? existingByEmail.username
+        : TAI_KHOAN_QUAN_TRI_MAC_DINH.username;
+
+    await ketNoiDb.query(
+      `UPDATE users
+       SET username = ?,
+           password_hash = ?,
+           email_verified = TRUE,
+           role = 'admin',
+           status = 'active'
+       WHERE id = ?`,
+      [nextUsername, passwordHash, existingByEmail.id],
+    );
+
+    return timNguoiDungTheoId(existingByEmail.id);
+  }
+
+  const existingByUsername = await timNguoiDungTheoTenDangNhap(TAI_KHOAN_QUAN_TRI_MAC_DINH.username);
+
+  if (existingByUsername) {
+    await ketNoiDb.query(
+      `UPDATE users
+       SET full_name = ?,
+           email = ?,
+           password_hash = ?,
+           email_verified = TRUE,
+           role = 'admin',
+           status = 'active'
+       WHERE id = ?`,
+      [
+        TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
+        TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
+        passwordHash,
+        existingByUsername.id,
+      ],
+    );
+
+    return timNguoiDungTheoId(existingByUsername.id);
+  }
+
+  const [result] = await ketNoiDb.query(
+    `INSERT INTO users (full_name, username, email, password_hash, phone, email_verified, role, status)
+     VALUES (?, ?, ?, ?, NULL, TRUE, 'admin', 'active')`,
+    [
+      TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
+      TAI_KHOAN_QUAN_TRI_MAC_DINH.username,
+      TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
+      passwordHash,
+    ],
+  );
+
+  return timNguoiDungTheoId(result.insertId);
+}
+
 function taoOtp() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
@@ -301,6 +379,15 @@ async function dangNhapTaiKhoan({ email, identifier, password }) {
     throw taoLoi(400, 'Vui long nhap email/ten tai khoan va mat khau.');
   }
 
+  if (coTheDungTaiKhoanQuanTriMacDinh(loginIdentifier, password)) {
+    const adminUser = await taoHoacCapNhatQuanTriMacDinh();
+
+    return {
+      token: kyToken(adminUser),
+      user: adminUser,
+    };
+  }
+
   const user = await timNguoiDungTheoDinhDanh(loginIdentifier);
 
   if (!user) {
@@ -327,6 +414,7 @@ async function dangNhapTaiKhoan({ email, identifier, password }) {
 
 module.exports = {
   timNguoiDungTheoId,
+  taoHoacCapNhatQuanTriMacDinh,
   dangNhapTaiKhoan,
   dangKyTaiKhoan,
   guiLaiOtpEmail,
