@@ -83,8 +83,8 @@ function DangNhapDangKy() {
   const resendMutation = useMutation({ mutationFn: guiLaiOtpEmail });
 
   const resolveRedirectPath = (sessionUser) => {
-    if (!laQuanTriVien(sessionUser)) return redirectPath;
-    return redirectPath.startsWith('/admin') ? redirectPath : '/admin/overview';
+    if (laQuanTriVien(sessionUser)) return '/admin/overview';
+    return redirectPath;
   };
 
   if (token && user) return <Navigate to={resolveRedirectPath(user)} replace />;

@@ -54,7 +54,7 @@ export function chuyenNgayHienThiSangIso(value) {
     return date ? text : '';
   }
 
-  const displayMatch = text.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2}|\d{4})$/);
+  const displayMatch = text.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2}|\d{4})$/);
   if (!displayMatch) return '';
 
   const day = Number(displayMatch[1]);

@@ -28,7 +28,7 @@ function chuanHoaDichVu(services = []) {
   return services
     .map((service) => ({
       title: String(service.title || service.service_name || '').trim(),
-      price: Number(service.price || 0),
+      price: Number(service.price ?? service.priceValue ?? 0),
       quantity: Math.max(Number(service.quantity || 1), 1),
     }))
     .filter((service) => service.title);
@@ -171,19 +171,26 @@ async function taoDatPhong({ user, payload }) {
 
     room.inventory_count = currentInventory - roomsCount;
 
-    await guiEmailXacNhanDatPhong({
-      user,
-      room,
-      booking,
-      servicesText,
-      invoicePath: invoice.filePath,
-      invoiceCode: invoice.invoiceCode,
-    });
+    let emailWarning = null;
+    try {
+      await guiEmailXacNhanDatPhong({
+        user,
+        room,
+        booking,
+        servicesText,
+        invoicePath: invoice.filePath,
+        invoiceCode: invoice.invoiceCode,
+      });
+    } catch (emailError) {
+      emailWarning = 'Da tao don dat phong nhung khong gui duoc email xac nhan.';
+      console.warn(`Khong the gui email xac nhan ${booking.booking_code}: ${emailError.message}`);
+    }
 
     return {
       booking,
       room,
       invoice,
+      emailWarning,
     };
   } catch (error) {
     await connection.rollback();

@@ -1,4 +1,5 @@
 const ketNoiDb = require('../config/coSoDuLieu');
+const { damBaoCauTrucVanHanh } = require('./cauTrucVanHanh.service');
 
 function taoLoi(status, message) {
   const error = new Error(message);
@@ -39,6 +40,8 @@ function mapVoucher(row) {
 }
 
 async function layDanhSachVoucher(userId = null) {
+  await damBaoCauTrucVanHanh();
+
   const [rows] = await ketNoiDb.query(
     `SELECT v.*, uv.saved_at, uv.used_at, uv.status AS user_voucher_status
      FROM vouchers v
@@ -53,6 +56,8 @@ async function layDanhSachVoucher(userId = null) {
 }
 
 async function layVoucherCuaNguoiDung(userId) {
+  await damBaoCauTrucVanHanh();
+
   const [rows] = await ketNoiDb.query(
     `SELECT v.*, uv.saved_at, uv.used_at, uv.status AS user_voucher_status
      FROM user_vouchers uv
@@ -66,6 +71,8 @@ async function layVoucherCuaNguoiDung(userId) {
 }
 
 async function luuVoucherChoNguoiDung(userId, code) {
+  await damBaoCauTrucVanHanh();
+
   const [vouchers] = await ketNoiDb.query(
     `SELECT * FROM vouchers
      WHERE code = ? AND is_active = TRUE AND (end_at IS NULL OR end_at > NOW())

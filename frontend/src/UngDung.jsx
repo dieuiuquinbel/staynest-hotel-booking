@@ -7,6 +7,7 @@ import ChanTrang from './components/layout/ChanTrang';
 import DauTrang from './components/layout/DauTrang';
 import { layNguoiDungHienTai } from './services/xacThucApi';
 import useKhoXacThuc from './store/khoXacThuc';
+import { laQuanTriVien } from './utils/phanQuyen';
 const TrangChu = lazy(() => import('./pages/TrangChu'));
 const DanhSachPhong = lazy(() => import('./pages/DanhSachPhong'));
 const ChiTietPhong = lazy(() => import('./pages/ChiTietPhong'));
@@ -192,17 +193,20 @@ function UngDung() {
   }, [authQuery.data, authQuery.isError, authQuery.isSuccess, clearSession, markReady, setUser, token, user]);
 
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminUser = laQuanTriVien(user);
+  const isAdminExperience = isAdminRoute || isAdminUser;
+  const customerPage = (element) => (isAdminUser ? <Navigate to="/admin/overview" replace /> : element);
 
   return (
     <div className="flex min-h-screen flex-col text-slate-900">
       <CuonLenDauTrang />
-      {!isAdminRoute ? <DauTrang /> : null}
+      {!isAdminExperience ? <DauTrang /> : null}
       <Suspense fallback={<DangTaiTrang />}>
         <Routes>
-          <Route path="/" element={<TrangChu />} />
-          <Route path="/rooms" element={<DanhSachPhong />} />
-          <Route path="/rooms/:roomId" element={<ChiTietPhong />} />
-          <Route path="/history" element={<LichSu />} />
+          <Route path="/" element={customerPage(<TrangChu />)} />
+          <Route path="/rooms" element={customerPage(<DanhSachPhong />)} />
+          <Route path="/rooms/:roomId" element={customerPage(<ChiTietPhong />)} />
+          <Route path="/history" element={customerPage(<LichSu />)} />
           <Route path="/auth" element={<DangNhapDangKy />} />
           <Route element={<TuyenDuongBaoVe chanAdmin />}>
             <Route path="/booking" element={<DatPhong />} />
@@ -222,9 +226,9 @@ function UngDung() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
-      {!isAdminRoute ? <NutCuonTrangNoi /> : null}
-      {!isAdminRoute ? <NutLienHeNoi /> : null}
-      {!isAdminRoute ? <ChanTrang /> : null}
+      {!isAdminExperience ? <NutCuonTrangNoi /> : null}
+      {!isAdminExperience ? <NutLienHeNoi /> : null}
+      {!isAdminExperience ? <ChanTrang /> : null}
     </div>
   );
 }

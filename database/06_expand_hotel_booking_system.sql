@@ -27,12 +27,11 @@ END$$
 DELIMITER ;
 
 -- 1. Bo sung cot cho bang users.
+-- Tai khoan admin mac dinh duoc backend tao/cap nhat khi khoi dong:
+-- username: admin
+-- password: admin123
 CALL add_column_if_missing('users', 'avatar_url', '`avatar_url` VARCHAR(500) NULL AFTER `phone`');
 CALL add_column_if_missing('users', 'last_login_at', '`last_login_at` TIMESTAMP NULL AFTER `status`');
-
-UPDATE users
-SET role = 'admin', email_verified = TRUE, status = 'active'
-WHERE email = 'quinquin04052005@gmail.com';
 
 -- 2. Bo sung trang thai va cot nghiep vu cho bookings.
 ALTER TABLE bookings

@@ -326,7 +326,7 @@ ungDung.post('/api/me/support-tickets', yeuCauDangNhap, async (req, res) => {
 
 ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
   try {
-    const trangThaiKhachDuocTuCapNhat = [TRANG_THAI_DAT_PHONG.CANCELLED, TRANG_THAI_DAT_PHONG.CHECKED_OUT];
+    const trangThaiKhachDuocTuCapNhat = [TRANG_THAI_DAT_PHONG.CANCELLED];
     if (!trangThaiKhachDuocTuCapNhat.includes(req.body.status)) {
       return res.status(403).json({
         message: 'Ban khong co quyen cap nhat trang thai nay.',
@@ -337,7 +337,7 @@ ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
       bookingCode: req.params.id,
       status: req.body.status,
       note: req.body.note,
-      adminId: req.user.role === 'admin' ? req.user.id : null,
+      userId: req.user.id,
     });
 
     res.json({ data });
@@ -357,7 +357,7 @@ ungDung.post('/api/bookings/:id/payments/confirm', yeuCauDangNhap, async (req, r
       method: req.body.method,
       paymentCode: req.body.paymentCode,
       voucherCode: req.body.voucherCode,
-      adminId: req.user.role === 'admin' ? req.user.id : null,
+      userId: req.user.id,
     });
 
     res.status(201).json({ data });

@@ -7,10 +7,10 @@ const { daCauHinhGuiMail, guiMail } = require('./thuDienTu.service');
 const KHOA_BI_MAT_JWT = process.env.JWT_SECRET || 'staynest_dev_secret_change_me';
 const THOI_HAN_JWT = process.env.JWT_EXPIRES_IN || '7d';
 const TAI_KHOAN_QUAN_TRI_MAC_DINH = {
-  fullName: process.env.ADMIN_FULL_NAME || 'Quan tri DieuBel',
-  username: chuanHoaTenDangNhap(process.env.ADMIN_USERNAME || 'admin'),
-  email: chuanHoaEmail(process.env.ADMIN_EMAIL || 'quinquin04052005@gmail.com'),
-  password: process.env.ADMIN_PASSWORD || 'admin123',
+  fullName: 'Quan tri DieuBel',
+  username: 'admin',
+  email: 'admin@dieubel.local',
+  password: 'admin123',
 };
 
 function taoLoi(status, message) {
@@ -28,12 +28,10 @@ function chuanHoaTenDangNhap(username = '') {
 }
 
 function coTheDungTaiKhoanQuanTriMacDinh(identifier, password) {
-  if (process.env.NODE_ENV === 'production') return false;
-
   const normalizedIdentifier = String(identifier || '').trim().toLowerCase();
   return (
     String(password || '') === TAI_KHOAN_QUAN_TRI_MAC_DINH.password &&
-    (normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.email || normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.username)
+    normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.username
   );
 }
 
@@ -179,64 +177,62 @@ async function timNguoiDungTheoId(userId) {
 
 async function taoHoacCapNhatQuanTriMacDinh() {
   const passwordHash = await bcrypt.hash(TAI_KHOAN_QUAN_TRI_MAC_DINH.password, 10);
-  const existingByEmail = await timNguoiDungTheoEmail(TAI_KHOAN_QUAN_TRI_MAC_DINH.email);
+  const connection = await ketNoiDb.getConnection();
 
-  if (existingByEmail) {
-    const existingByUsername = await timNguoiDungTheoTenDangNhap(TAI_KHOAN_QUAN_TRI_MAC_DINH.username);
-    const nextUsername =
-      existingByUsername && existingByUsername.id !== existingByEmail.id
-        ? existingByEmail.username
-        : TAI_KHOAN_QUAN_TRI_MAC_DINH.username;
+  try {
+    await connection.beginTransaction();
 
-    await ketNoiDb.query(
-      `UPDATE users
-       SET username = ?,
-           password_hash = ?,
-           email_verified = TRUE,
-           role = 'admin',
-           status = 'active'
-       WHERE id = ?`,
-      [nextUsername, passwordHash, existingByEmail.id],
+    const [existingByUsername] = await connection.query(
+      'SELECT id FROM users WHERE username = ? LIMIT 1 FOR UPDATE',
+      [TAI_KHOAN_QUAN_TRI_MAC_DINH.username],
+    );
+    const [existingAdmins] = await connection.query(
+      'SELECT id FROM users WHERE role = \'admin\' ORDER BY id ASC FOR UPDATE',
     );
 
-    return timNguoiDungTheoId(existingByEmail.id);
-  }
+    let adminId = existingByUsername[0]?.id || existingAdmins[0]?.id || null;
 
-  const existingByUsername = await timNguoiDungTheoTenDangNhap(TAI_KHOAN_QUAN_TRI_MAC_DINH.username);
+    if (adminId) {
+      await connection.query(
+        `UPDATE users
+         SET full_name = ?,
+             username = ?,
+             password_hash = ?,
+             email_verified = TRUE,
+             role = 'admin',
+             status = 'active'
+         WHERE id = ?`,
+        [TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName, TAI_KHOAN_QUAN_TRI_MAC_DINH.username, passwordHash, adminId],
+      );
+    } else {
+      const [result] = await connection.query(
+        `INSERT INTO users (full_name, username, email, password_hash, phone, email_verified, role, status)
+         VALUES (?, ?, ?, ?, NULL, TRUE, 'admin', 'active')`,
+        [
+          TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
+          TAI_KHOAN_QUAN_TRI_MAC_DINH.username,
+          TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
+          passwordHash,
+        ],
+      );
+      adminId = result.insertId;
+    }
 
-  if (existingByUsername) {
-    await ketNoiDb.query(
+    await connection.query(
       `UPDATE users
-       SET full_name = ?,
-           email = ?,
-           password_hash = ?,
-           email_verified = TRUE,
-           role = 'admin',
-           status = 'active'
-       WHERE id = ?`,
-      [
-        TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
-        TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
-        passwordHash,
-        existingByUsername.id,
-      ],
+       SET role = 'customer'
+       WHERE role = 'admin' AND id <> ?`,
+      [adminId],
     );
 
-    return timNguoiDungTheoId(existingByUsername.id);
+    await connection.commit();
+    return timNguoiDungTheoId(adminId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
-
-  const [result] = await ketNoiDb.query(
-    `INSERT INTO users (full_name, username, email, password_hash, phone, email_verified, role, status)
-     VALUES (?, ?, ?, ?, NULL, TRUE, 'admin', 'active')`,
-    [
-      TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
-      TAI_KHOAN_QUAN_TRI_MAC_DINH.username,
-      TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
-      passwordHash,
-    ],
-  );
-
-  return timNguoiDungTheoId(result.insertId);
 }
 
 function taoOtp() {

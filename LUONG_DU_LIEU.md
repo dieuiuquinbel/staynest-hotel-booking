@@ -1,321 +1,151 @@
 # Luồng Dữ Liệu
 
-Tài liệu này mô tả cách dữ liệu đi qua frontend, backend và database.
+Tài liệu này mô tả ngắn các luồng nghiệp vụ chính.
 
-## 1. Sơ đồ tổng quan
+## 1. Tổng quan
 
 ```text
-Người dùng
-  -> React page/component
-  -> frontend service dùng Axios
-  -> Express route trong backend/src/ungDung.js
-  -> backend service xử lý nghiệp vụ
+React page
+  -> frontend service Axios
+  -> Express route
+  -> backend service
   -> MySQL
-  -> trả JSON về frontend
+  -> JSON trả về frontend
 ```
 
-Các phần phụ:
+## 2. Đăng nhập
 
 ```text
-Backend service
-  -> Nodemailer SMTP để gửi OTP/email
-  -> storage/invoices để lưu hóa đơn HTML
-  -> storage/lich-su-ck để lưu lịch sử chuyển khoản demo
-```
-
-## 2. Luồng đăng ký và xác minh OTP
-
-```text
-Trang đăng ký
-  -> POST /api/auth/register
-  -> dangKyTaiKhoan()
-  -> kiểm tra email/username/mật khẩu
-  -> bcrypt hash mật khẩu
-  -> INSERT users với email_verified = false
-  -> tạo OTP 6 số
-  -> hash OTP bằng SHA-256
-  -> INSERT email_otps
-  -> gửi email qua SMTP
-  -> frontend hiển thị form nhập OTP
-```
-
-Khi nhập OTP:
-
-```text
-Form OTP
-  -> POST /api/auth/verify-email
-  -> xacMinhOtpEmail()
-  -> tìm OTP chưa dùng và chưa hết hạn
-  -> UPDATE email_otps.used_at
-  -> UPDATE users.email_verified = true
-  -> ký JWT
-  -> frontend lưu token và user vào Zustand
-```
-
-Nếu chưa cấu hình SMTP ở môi trường dev:
-
-```text
-Backend bỏ qua gửi email
-  -> trả devOtp
-  -> dùng devOtp để test local
-```
-
-## 3. Luồng đăng nhập
-
-```text
-Form đăng nhập
-  -> POST /api/auth/login
+POST /api/auth/login
   -> dangNhapTaiKhoan()
-  -> tìm user bằng email hoặc username
-  -> bcrypt.compare mật khẩu
-  -> kiểm tra status = active
+  -> kiểm tra user, mật khẩu, status
   -> ký JWT
-  -> frontend lưu session vào Zustand persist
+  -> frontend lưu token bằng Zustand
 ```
 
-Khi gọi API cần đăng nhập:
+Sau đăng nhập:
+
+- `role = admin`: luôn về `/admin/overview`, không xem giao diện khách.
+- `role = customer`: về trang khách hàng hoặc redirect đang có.
+
+Backend luôn seed một admin duy nhất khi khởi động:
+
+- Username: `admin`
+- Password: `admin123`
+- Các tài khoản admin khác sẽ bị hạ xuống `customer`
+
+## 3. Đặt phòng
 
 ```text
-ketNoiApi interceptor
-  -> đọc token từ khoXacThuc
-  -> gắn Authorization: Bearer <token>
-  -> backend yeuCauDangNhap()
-  -> jwt.verify()
-  -> tìm user trong DB
-  -> gắn req.user
-```
-
-## 4. Luồng xem và tìm phòng
-
-```text
-Trang chủ hoặc danh sách phòng
-  -> layDanhSachPhong(query)
-  -> GET /api/rooms
-  -> layDanhSachPhong()
-  -> tạo bộ lọc từ query
-  -> SELECT rooms
-  -> chuẩn hóa JSON amenities/gallery
-  -> trả danh sách phòng cho frontend
-```
-
-Chi tiết phòng:
-
-```text
-Trang chi tiết phòng
-  -> layPhongTheoId(roomId)
-  -> GET /api/rooms/:id
-  -> backend đọc rooms và room_images nếu có
-  -> frontend hiển thị thông tin phòng
-```
-
-## 5. Luồng đặt phòng
-
-```text
-Trang đặt phòng
-  -> người dùng chọn phòng, ngày, số khách, số phòng, dịch vụ
+DatPhong.jsx
   -> POST /api/bookings
-  -> yeuCauDangNhap()
   -> taoDatPhong()
-```
-
-Trong `taoDatPhong()`:
-
-```text
-Kiểm tra user đã xác minh email
-  -> lấy thông tin phòng
-  -> tính số đêm
-  -> chuẩn hóa dịch vụ đã chọn
-  -> tính tiền phòng
-  -> tính tiền dịch vụ
-  -> tính tổng tiền
-  -> tạo booking_code
-  -> bắt đầu transaction MySQL
+  -> SELECT rooms FOR UPDATE
+  -> kiểm tra inventory_count
+  -> UPDATE rooms SET inventory_count = inventory_count - rooms_count
   -> INSERT bookings
-  -> tạo file hóa đơn HTML
-  -> INSERT invoices
+  -> tạo hóa đơn
   -> commit transaction
-  -> gửi email xác nhận đặt phòng kèm hóa đơn
-  -> trả booking, room, invoice
 ```
 
-Trạng thái ban đầu:
+Booking mới:
 
 - `booking_status = holding`
 - `payment_status = unpaid`
-- `deposit_amount = 10% tổng tiền`
-- `remaining_amount = tổng tiền`
-- `payment_deadline = 15 phút sau khi đặt`
+- `deposit_amount = 10%`
+- `remaining_amount = total_price`
 
-## 6. Luồng xem đơn của khách
-
-```text
-Trang Đặt phòng của tôi
-  -> GET /api/bookings/my
-  -> layDatPhongCuaNguoiDung(userId)
-  -> SELECT bookings + users + rooms
-  -> gom thêm status_logs, payment_transactions, feedbacks
-  -> mapBooking()
-  -> frontend render danh sách và tiến trình
-```
-
-Frontend vẫn có một số helper localStorage trong `utils/lichSuDatPhong.js` để hỗ trợ dữ liệu demo. Dữ liệu chính của đơn đặt phòng hiện nằm trong MySQL.
-
-## 7. Luồng xác nhận thanh toán
-
-Khách hoặc admin xác nhận thanh toán:
+## 4. Thanh toán và voucher
 
 ```text
-POST /api/bookings/:id/payments/confirm
-hoặc
-POST /api/admin/bookings/:id/payments/confirm
+DatPhongCuaToi.jsx
+  -> chọn voucher đủ điều kiện
+  -> POST /api/bookings/:id/payments/confirm
   -> xacNhanThanhToan()
-```
-
-Trong `xacNhanThanhToan()`:
-
-```text
-Tìm booking
-  -> nếu có voucher thì kiểm tra điều kiện
-  -> tính discount_amount
-  -> tính total_price mới
-  -> xác định thanh toán cọc hay toàn bộ
-  -> tạo payment_code nếu chưa có
-  -> tạo checkin_qr_token nếu chưa có
-  -> UPDATE bookings thành confirmed
-  -> UPDATE user_vouchers nếu voucher được dùng
+  -> tính giảm giá
+  -> cập nhật booking
   -> INSERT payment_transactions
   -> INSERT booking_status_logs
-  -> trả lại danh sách booking mới nhất
 ```
 
-Trạng thái thanh toán:
+Voucher không đủ điều kiện sẽ bị vô hiệu hóa ở UI.
 
-- `deposit_paid`: đã thanh toán cọc.
-- `paid`: đã thanh toán đủ.
-- `unpaid`: chưa thanh toán.
+## 5. Hủy và hoàn tiền
 
-## 8. Luồng đổi trạng thái đơn
-
-Admin có thể đổi nhiều trạng thái. Khách chỉ được tự cập nhật một số trạng thái được cho phép.
+Đơn chưa thanh toán:
 
 ```text
-PATCH /api/admin/bookings/:id/status
-hoặc
 PATCH /api/bookings/:id/status
-  -> capNhatTrangThaiDatPhong()
-  -> UPDATE bookings
-  -> INSERT booking_status_logs
+  -> cancelled
+  -> trả rooms_count về rooms.inventory_count
 ```
 
-Các trạng thái chính:
-
-- `holding`: đang giữ chỗ.
-- `confirmed`: đã xác nhận.
-- `checked_in`: đã nhận phòng.
-- `checked_out`: đã trả phòng.
-- `cancelled`: đã hủy.
-- `no_show`: khách không đến.
-
-## 9. Luồng hóa đơn
-
-Khi tạo booking:
+Đơn đã thanh toán:
 
 ```text
-taoDatPhong()
-  -> taoFileHoaDon()
-  -> tạo HTML trong backend/storage/invoices
-  -> INSERT invoices
+POST /api/bookings/:id/refund-requests
+  -> tạo refund_requests
+  -> phí hủy 20%
+  -> booking_status = cancel_requested
 ```
 
-Admin xem và tải hóa đơn:
+Admin duyệt:
 
 ```text
-GET /api/admin/invoices
-  -> layDanhSachHoaDon()
-
-GET /api/admin/invoices/:id/download
-  -> layHoaDonTheoId()
-  -> res.download(file_path)
+PATCH /api/admin/refund-requests/:id
+  -> refund approved/completed
+  -> booking cancelled
+  -> payment refunded
+  -> trả phòng về inventory_count
 ```
 
-## 10. Luồng phản hồi khách hàng
+## 6. Khiếu nại/hỗ trợ
 
 ```text
-Khách gửi phản hồi từ đơn đặt phòng
-  -> POST /api/bookings/:id/feedbacks
-  -> guiPhanHoiKhachHang()
-  -> kiểm tra booking thuộc user hiện tại
-  -> INSERT customer_feedbacks
-  -> trả lại danh sách booking của user
+TaiKhoan.jsx
+  -> POST /api/me/support-tickets
+  -> INSERT support_tickets
+
+AdminOperations.jsx
+  -> GET /api/admin/support-tickets
+  -> PATCH /api/admin/support-tickets/:id
 ```
 
-## 11. Luồng quản trị khách hàng
+Khiếu nại chung nằm ở MePage, admin xử lý trong khu vận hành.
+
+## 7. Quản lý khách hàng
 
 ```text
-Admin dashboard
-  -> GET /api/admin/overview
-  -> layTongQuanQuanTri()
-  -> tính doanh thu, đơn, khách hàng, phòng
+AdminCustomers.jsx
+  -> GET /api/admin/customers
+  -> PATCH /api/admin/customers/:id
+  -> DELETE /api/admin/customers/:id
 ```
 
-Quản lý khách hàng:
+Logic xóa:
 
-```text
-GET /api/admin/customers
-  -> layDanhSachKhachHang()
+- Chưa có booking: xóa thật khỏi `users`.
+- Đã có booking: khóa `status = inactive` để giữ lịch sử và doanh thu.
 
-GET /api/admin/customers/:id
-  -> layChiTietKhachHang()
+## 8. Bảng chính
 
-PATCH /api/admin/customers/:id
-  -> capNhatKhachHang()
-
-PATCH /api/admin/customers/:id/status
-  -> capNhatTrangThaiKhachHang()
-
-DELETE /api/admin/customers/:id
-  -> xoaKhachHang()
-```
-
-## 12. Bảng dữ liệu chính
-
-| Bảng | Chứa dữ liệu |
+| Bảng | Vai trò |
 | --- | --- |
-| `users` | Tài khoản khách hàng và admin |
-| `email_otps` | OTP xác minh email |
-| `rooms` | Thông tin phòng/khách sạn |
-| `room_images` | Ảnh phụ của phòng |
+| `users` | Tài khoản khách/admin |
+| `rooms` | Phòng và `inventory_count` |
 | `bookings` | Đơn đặt phòng |
-| `invoices` | Hóa đơn của booking |
-| `services` | Dịch vụ cộng thêm |
-| `booking_services` | Dịch vụ gắn với booking |
+| `invoices` | Hóa đơn |
 | `vouchers` | Mã ưu đãi |
-| `user_vouchers` | Voucher đã lưu hoặc đã dùng của user |
+| `user_vouchers` | Voucher của user |
 | `payment_transactions` | Giao dịch thanh toán |
-| `booking_status_logs` | Lịch sử đổi trạng thái đơn |
-| `customer_feedbacks` | Phản hồi/khiếu nại của khách |
-| `room_reviews` | Đánh giá phòng |
-| `favorite_rooms` | Phòng yêu thích |
-| `admin_audit_logs` | Lịch sử thao tác admin |
+| `booking_status_logs` | Log trạng thái |
+| `refund_requests` | Hủy/hoàn tiền |
+| `support_tickets` | Khiếu nại/hỗ trợ |
+| `admin_audit_logs` | Log thao tác admin |
 
-## 13. Nguyên tắc đọc code
+## 9. Kiểm tra lỗi nhanh
 
-Khi cần hiểu một chức năng, đọc theo thứ tự:
-
-```text
-frontend/src/pages
-  -> frontend/src/services
-  -> backend/src/ungDung.js
-  -> backend/src/services
-  -> database/*.sql
-```
-
-Ví dụ muốn hiểu đặt phòng:
-
-```text
-frontend/src/pages/DatPhong.jsx
-  -> frontend/src/services/datPhongApi.js
-  -> POST /api/bookings trong backend/src/ungDung.js
-  -> backend/src/services/datPhong.service.js
-  -> bảng bookings và invoices
-```
+- Không tải được admin booking: kiểm tra `refund_requests`, `support_tickets`, backend và MySQL.
+- Admin vẫn thấy giao diện khách: kiểm tra `UngDung.jsx` và `DangNhapDangKy.jsx`.
+- Số phòng không giảm: kiểm tra `datPhong.service.js` và `rooms.inventory_count`.
+- Xóa khách không mất: nếu khách đã có booking thì đó là khóa mềm, không phải lỗi.

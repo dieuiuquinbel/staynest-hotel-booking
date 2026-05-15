@@ -1,4 +1,5 @@
 const ketNoiDb = require('../config/coSoDuLieu');
+const { damBaoCauTrucVanHanh } = require('./cauTrucVanHanh.service');
 
 const TRANG_THAI_DAT_PHONG = {
   HOLDING: 'holding',
@@ -70,96 +71,6 @@ function tinhChinhSachHoanTien(paidAmount) {
     cancelFeeAmount,
     refundAmount: Math.max(0, safePaidAmount - cancelFeeAmount),
   };
-}
-
-let khoiTaoCauTrucVanHanhPromise = null;
-
-async function damBaoCauTrucVanHanh() {
-  if (!khoiTaoCauTrucVanHanhPromise) {
-    khoiTaoCauTrucVanHanhPromise = (async () => {
-      await ketNoiDb.query(
-        `ALTER TABLE bookings
-         MODIFY booking_status ENUM(
-           'pending',
-           'holding',
-           'confirmed',
-           'cancel_requested',
-           'checked_in',
-           'checked_out',
-           'cancelled',
-           'expired',
-           'completed',
-           'no_show'
-         ) NOT NULL DEFAULT 'holding'`,
-      );
-
-      await ketNoiDb.query(
-        `ALTER TABLE bookings
-         MODIFY payment_status ENUM(
-           'unpaid',
-           'deposit_paid',
-           'paid',
-           'pay_at_counter',
-           'refunded'
-         ) NOT NULL DEFAULT 'unpaid'`,
-      );
-
-      await ketNoiDb.query(
-        `CREATE TABLE IF NOT EXISTS refund_requests (
-          id BIGINT PRIMARY KEY AUTO_INCREMENT,
-          refund_code VARCHAR(50) NOT NULL UNIQUE,
-          booking_id BIGINT NOT NULL,
-          user_id BIGINT NOT NULL,
-          paid_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-          cancel_fee_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-          refund_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
-          bank_name VARCHAR(120) NOT NULL,
-          bank_account_name VARCHAR(160) NOT NULL,
-          bank_account_number VARCHAR(80) NOT NULL,
-          phone VARCHAR(30) NOT NULL,
-          email VARCHAR(160) NOT NULL,
-          reason TEXT NULL,
-          status ENUM('pending','approved','rejected','completed') NOT NULL DEFAULT 'pending',
-          admin_note TEXT NULL,
-          processed_by BIGINT NULL,
-          requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          approved_at TIMESTAMP NULL,
-          completed_at TIMESTAMP NULL,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          CONSTRAINT fk_refund_requests_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
-          CONSTRAINT fk_refund_requests_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          CONSTRAINT fk_refund_requests_admin FOREIGN KEY (processed_by) REFERENCES users(id) ON DELETE SET NULL,
-          UNIQUE KEY uq_refund_requests_booking (booking_id)
-        )`,
-      );
-
-      await ketNoiDb.query(
-        `CREATE TABLE IF NOT EXISTS support_tickets (
-          id BIGINT PRIMARY KEY AUTO_INCREMENT,
-          ticket_code VARCHAR(50) NOT NULL UNIQUE,
-          user_id BIGINT NOT NULL,
-          booking_id BIGINT NULL,
-          category ENUM('booking','payment','refund','service','account','other') NOT NULL DEFAULT 'other',
-          title VARCHAR(160) NOT NULL,
-          content TEXT NOT NULL,
-          status ENUM('new','processing','resolved','closed') NOT NULL DEFAULT 'new',
-          admin_reply TEXT NULL,
-          replied_by BIGINT NULL,
-          replied_at TIMESTAMP NULL,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-          CONSTRAINT fk_support_tickets_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-          CONSTRAINT fk_support_tickets_booking FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
-          CONSTRAINT fk_support_tickets_admin FOREIGN KEY (replied_by) REFERENCES users(id) ON DELETE SET NULL
-        )`,
-      );
-    })().catch((error) => {
-      khoiTaoCauTrucVanHanhPromise = null;
-      throw error;
-    });
-  }
-
-  return khoiTaoCauTrucVanHanhPromise;
 }
 
 async function traPhongVeKhoNeuCan(connection, booking, nextStatus) {
@@ -358,24 +269,28 @@ async function layTatCaDatPhong() {
   return rows.map(mapBooking);
 }
 
-async function timDatPhongTheoMa(connection, bookingCode) {
+async function timDatPhongTheoMa(connection, bookingCode, userId = null) {
+  const values = [bookingCode, Number(bookingCode) || 0];
+  const ownerClause = userId ? ' AND user_id = ?' : '';
+  if (userId) values.push(userId);
+
   const [rows] = await connection.query(
-    'SELECT * FROM bookings WHERE booking_code = ? OR id = ? LIMIT 1',
-    [bookingCode, Number(bookingCode) || 0],
+    `SELECT * FROM bookings WHERE (booking_code = ? OR id = ?)${ownerClause} LIMIT 1`,
+    values,
   );
 
-  if (!rows.length) throw taoLoi(404, 'Khong tim thay don dat phong.');
+  if (!rows.length) throw taoLoi(404, userId ? 'Khong tim thay don dat phong cua ban.' : 'Khong tim thay don dat phong.');
   return rows[0];
 }
 
-async function capNhatTrangThaiDatPhong({ bookingCode, status, adminId = null, note = null }) {
+async function capNhatTrangThaiDatPhong({ bookingCode, status, adminId = null, userId = null, note = null }) {
   await damBaoCauTrucVanHanh();
 
   const connection = await ketNoiDb.getConnection();
 
   try {
     await connection.beginTransaction();
-    const booking = await timDatPhongTheoMa(connection, bookingCode);
+    const booking = await timDatPhongTheoMa(connection, bookingCode, userId);
 
     if (status === TRANG_THAI_DAT_PHONG.CANCELLED && booking.payment_status !== TRANG_THAI_THANH_TOAN.UNPAID && booking.booking_status !== TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED) {
       throw taoLoi(400, 'Don da thanh toan can tao yeu cau huy/hoan tien de admin duyet, khong huy truc tiep.');
@@ -399,10 +314,10 @@ async function capNhatTrangThaiDatPhong({ bookingCode, status, adminId = null, n
     await connection.query(
       `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
        VALUES (?, ?, ?, ?, ?)`,
-      [booking.id, booking.booking_status, status, note, adminId],
+      [booking.id, booking.booking_status, status, note, adminId || userId],
     );
     await connection.commit();
-    return layTatCaDatPhong();
+    return userId ? layDatPhongCuaNguoiDung(userId) : layTatCaDatPhong();
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -809,14 +724,14 @@ async function layBaoCaoDoanhThu() {
   };
 }
 
-async function xacNhanThanhToan({ bookingCode, method, adminId = null, paymentCode = null, voucherCode = null }) {
+async function xacNhanThanhToan({ bookingCode, method, adminId = null, userId = null, paymentCode = null, voucherCode = null }) {
   await damBaoCauTrucVanHanh();
 
   const connection = await ketNoiDb.getConnection();
 
   try {
     await connection.beginTransaction();
-    const booking = await timDatPhongTheoMa(connection, bookingCode);
+    const booking = await timDatPhongTheoMa(connection, bookingCode, userId);
     const isDeposit = method === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT;
     let totalPrice = Number(booking.total_price || 0);
     let discountAmount = Number(booking.discount_amount || 0);
@@ -899,11 +814,11 @@ async function xacNhanThanhToan({ bookingCode, method, adminId = null, paymentCo
     await connection.query(
       `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
        VALUES (?, ?, 'confirmed', ?, ?)`,
-      [booking.id, booking.booking_status, `Xac nhan thanh toan ${paymentStatus}`, adminId],
+      [booking.id, booking.booking_status, `Xac nhan thanh toan ${paymentStatus}`, adminId || userId],
     );
 
     await connection.commit();
-    return layTatCaDatPhong();
+    return userId ? layDatPhongCuaNguoiDung(userId) : layTatCaDatPhong();
   } catch (error) {
     await connection.rollback();
     throw error;

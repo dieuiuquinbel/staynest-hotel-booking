@@ -6,7 +6,6 @@ import DatPhongCuaToiThanhToanVietQr from './DatPhongCuaToi-ThanhToanVietQr';
 import DatPhongCuaToiTienTrinh from './DatPhongCuaToi-TienTrinh';
 import {
   capNhatTrangThaiDatPhongApi,
-  taoYeuCauHoanTienApi,
   xacNhanThanhToanDatPhongApi,
 } from '../services/datPhongApi';
 import useKhoXacThuc from '../store/khoXacThuc';
@@ -20,7 +19,6 @@ import {
   NHAN_TRANG_THAI_THANH_TOAN,
   taoHtmlHoaDon,
   tinhGiamGiaVoucher,
-  tinhChinhSachHoanTien,
 } from '../utils/lichSuDatPhong';
 import { dinhDangNgay, dinhDangTien } from '../utils/dinhDang';
 import { kiemTraDieuKienVoucher, moTaDieuKienVoucher } from '../utils/diemThuong';
@@ -114,8 +112,6 @@ function DatPhongCuaToi() {
   const [voucherInputByBooking, setVoucherInputByBooking] = useState({});
   const [voucherAutoOffByBooking, setVoucherAutoOffByBooking] = useState({});
   const [publicVouchers, setPublicVouchers] = useState([]);
-  const [refundOpenByBooking, setRefundOpenByBooking] = useState({});
-  const [refundByBooking, setRefundByBooking] = useState({});
   const { bookings, error: bookingsError, isLoading: bookingsLoading, refresh, setRemoteBookings } = useDatPhongCuaToi(user);
   const [redeemedRewards] = useKhoVoucherCuaToi(user);
   const availableRewards = redeemedRewards.filter((reward) => !reward.used);
@@ -268,38 +264,6 @@ function DatPhongCuaToi() {
     moHtmlTrongTabMoi(taoHtmlHoaDon(booking));
   };
 
-  const submitRefundRequest = async (booking) => {
-    const draft = refundByBooking[booking.id] || {};
-    const refundPayload = {
-      bankName: draft.bankName,
-      bankAccountName: draft.bankAccountName,
-      bankAccountNumber: draft.bankAccountNumber,
-      phone: draft.phone,
-      email: draft.email || user?.email,
-      reason: draft.reason,
-    };
-    const requiredFields = ['bankName', 'bankAccountName', 'bankAccountNumber', 'phone', 'email'];
-    const missingField = requiredFields.some((field) => !String(refundPayload[field] || '').trim());
-
-    if (missingField) {
-      setPaymentThongBao('Vui lòng nhập đủ thông tin nhận hoàn tiền trước khi gửi yêu cầu.');
-      return;
-    }
-
-    try {
-      await taoYeuCauHoanTienApi(booking.id, refundPayload);
-    } catch (error) {
-      setPaymentThongBao(error?.response?.data?.message || 'Không tạo được yêu cầu hủy/hoàn tiền trên MySQL.');
-      return;
-    }
-
-    setRefundOpenByBooking((current) => ({ ...current, [booking.id]: false }));
-    setRefundByBooking((current) => ({ ...current, [booking.id]: {} }));
-    await refresh();
-    setPaymentThongBao(`Đã gửi yêu cầu hủy/hoàn tiền cho đơn ${booking.id}. Admin sẽ duyệt trước khi phòng được mở lại.`);
-  };
-
-
   return (
     <main className="history-page-bg flex-1">
       <section className="mx-auto max-w-[1380px] px-4 py-10 sm:px-6">
@@ -361,12 +325,6 @@ function DatPhongCuaToi() {
               const canPay = booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID && booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING;
               const hasCheckInQr = Boolean(booking.qrToken);
               const canCustomerConfirmCheckout = booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && booking.paymentStatus !== TRANG_THAI_THANH_TOAN.UNPAID;
-              const canRequestRefund =
-                booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED &&
-                [TRANG_THAI_THANH_TOAN.DEPOSIT_PAID, TRANG_THAI_THANH_TOAN.PAID].includes(booking.paymentStatus) &&
-                !booking.refundRequest;
-              const refundDraft = refundByBooking[booking.id] || {};
-              const { cancelFeeAmount, refundAmount } = tinhChinhSachHoanTien(booking.paidAmount);
               const appliedVoucherCode = voucherByBooking[booking.id] || '';
               const voucherInputCode = voucherInputByBooking[booking.id] ?? appliedVoucherCode;
               const selectedVoucher = findVoucherByCode(appliedVoucherCode);
@@ -713,19 +671,6 @@ function DatPhongCuaToi() {
                       </button>
                       <button
                         type="button"
-                        disabled={!canRequestRefund}
-                        onClick={() =>
-                          setRefundOpenByBooking((current) => ({
-                            ...current,
-                            [booking.id]: !current[booking.id],
-                          }))
-                        }
-                        className="min-h-12 w-full min-w-0 overflow-hidden rounded-xl border border-rose-200 bg-white px-4 py-3 text-center text-sm font-bold leading-5 text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-                      >
-                        {booking.refundRequest ? 'Đang chờ hoàn tiền' : 'Yêu cầu hủy / hoàn tiền'}
-                      </button>
-                      <button
-                        type="button"
                         disabled={!canCustomerConfirmCheckout}
                         onClick={async () => {
                           try {
@@ -743,93 +688,11 @@ function DatPhongCuaToi() {
                       </button>
                       <Link
                         to={`/me?supportBooking=${booking.id}`}
-                        className="min-h-12 w-full min-w-0 overflow-hidden rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold leading-5 text-slate-700 transition hover:border-brand-500 hover:text-brand-700"
+                        className="flex min-h-12 w-full min-w-0 items-center justify-center overflow-hidden rounded-xl border border-slate-300 bg-white px-4 py-3 text-center text-sm font-bold leading-5 text-slate-700 transition hover:border-brand-500 hover:text-brand-700"
                       >
                         Hỗ trợ / khiếu nại
                       </Link>
                     </div>
-
-                    {booking.refundRequest ? (
-                      <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3 text-sm">
-                        <p className="font-black text-slate-950">Yêu cầu hoàn tiền: {booking.refundRequest.code}</p>
-                        <p className="mt-1 font-bold text-amber-700">
-                          Trạng thái: {booking.refundRequest.status} · Dự kiến hoàn {dinhDangTien(booking.refundRequest.refundAmount)}
-                        </p>
-                      </div>
-                    ) : null}
-
-                    {refundOpenByBooking[booking.id] ? (
-                      <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <p className="text-sm font-black text-slate-950">Yêu cầu hủy / hoàn tiền</p>
-                            <p className="mt-1 text-xs font-bold leading-6 text-slate-600">
-                              Phí hủy 20%: {dinhDangTien(cancelFeeAmount)}. Số tiền hoàn dự kiến: {dinhDangTien(refundAmount)}.
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-rose-700">Admin duyệt</span>
-                        </div>
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          {[
-                            ['bankAccountName', 'Tên chủ tài khoản'],
-                            ['bankName', 'Ngân hàng'],
-                            ['bankAccountNumber', 'Số tài khoản'],
-                            ['phone', 'Số điện thoại'],
-                            ['email', 'Email nhận thông báo'],
-                          ].map(([field, label]) => (
-                            <label key={field} className="grid gap-1 text-xs font-bold text-slate-600">
-                              {label}
-                              <input
-                                value={refundDraft[field] || (field === 'email' ? user?.email || '' : '')}
-                                onChange={(event) =>
-                                  setRefundByBooking((current) => ({
-                                    ...current,
-                                    [booking.id]: {
-                                      ...(current[booking.id] || {}),
-                                      [field]: event.target.value,
-                                    },
-                                  }))
-                                }
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 outline-none focus:border-brand-500"
-                              />
-                            </label>
-                          ))}
-                          <label className="grid gap-1 text-xs font-bold text-slate-600 sm:col-span-2">
-                            Lý do hủy
-                            <textarea
-                              rows={3}
-                              value={refundDraft.reason || ''}
-                              onChange={(event) =>
-                                setRefundByBooking((current) => ({
-                                  ...current,
-                                  [booking.id]: {
-                                    ...(current[booking.id] || {}),
-                                    reason: event.target.value,
-                                  },
-                                }))
-                              }
-                              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-950 outline-none focus:border-brand-500"
-                            />
-                          </label>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => submitRefundRequest(booking)}
-                            className="rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-rose-700"
-                          >
-                            Gửi yêu cầu
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setRefundOpenByBooking((current) => ({ ...current, [booking.id]: false }))}
-                            className="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700"
-                          >
-                            Đóng
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
 
                     {booking.latestCustomerFeedback ? (
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm">

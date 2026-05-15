@@ -1,4 +1,5 @@
 const ketNoiDb = require('../config/coSoDuLieu');
+const { damBaoCauTrucVanHanh } = require('./cauTrucVanHanh.service');
 
 function taoLoi(status, message) {
   const error = new Error(message);
@@ -33,6 +34,8 @@ function mapKhachHang(row) {
 }
 
 async function layTongQuanQuanTri() {
+  await damBaoCauTrucVanHanh();
+
   const [[bookingStats]] = await ketNoiDb.query(
     `SELECT
        COUNT(*) AS total_bookings,
@@ -89,6 +92,8 @@ async function layTongQuanQuanTri() {
 }
 
 async function layDanhSachKhachHang({ search = '', status = '', role = 'customer' } = {}) {
+  await damBaoCauTrucVanHanh();
+
   const conditions = [];
   const values = [];
 
@@ -137,6 +142,8 @@ async function layDanhSachKhachHang({ search = '', status = '', role = 'customer
 }
 
 async function layChiTietKhachHang(userId) {
+  await damBaoCauTrucVanHanh();
+
   const [customers] = await ketNoiDb.query(
     `SELECT
        u.id,
@@ -190,6 +197,8 @@ async function layChiTietKhachHang(userId) {
 }
 
 async function capNhatKhachHang({ userId, payload, adminId }) {
+  await damBaoCauTrucVanHanh();
+
   const fullName = String(payload.full_name || payload.fullName || '').trim();
   const phone = String(payload.phone || '').trim() || null;
   const username = chuanHoaTenDangNhap(payload.username);
@@ -234,6 +243,8 @@ async function capNhatKhachHang({ userId, payload, adminId }) {
 }
 
 async function capNhatTrangThaiKhachHang({ userId, status, adminId }) {
+  await damBaoCauTrucVanHanh();
+
   const nextStatus = status === 'inactive' ? 'inactive' : 'active';
   const [result] = await ketNoiDb.query('UPDATE users SET status = ? WHERE id = ? AND role <> \'admin\'', [nextStatus, userId]);
 
@@ -251,6 +262,8 @@ async function capNhatTrangThaiKhachHang({ userId, status, adminId }) {
 }
 
 async function xoaKhachHang({ userId, adminId }) {
+  await damBaoCauTrucVanHanh();
+
   const [[bookingStats]] = await ketNoiDb.query('SELECT COUNT(*) AS total FROM bookings WHERE user_id = ?', [userId]);
 
   if (Number(bookingStats.total || 0) > 0) {
