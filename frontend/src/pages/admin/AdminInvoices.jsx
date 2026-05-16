@@ -30,16 +30,16 @@ function AdminInvoices() {
   return (
     <div className="grid gap-6">
       <section className="rounded-xl border border-slate-200 bg-white p-6">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">HÃ³a Ä‘Æ¡n</p>
-        <h2 className="mt-2 text-2xl font-black text-slate-950">Tra cá»©u hÃ³a Ä‘Æ¡n</h2>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Hóa đơn</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-950">Tra cứu hóa đơn</h2>
         <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">
-          Danh sÃ¡ch hÃ³a Ä‘Æ¡n sinh tá»« cÃ¡c Ä‘Æ¡n Ä‘áº·t phÃ²ng. Admin cÃ³ thá»ƒ táº£i file HTML hÃ³a Ä‘Æ¡n Ä‘á»ƒ kiá»ƒm tra hoáº·c gá»­i láº¡i cho khÃ¡ch.
+          Danh sách hóa đơn sinh từ các đơn đặt phòng. Admin có thể tải file HTML hóa đơn để kiểm tra hoặc gửi lại cho khách.
         </p>
       </section>
 
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-        {isLoading ? <div className="p-5 text-sm font-bold text-slate-500">Äang táº£i hÃ³a Ä‘Æ¡n...</div> : null}
-        {isError ? <div className="p-5 text-sm font-bold text-rose-700">KhÃ´ng táº£i Ä‘Æ°á»£c hÃ³a Ä‘Æ¡n.</div> : null}
+        {isLoading ? <div className="p-5 text-sm font-bold text-slate-500">Đang tải hóa đơn...</div> : null}
+        {isError ? <div className="p-5 text-sm font-bold text-rose-700">Không tải được hóa đơn.</div> : null}
         {!isLoading && !isError ? (
           <div className="divide-y divide-slate-100">
             {data.map((invoice) => (
@@ -58,7 +58,7 @@ function AdminInvoices() {
                   onClick={() => taiHoaDonAdmin(invoice)}
                   className="h-fit rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-sm font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700"
                 >
-                  Táº£i
+                  Tải
                 </button>
               </article>
             ))}

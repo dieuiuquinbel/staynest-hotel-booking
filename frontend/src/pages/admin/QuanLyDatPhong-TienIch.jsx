@@ -1,4 +1,4 @@
-﻿import {
+import {
   KIEU_DAT_PHONG,
   NHAN_KIEU_DAT_PHONG,
   NHAN_TRANG_THAI_DAT_PHONG,
@@ -35,14 +35,14 @@ export function lopHuyHieu(map, value) {
 
 export function thoiGianDatPhong(booking) {
   if (booking.bookingType === KIEU_DAT_PHONG.DAY_USE) {
-    return `${dinhDangNgay(booking.checkIn) || 'ChÆ°a chá»n'} Â· ${booking.timeSlot?.label || 'Trong ngÃ y'} Â· ${booking.timeSlot?.time || ''}`;
+    return `${dinhDangNgay(booking.checkIn) || 'Chưa chọn'} · ${booking.timeSlot?.label || 'Trong ngày'} · ${booking.timeSlot?.time || ''}`;
   }
 
-  return `${dinhDangNgay(booking.checkIn) || 'ChÆ°a chá»n'} - ${dinhDangNgay(booking.checkOut) || 'ChÆ°a chá»n'}`;
+  return `${dinhDangNgay(booking.checkIn) || 'Chưa chọn'} - ${dinhDangNgay(booking.checkOut) || 'Chưa chọn'}`;
 }
 
 export function nhanKieuDat(booking) {
-  return NHAN_KIEU_DAT_PHONG[booking.bookingType] || 'Qua Ä‘Ãªm';
+  return NHAN_KIEU_DAT_PHONG[booking.bookingType] || 'Qua đêm';
 }
 
 export function nhanTrangThaiDatPhong(booking) {

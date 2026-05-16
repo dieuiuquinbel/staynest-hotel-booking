@@ -17,13 +17,13 @@ import {
 import { dinhDangNgayGio } from './QuanLyDatPhong-TienIch.jsx';
 
 const FILTERS = [
-  { key: 'need_action', label: 'Cáº§n xá»­ lÃ½' },
-  { key: 'all', label: 'Táº¥t cáº£' },
-  { key: TRANG_THAI_DAT_PHONG.HOLDING, label: 'Giá»¯ chá»—' },
-  { key: TRANG_THAI_DAT_PHONG.CONFIRMED, label: 'ÄÃ£ xÃ¡c nháº­n' },
-  { key: TRANG_THAI_DAT_PHONG.CHECKED_IN, label: 'Äang á»Ÿ' },
-  { key: TRANG_THAI_DAT_PHONG.CHECKED_OUT, label: 'ÄÃ£ tráº£ phÃ²ng' },
-  { key: TRANG_THAI_DAT_PHONG.CANCELLED, label: 'ÄÃ£ há»§y' },
+  { key: 'need_action', label: 'Cần xử lý' },
+  { key: 'all', label: 'Tất cả' },
+  { key: TRANG_THAI_DAT_PHONG.HOLDING, label: 'Giữ chỗ' },
+  { key: TRANG_THAI_DAT_PHONG.CONFIRMED, label: 'Đã xác nhận' },
+  { key: TRANG_THAI_DAT_PHONG.CHECKED_IN, label: 'Đang ở' },
+  { key: TRANG_THAI_DAT_PHONG.CHECKED_OUT, label: 'Đã trả phòng' },
+  { key: TRANG_THAI_DAT_PHONG.CANCELLED, label: 'Đã hủy' },
   { key: TRANG_THAI_DAT_PHONG.NO_SHOW, label: 'No-show' },
 ];
 
@@ -48,11 +48,11 @@ function Badge({ tone = 'bg-slate-100 text-slate-700', children }) {
 }
 
 function bookingLabel(status) {
-  return NHAN_TRANG_THAI_DAT_PHONG[status] || status || 'ChÆ°a cÃ³';
+  return NHAN_TRANG_THAI_DAT_PHONG[status] || status || 'Chưa có';
 }
 
 function paymentLabel(status) {
-  return NHAN_TRANG_THAI_THANH_TOAN[status] || status || 'ChÆ°a cÃ³';
+  return NHAN_TRANG_THAI_THANH_TOAN[status] || status || 'Chưa có';
 }
 
 function isNeedAction(booking) {
@@ -98,30 +98,30 @@ function buildStats(bookings) {
   const paidBookings = bookings.filter((booking) => [TRANG_THAI_THANH_TOAN.PAID, TRANG_THAI_THANH_TOAN.DEPOSIT_PAID].includes(booking.paymentStatus));
 
   return [
-    { label: 'Tá»•ng Ä‘Æ¡n', value: bookings.length },
-    { label: 'Cáº§n xá»­ lÃ½', value: bookings.filter(isNeedAction).length, tone: 'text-rose-600' },
-    { label: 'ÄÃ£ xÃ¡c nháº­n', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED).length },
-    { label: 'Äang á»Ÿ', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN).length },
-    { label: 'HoÃ n táº¥t', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_OUT).length },
+    { label: 'Tổng đơn', value: bookings.length },
+    { label: 'Cần xử lý', value: bookings.filter(isNeedAction).length, tone: 'text-rose-600' },
+    { label: 'Đã xác nhận', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED).length },
+    { label: 'Đang ở', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN).length },
+    { label: 'Hoàn tất', value: bookings.filter((booking) => booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_OUT).length },
     { label: 'Doanh thu', value: dinhDangTien(paidBookings.reduce((sum, booking) => sum + Number(booking.paidAmount || 0), 0)), tone: 'text-brand-700' },
   ];
 }
 
 function exportCsv(bookings) {
   const header = [
-    'MÃ£ Ä‘Æ¡n',
-    'KhÃ¡ch',
+    'Mã đơn',
+    'Khách',
     'Email',
-    'KhÃ¡ch sáº¡n',
-    'PhÃ²ng',
-    'Nháº­n phÃ²ng',
-    'Tráº£ phÃ²ng',
-    'Tráº¡ng thÃ¡i Ä‘áº·t',
-    'Tráº¡ng thÃ¡i thanh toÃ¡n',
-    'Tá»•ng tiá»n',
-    'ÄÃ£ thanh toÃ¡n',
-    'CÃ²n láº¡i',
-    'Ghi chÃº admin',
+    'Khách sạn',
+    'Phòng',
+    'Nhận phòng',
+    'Trả phòng',
+    'Trạng thái đặt',
+    'Trạng thái thanh toán',
+    'Tổng tiền',
+    'Đã thanh toán',
+    'Còn lại',
+    'Ghi chú admin',
   ];
   const rows = bookings.map((booking) => [
     booking.id,
@@ -152,7 +152,7 @@ function DetailRow({ label, value }) {
   return (
     <div className="rounded-lg bg-slate-50 px-3 py-2">
       <p className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-sm font-black text-slate-950">{value || 'ChÆ°a cÃ³'}</p>
+      <p className="mt-1 break-words text-sm font-black text-slate-950">{value || 'Chưa có'}</p>
     </div>
   );
 }
@@ -161,7 +161,7 @@ function BookingDetail({ booking, note, setNote, onStatus, onPayment, onSaveNote
   if (!booking) {
     return (
       <aside className="rounded-xl border border-slate-200 bg-white p-5 text-sm font-bold text-slate-500">
-        Chá»n má»™t Ä‘Æ¡n Ä‘áº·t phÃ²ng Ä‘á»ƒ xem chi tiáº¿t, lá»‹ch sá»­ xá»­ lÃ½ vÃ  thao tÃ¡c duyá»‡t phÃ²ng.
+        Chọn một đơn đặt phòng để xem chi tiết, lịch sử xử lý và thao tác duyệt phòng.
       </aside>
     );
   }
@@ -179,22 +179,22 @@ function BookingDetail({ booking, note, setNote, onStatus, onPayment, onSaveNote
     <aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-950/[0.03] xl:sticky xl:top-24 xl:self-start">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-700">Chi tiáº¿t Ä‘Æ¡n</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-700">Chi tiết đơn</p>
           <h3 className="mt-2 break-all text-xl font-black text-slate-950">{booking.id}</h3>
-          <p className="mt-1 text-sm font-bold text-slate-500">{booking.guestName} Â· {booking.guestEmail}</p>
+          <p className="mt-1 text-sm font-bold text-slate-500">{booking.guestName} · {booking.guestEmail}</p>
         </div>
         <Badge tone={STATUS_TONE[booking.bookingStatus]}>{bookingLabel(booking.bookingStatus)}</Badge>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2">
         <button disabled={!canConfirm} onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CONFIRMED)} className="rounded-lg bg-slate-950 px-3 py-2.5 text-sm font-black text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500">
-          Duyá»‡t Ä‘Æ¡n
+          Duyệt đơn
         </button>
         <button disabled={!canDeposit} onClick={() => onPayment(booking.id, PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT)} className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
-          XÃ¡c nháº­n cá»c
+          Xác nhận cọc
         </button>
         <button disabled={!canFullPay} onClick={() => onPayment(booking.id, PHUONG_THUC_THANH_TOAN.ONLINE_FULL)} className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
-          Thanh toÃ¡n Ä‘á»§
+          Thanh toán đủ
         </button>
         <button disabled={!canCheckIn} onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN)} className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm font-black text-sky-700 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
           Check-in
@@ -203,33 +203,33 @@ function BookingDetail({ booking, note, setNote, onStatus, onPayment, onSaveNote
           Check-out
         </button>
         <button disabled={!canCancel} onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED)} className="rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400">
-          Há»§y Ä‘Æ¡n
+          Hủy đơn
         </button>
       </div>
 
       <section className="mt-5 grid grid-cols-2 gap-2">
-        <DetailRow label="KhÃ¡ch sáº¡n" value={booking.hotel_name} />
-        <DetailRow label="PhÃ²ng" value={booking.room_name} />
-        <DetailRow label="Nháº­n phÃ²ng" value={dinhDangNgay(booking.checkIn)} />
-        <DetailRow label="Tráº£ phÃ²ng" value={dinhDangNgay(booking.checkOut)} />
-        <DetailRow label="Sá»‘ khÃ¡ch" value={booking.guests} />
-        <DetailRow label="Sá»‘ phÃ²ng" value={booking.rooms} />
-        <DetailRow label="Tá»•ng tiá»n" value={dinhDangTien(booking.totalPrice)} />
-        <DetailRow label="CÃ²n láº¡i" value={dinhDangTien(booking.remainingAmount)} />
-        <DetailRow label="MÃ£ thanh toÃ¡n" value={booking.paymentCode || booking.transferContent} />
+        <DetailRow label="Khách sạn" value={booking.hotel_name} />
+        <DetailRow label="Phòng" value={booking.room_name} />
+        <DetailRow label="Nhận phòng" value={dinhDangNgay(booking.checkIn)} />
+        <DetailRow label="Trả phòng" value={dinhDangNgay(booking.checkOut)} />
+        <DetailRow label="Số khách" value={booking.guests} />
+        <DetailRow label="Số phòng" value={booking.rooms} />
+        <DetailRow label="Tổng tiền" value={dinhDangTien(booking.totalPrice)} />
+        <DetailRow label="Còn lại" value={dinhDangTien(booking.remainingAmount)} />
+        <DetailRow label="Mã thanh toán" value={booking.paymentCode || booking.transferContent} />
         <DetailRow label="QR check-in" value={booking.qrToken} />
       </section>
 
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">Timeline xá»­ lÃ½</p>
+        <p className="text-sm font-black text-slate-950">Timeline xử lý</p>
         <div className="mt-3 grid gap-2 text-sm">
           {[
-            ['Táº¡o Ä‘Æ¡n', booking.createdAt],
-            ['XÃ¡c nháº­n', booking.confirmedAt],
-            ['Thanh toÃ¡n', booking.paidAt],
+            ['Tạo đơn', booking.createdAt],
+            ['Xác nhận', booking.confirmedAt],
+            ['Thanh toán', booking.paidAt],
             ['Check-in', booking.checkedInAt],
             ['Check-out', booking.checkedOutAt],
-            ['Há»§y/no-show', booking.cancelledAt || booking.noShowAt],
+            ['Hủy/no-show', booking.cancelledAt || booking.noShowAt],
           ].map(([label, value]) => (
             <div key={label} className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
               <span className="font-bold text-slate-600">{label}</span>
@@ -240,7 +240,7 @@ function BookingDetail({ booking, note, setNote, onStatus, onPayment, onSaveNote
       </section>
 
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">Lá»‹ch sá»­ tráº¡ng thÃ¡i</p>
+        <p className="text-sm font-black text-slate-950">Lịch sử trạng thái</p>
         <div className="mt-3 grid gap-2">
           {(booking.statusLogs || []).length ? (
             booking.statusLogs.map((log) => (
@@ -248,22 +248,22 @@ function BookingDetail({ booking, note, setNote, onStatus, onPayment, onSaveNote
                 <p className="font-black text-slate-950">
                   {bookingLabel(log.oldStatus)} {'->'} {bookingLabel(log.newStatus)}
                 </p>
-                <p className="mt-1 text-xs font-bold text-slate-500">{dinhDangNgayGio(log.changedAt)} Â· {log.note || 'KhÃ´ng cÃ³ ghi chÃº'}</p>
+                <p className="mt-1 text-xs font-bold text-slate-500">{dinhDangNgayGio(log.changedAt)} · {log.note || 'Không có ghi chú'}</p>
               </div>
             ))
           ) : (
-            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-500">ChÆ°a cÃ³ log tráº¡ng thÃ¡i.</p>
+            <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-500">Chưa có log trạng thái.</p>
           )}
         </div>
       </section>
 
       <section className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
         <label className="grid gap-2">
-          <span className="text-sm font-black text-slate-950">Ghi chÃº admin</span>
+          <span className="text-sm font-black text-slate-950">Ghi chú admin</span>
           <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-brand-500" />
         </label>
         <button onClick={() => onSaveNote(booking.id)} className="mt-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
-          LÆ°u ghi chÃº
+          Lưu ghi chú
         </button>
       </section>
     </aside>
@@ -296,7 +296,7 @@ function QuanLyDatPhong() {
       setBookings(data);
       setSelectedId((current) => (current && data.some((booking) => booking.id === current) ? current : data[0]?.id || null));
     } catch (apiError) {
-      setError(apiError?.response?.data?.message || 'KhÃ´ng táº£i Ä‘Æ°á»£c dá»¯ liá»‡u Ä‘áº·t phÃ²ng tá»« MySQL. HÃ£y kiá»ƒm tra backend vÃ  database.');
+      setError(apiError?.response?.data?.message || 'Không tải được dữ liệu đặt phòng từ MySQL. Hãy kiểm tra backend và database.');
     } finally {
       setIsLoading(false);
     }
@@ -319,31 +319,31 @@ function QuanLyDatPhong() {
       setSelectedId(selectedBooking.id);
       setNotice(successMessage);
     } catch (apiError) {
-      setError(apiError?.response?.data?.message || 'Thao tÃ¡c tháº¥t báº¡i. Dá»¯ liá»‡u khÃ´ng Ä‘Æ°á»£c cáº­p nháº­t.');
+      setError(apiError?.response?.data?.message || 'Thao tác thất bại. Dữ liệu không được cập nhật.');
     }
   };
 
-  const handleStatus = (bookingId, status) => runMutation(() => capNhatTrangThaiDatPhongAdminApi(bookingId, status), 'ÄÃ£ cáº­p nháº­t tráº¡ng thÃ¡i Ä‘áº·t phÃ²ng.');
-  const handlePayment = (bookingId, method) => runMutation(() => xacNhanThanhToanAdminApi(bookingId, method), 'ÄÃ£ xÃ¡c nháº­n thanh toÃ¡n.');
-  const handleSaveNote = (bookingId) => runMutation(() => luuGhiChuAdminApi(bookingId, note), 'ÄÃ£ lÆ°u ghi chÃº admin.');
+  const handleStatus = (bookingId, status) => runMutation(() => capNhatTrangThaiDatPhongAdminApi(bookingId, status), 'Đã cập nhật trạng thái đặt phòng.');
+  const handlePayment = (bookingId, method) => runMutation(() => xacNhanThanhToanAdminApi(bookingId, method), 'Đã xác nhận thanh toán.');
+  const handleSaveNote = (bookingId) => runMutation(() => luuGhiChuAdminApi(bookingId, note), 'Đã lưu ghi chú admin.');
 
   return (
     <div className="grid gap-5">
       <section className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-700">Äáº·t phÃ²ng</p>
-            <h2 className="mt-2 text-2xl font-black text-slate-950">Duyá»‡t phÃ²ng vÃ  lá»‹ch sá»­ lÆ°u trÃº</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-700">Đặt phòng</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-950">Duyệt phòng và lịch sử lưu trú</h2>
             <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-500">
-              Báº£ng nÃ y chá»‰ Ä‘á»c/ghi dá»¯ liá»‡u tháº­t tá»« MySQL qua API admin. Náº¿u backend hoáº·c database lá»—i, há»‡ thá»‘ng sáº½ bÃ¡o lá»—i thay vÃ¬ láº¥y dá»¯ liá»‡u táº¡m.
+              Bảng này chỉ đọc/ghi dữ liệu thật từ MySQL qua API admin. Nếu backend hoặc database lỗi, hệ thống sẽ báo lỗi thay vì lấy dữ liệu tạm.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={refresh} className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
-              Táº£i láº¡i
+              Tải lại
             </button>
             <button onClick={() => exportCsv(filteredBookings)} className="rounded-lg bg-slate-950 px-4 py-2.5 text-sm font-black text-white transition hover:bg-slate-800">
-              Xuáº¥t CSV
+              Xuất CSV
             </button>
           </div>
         </div>
@@ -360,7 +360,7 @@ function QuanLyDatPhong() {
 
       <section className="rounded-xl border border-slate-200 bg-white p-4">
         <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_190px]">
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="TÃ¬m mÃ£ Ä‘Æ¡n, khÃ¡ch, email, khÃ¡ch sáº¡n, mÃ£ thanh toÃ¡n..." className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-brand-500" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tìm mã đơn, khách, email, khách sạn, mã thanh toán..." className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-brand-500" />
           <input type="date" value={dateFilter} onChange={(event) => setDateFilter(event.target.value)} className="rounded-lg border border-slate-200 px-4 py-3 text-sm font-bold outline-none focus:border-brand-500" />
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -381,17 +381,17 @@ function QuanLyDatPhong() {
             <table className="min-w-[1180px] w-full text-left text-sm">
               <thead className="bg-slate-50 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">MÃ£ Ä‘Æ¡n / khÃ¡ch</th>
-                  <th className="px-4 py-3">PhÃ²ng</th>
-                  <th className="px-4 py-3">Nháº­n - tráº£</th>
-                  <th className="px-4 py-3">Thanh toÃ¡n</th>
-                  <th className="px-4 py-3">Tráº¡ng thÃ¡i</th>
-                  <th className="px-4 py-3">Xá»­ lÃ½</th>
+                  <th className="px-4 py-3">Mã đơn / khách</th>
+                  <th className="px-4 py-3">Phòng</th>
+                  <th className="px-4 py-3">Nhận - trả</th>
+                  <th className="px-4 py-3">Thanh toán</th>
+                  <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3">Xử lý</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {isLoading ? (
-                  <tr><td colSpan="6" className="px-4 py-8 text-center font-bold text-slate-500">Äang táº£i dá»¯ liá»‡u Ä‘áº·t phÃ²ng tá»« MySQL...</td></tr>
+                  <tr><td colSpan="6" className="px-4 py-8 text-center font-bold text-slate-500">Đang tải dữ liệu đặt phòng từ MySQL...</td></tr>
                 ) : filteredBookings.length ? (
                   filteredBookings.map((booking) => (
                     <tr key={booking.id} onClick={() => setSelectedId(booking.id)} className={`cursor-pointer transition hover:bg-sky-50 ${selectedBooking?.id === booking.id ? 'bg-sky-50' : 'bg-white'}`}>
@@ -408,12 +408,12 @@ function QuanLyDatPhong() {
                       <td className="px-4 py-4 align-top">
                         <p className="font-black text-slate-950">{dinhDangNgay(booking.checkIn)}</p>
                         <p className="mt-1 text-xs font-bold text-slate-500">{dinhDangNgay(booking.checkOut)}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.guests} khÃ¡ch Â· {booking.rooms} phÃ²ng</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.guests} khách · {booking.rooms} phòng</p>
                       </td>
                       <td className="px-4 py-4 align-top">
                         <p className="font-black text-brand-700">{dinhDangTien(booking.totalPrice)}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">ÄÃ£ tráº£ {dinhDangTien(booking.paidAmount)}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">CÃ²n {dinhDangTien(booking.remainingAmount)}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">Đã trả {dinhDangTien(booking.paidAmount)}</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">Còn {dinhDangTien(booking.remainingAmount)}</p>
                       </td>
                       <td className="px-4 py-4 align-top">
                         <div className="grid gap-2">
@@ -423,13 +423,13 @@ function QuanLyDatPhong() {
                       </td>
                       <td className="px-4 py-4 align-top">
                         <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(booking.id); }} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
-                          Chi tiáº¿t
+                          Chi tiết
                         </button>
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr><td colSpan="6" className="px-4 py-8 text-center font-bold text-slate-500">KhÃ´ng cÃ³ Ä‘Æ¡n Ä‘áº·t phÃ²ng phÃ¹ há»£p.</td></tr>
+                  <tr><td colSpan="6" className="px-4 py-8 text-center font-bold text-slate-500">Không có đơn đặt phòng phù hợp.</td></tr>
                 )}
               </tbody>
             </table>
