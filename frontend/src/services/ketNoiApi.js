@@ -1,4 +1,5 @@
-﻿import axios from 'axios';
+// Cau hinh Axios dung chung cho moi request tu frontend den backend API.
+import axios from 'axios';
 import useKhoXacThuc from '../store/khoXacThuc';
 
 const ketNoiApi = axios.create({

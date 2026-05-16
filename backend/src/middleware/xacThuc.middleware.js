@@ -1,5 +1,6 @@
+// Middleware xac thuc JWT: doc token, nap user va chan request chua dang nhap.
 const jwt = require('jsonwebtoken');
-const { timNguoiDungTheoId } = require('../services/xacThuc.service');
+const { timNguoiDungTheoId } = require('../modules/auth/xacThuc.service');
 
 const KHOA_BI_MAT_JWT = process.env.JWT_SECRET || 'staynest_dev_secret_change_me';
 

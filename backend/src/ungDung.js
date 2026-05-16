@@ -1,10 +1,11 @@
+// Cau hinh Express API: gan middleware, route khach hang va route quan tri.
 const express = require('express');
 const cors = require('cors');
 const ketNoiDb = require('./config/coSoDuLieu');
 const { yeuCauDangNhap } = require('./middleware/xacThuc.middleware');
-const { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } = require('./services/xacThuc.service');
-const { taoDatPhong, layHoaDonTheoId, layDanhSachHoaDon } = require('./services/datPhong.service');
-const { xacNhanThanhToanDemo } = require('./services/thanhToan.service');
+const { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } = require('./modules/auth/xacThuc.service');
+const { taoDatPhong, layHoaDonTheoId, layDanhSachHoaDon } = require('./modules/bookings/datPhong.service');
+const { xacNhanThanhToanDemo } = require('./modules/payments/thanhToan.service');
 const {
   TRANG_THAI_DAT_PHONG,
   layDatPhongCuaNguoiDung,
@@ -22,17 +23,17 @@ const {
   layTatCaYeuCauHoTro,
   capNhatYeuCauHoTro,
   layBaoCaoDoanhThu,
-} = require('./services/quanLyDatPhong.service');
+} = require('./modules/bookings/quanLyDatPhong.service');
 const {
   layDanhSachPhong,
   layPhongNoiBat,
   layPhongTheoId,
-} = require('./services/phong.service');
+} = require('./modules/rooms/phong.service');
 const {
   layDanhSachVoucher,
   layVoucherCuaNguoiDung,
   luuVoucherChoNguoiDung,
-} = require('./services/voucher.service');
+} = require('./modules/vouchers/voucher.service');
 const {
   layTongQuanQuanTri,
   layDanhSachKhachHang,
@@ -40,7 +41,7 @@ const {
   capNhatKhachHang,
   capNhatTrangThaiKhachHang,
   xoaKhachHang,
-} = require('./services/quanTri.service');
+} = require('./modules/admin/quanTri.service');
 
 const ungDung = express();
 

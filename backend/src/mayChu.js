@@ -1,7 +1,8 @@
+// Diem khoi dong backend: nap bien moi truong, tao admin mac dinh va lang nghe HTTP.
 require('dotenv').config();
 
 const ungDung = require('./ungDung');
-const { taoHoacCapNhatQuanTriMacDinh } = require('./services/xacThuc.service');
+const { taoHoacCapNhatQuanTriMacDinh } = require('./modules/auth/xacThuc.service');
 
 const cong = Number(process.env.PORT) || 5000;
 
