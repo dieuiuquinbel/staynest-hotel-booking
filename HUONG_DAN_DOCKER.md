@@ -1,33 +1,58 @@
-# Chạy dự án bằng Docker Desktop
+# Chay du an bang Docker Desktop
 
-## Yêu cầu
+## Yeu cau
 
-- Cài Docker Desktop.
-- Mở Docker Desktop trước khi chạy lệnh.
-- Chạy lệnh tại thư mục gốc dự án: `D:\Website khách sạn final`.
+- Cai Docker Desktop.
+- Mo Docker Desktop truoc khi chay lenh.
+- Chay lenh tai thu muc goc du an.
 
-## Chạy lần đầu
+## Chay du an
 
 ```powershell
 docker compose up --build
 ```
 
-Sau khi container chạy xong:
+Chay nen:
 
-- Website: http://localhost:5714
-- Backend health check: http://localhost:5000/api/health
-- MySQL trên máy host: `localhost:3307`
+```powershell
+docker compose up --build -d
+```
 
-Tài khoản admin mặc định:
+Dia chi sau khi chay:
+
+```text
+Website: http://localhost:5714
+Backend health check: http://localhost:5000/api/health
+MySQL tren may host: 127.0.0.1:3307
+```
+
+Tai khoan admin website:
 
 ```text
 admin / admin123
 ```
 
-## Chạy nền
+## Ket noi MySQL Workbench 8.0
+
+Tao connection:
+
+```text
+Connection Name: DieuBel Docker MySQL
+Hostname: 127.0.0.1
+Port: 3307
+Username: root
+Password: 123456
+Default Schema: hotel_booking_db
+```
+
+Schema can xem la `hotel_booking_db`.
+
+## Dung va reset database
+
+Dung container:
 
 ```powershell
-docker compose up --build -d
+docker compose down
 ```
 
 Xem log:
@@ -36,36 +61,27 @@ Xem log:
 docker compose logs -f
 ```
 
-Dừng chương trình:
-
-```powershell
-docker compose down
-```
-
-## Import lại database từ đầu
-
-MySQL chỉ tự import các file trong `database/` khi volume dữ liệu còn trống. Nếu muốn xóa dữ liệu cũ và import lại từ đầu:
+Xoa database cu va import lai tu cac file trong `database/`:
 
 ```powershell
 docker compose down -v
 docker compose up --build
 ```
 
-Lệnh này sẽ xóa volume database Docker của dự án.
+Lenh `docker compose down -v` se xoa volume MySQL cua project.
 
-## Gửi cho máy khác
+## File can gui cho nguoi khac
 
-Gửi toàn bộ thư mục dự án, bao gồm các file mới:
+Gui ca thu muc project, bao gom:
 
-- `docker-compose.yml`
-- `backend/Dockerfile`
-- `frontend/Dockerfile`
-- `.dockerignore`
-- `backend/.dockerignore`
-- `frontend/.dockerignore`
-
-Người nhận chỉ cần mở Docker Desktop rồi chạy:
-
-```powershell
-docker compose up --build
+```text
+docker-compose.yml
+backend/.env
+backend/Dockerfile
+frontend/Dockerfile
+database/
+backend/
+frontend/
 ```
+
+`backend/.env` trong ban nay la file demo cong khai. Docker Compose van truyen bien moi truong truc tiep trong `docker-compose.yml`, nen nguoi nhan chi can chay `docker compose up --build`.

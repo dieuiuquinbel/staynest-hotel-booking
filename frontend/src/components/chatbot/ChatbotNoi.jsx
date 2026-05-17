@@ -1,43 +1,61 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { layDanhSachPhong } from '../../services/phongApi';
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { layDanhSachPhong } from "../../services/phongApi";
 
-const AVATAR_SRC = '/chat-avatar.png';
+const AVATAR_SRC = "/chat-avatar.png";
 
 const GOI_Y_NHANH = [
-  { label: 'Đà Nẵng dưới 1 triệu', message: 'Có phòng Đà Nẵng dưới 1 triệu không?' },
-  { label: 'Phú Quốc 2 người', message: 'Tôi muốn đi Phú Quốc 2 người' },
-  { label: 'Cọc 10%', message: 'Cọc giữ phòng bao nhiêu?' },
-  { label: 'Hủy phòng', message: 'Hủy đặt chỗ có mất phí không?' },
+  {
+    label: "Đà Nẵng dưới 1 triệu",
+    message: "Có phòng Đà Nẵng dưới 1 triệu không?",
+  },
+  { label: "Phú Quốc 2 người", message: "Tôi muốn đi Phú Quốc 2 người" },
+  { label: "Cọc 10%", message: "Cọc giữ phòng bao nhiêu?" },
+  { label: "Hủy phòng", message: "Hủy đặt chỗ có mất phí không?" },
 ];
 
 const DIA_DIEM = [
-  { label: 'Đà Nẵng', query: 'Da Nang', aliases: ['đà nẵng', 'da nang', 'danang'] },
-  { label: 'Phú Quốc', query: 'Phu Quoc', aliases: ['phú quốc', 'phu quoc'] },
-  { label: 'Hà Nội', query: 'Ha Noi', aliases: ['hà nội', 'ha noi', 'hanoi'] },
-  { label: 'Nha Trang', query: 'Nha Trang', aliases: ['nha trang'] },
-  { label: 'Hội An', query: 'Hoi An', aliases: ['hội an', 'hoi an'] },
+  {
+    label: "Đà Nẵng",
+    query: "Da Nang",
+    aliases: ["đà nẵng", "da nang", "danang"],
+  },
+  { label: "Phú Quốc", query: "Phu Quoc", aliases: ["phú quốc", "phu quoc"] },
+  { label: "Hà Nội", query: "Ha Noi", aliases: ["hà nội", "ha noi", "hanoi"] },
+  { label: "Nha Trang", query: "Nha Trang", aliases: ["nha trang"] },
+  { label: "Hội An", query: "Hoi An", aliases: ["hội an", "hoi an"] },
 ];
-
+const CHAO = ["xin chào", "xin chao", "chào", "chao", "hello", "hi", "hey"];
+const CAM_ON = ["cảm ơn", "cam on", "thanks", "thank you"];
 function boDauTiengViet(value) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
 }
 
 function dinhDangTien(value) {
-  return Number(value || 0).toLocaleString('vi-VN') + ' đ';
+  return Number(value || 0).toLocaleString("vi-VN") + " đ";
 }
 
 function timDiaDiem(text) {
   const normalized = boDauTiengViet(text.toLowerCase());
   return DIA_DIEM.find((place) =>
-    place.aliases.some((alias) => normalized.includes(boDauTiengViet(alias.toLowerCase()))),
+    place.aliases.some((alias) =>
+      normalized.includes(boDauTiengViet(alias.toLowerCase())),
+    ),
   );
 }
 
 function timNganSach(text) {
-  const normalized = boDauTiengViet(text.toLowerCase()).replace(/,/g, '.');
-  const trieuMatch = normalized.match(/(?:duoi|khoang|tam|toi da|<=|<)?\s*(\d+(?:\.\d+)?)\s*(?:trieu|tr)/);
-  const nghinMatch = normalized.match(/(?:duoi|khoang|tam|toi da|<=|<)?\s*(\d{3,})\s*(?:k|nghin|ngan)?/);
+  const normalized = boDauTiengViet(text.toLowerCase()).replace(/,/g, ".");
+  const trieuMatch = normalized.match(
+    /(?:duoi|khoang|tam|toi da|<=|<)?\s*(\d+(?:\.\d+)?)\s*(?:trieu|tr)/,
+  );
+  const nghinMatch = normalized.match(
+    /(?:duoi|khoang|tam|toi da|<=|<)?\s*(\d{3,})\s*(?:k|nghin|ngan)?/,
+  );
 
   if (trieuMatch) return Math.round(Number(trieuMatch[1]) * 1000000);
   if (nghinMatch) {
@@ -56,40 +74,42 @@ function timSoKhach(text) {
 
 function coTu(text, words) {
   const normalized = boDauTiengViet(text.toLowerCase());
-  return words.some((word) => normalized.includes(boDauTiengViet(word.toLowerCase())));
+  return words.some((word) =>
+    normalized.includes(boDauTiengViet(word.toLowerCase())),
+  );
 }
 
 function taoLinkPhong(place, budget, guests) {
   const params = new URLSearchParams();
-  if (place?.query) params.set('city', place.query);
-  if (budget) params.set('maxPrice', String(budget));
-  if (guests) params.set('guests', String(guests));
-  params.set('availableOnly', 'true');
-  params.set('sort', 'price_asc');
+  if (place?.query) params.set("city", place.query);
+  if (budget) params.set("maxPrice", String(budget));
+  if (guests) params.set("guests", String(guests));
+  params.set("availableOnly", "true");
+  params.set("sort", "price_asc");
   return `/rooms?${params.toString()}`;
 }
 
 function taoQueryPhong(place, budget, guests) {
   const params = new URLSearchParams();
-  if (place?.query) params.set('city', place.query);
-  if (budget) params.set('maxPrice', String(budget));
-  if (guests) params.set('guests', String(guests));
-  params.set('availableOnly', 'true');
-  params.set('sort', 'price_asc');
-  params.set('limit', '5');
+  if (place?.query) params.set("city", place.query);
+  if (budget) params.set("maxPrice", String(budget));
+  if (guests) params.set("guests", String(guests));
+  params.set("availableOnly", "true");
+  params.set("sort", "price_asc");
+  params.set("limit", "5");
   return params.toString();
 }
 
 function tomTatTienNghi(room) {
   const perks = [];
-  if (room.breakfast_included) perks.push('bữa sáng');
-  if (room.free_cancellation) perks.push('hủy miễn phí');
+  if (room.breakfast_included) perks.push("bữa sáng");
+  if (room.free_cancellation) perks.push("hủy miễn phí");
   if (Array.isArray(room.amenities)) {
-    if (room.amenities.includes('wifi')) perks.push('wifi');
-    if (room.amenities.includes('parking')) perks.push('đỗ xe');
-    if (room.amenities.includes('pool')) perks.push('hồ bơi');
+    if (room.amenities.includes("wifi")) perks.push("wifi");
+    if (room.amenities.includes("parking")) perks.push("đỗ xe");
+    if (room.amenities.includes("pool")) perks.push("hồ bơi");
   }
-  return perks.slice(0, 3).join(', ') || 'tiện nghi cơ bản';
+  return perks.slice(0, 3).join(", ") || "tiện nghi cơ bản";
 }
 
 async function taoPhanHoi(noiDung) {
@@ -97,26 +117,60 @@ async function taoPhanHoi(noiDung) {
   const place = timDiaDiem(text);
   const budget = timNganSach(text);
   const guests = timSoKhach(text);
-  const hoiPhong = coTu(text, ['phòng', 'phong', 'khách sạn', 'khach san', 'resort', 'đi', 'di', 'ở', 'o']);
+  const hoiPhong = coTu(text, [
+    "phòng",
+    "phong",
+    "khách sạn",
+    "khach san",
+    "resort",
+    "đi",
+    "di",
+    "ở",
+    "o",
+  ]);
 
-  if (coTu(text, ['cọc', 'coc', 'đặt cọc', 'giu phong', 'giữ phòng'])) {
+  if (coTu(text, CHAO)) {
     return {
-      text: 'Trâm tư vấn nhé: bạn có thể cọc 10% để giữ phòng trước. Nếu muốn chắc chắn hơn thì thanh toán toàn bộ bằng VietQR. Sau khi thanh toán, đơn sẽ có QR nhận phòng để đưa cho lễ tân check-in.',
-      action: { label: 'Xem đặt chỗ của tôi', to: '/my-bookings' },
+      text: "Xin chào! Mình có thể giúp gì cho bạn? Bạn có thể hỏi: 'Có phòng Đà Nẵng dưới 1 triệu không?', 'Phú Quốc 2 người', hoặc 'voucher giảm giá'.",
     };
   }
 
-  if (coTu(text, ['hủy', 'huy', 'hoàn tiền', 'hoan tien', 'không đi', 'khong di'])) {
+  if (coTu(text, CAM_ON)) {
     return {
-      text: 'Nếu đơn vẫn đang giữ chỗ và chưa xử lý sâu, bạn có thể hủy ngay trong trang Đặt chỗ của tôi. Nếu đã thanh toán, nên gửi hỗ trợ để nhân viên kiểm tra trạng thái và hoàn tiền theo chính sách.',
-      action: { label: 'Gửi hỗ trợ', to: '/me' },
+      text: "Không có gì ạ! Nếu cần tìm phòng, hỏi Trâm bất cứ lúc nào nhé.",
     };
   }
 
-  if (coTu(text, ['voucher', 'mã giảm', 'ma giam', 'ưu đãi', 'uu dai', 'giảm giá', 'giam gia'])) {
+  if (coTu(text, ["cọc", "coc", "đặt cọc", "giu phong", "giữ phòng"])) {
+    return {
+      text: "Trâm tư vấn nhé: bạn có thể cọc 10% để giữ phòng trước. Nếu muốn chắc chắn hơn thì thanh toán toàn bộ bằng VietQR. Sau khi thanh toán, đơn sẽ có QR nhận phòng để đưa cho lễ tân check-in.",
+      action: { label: "Xem đặt chỗ của tôi", to: "/my-bookings" },
+    };
+  }
+
+  if (
+    coTu(text, ["hủy", "huy", "hoàn tiền", "hoan tien", "không đi", "khong di"])
+  ) {
+    return {
+      text: "Nếu đơn vẫn đang giữ chỗ và chưa xử lý sâu, bạn có thể hủy ngay trong trang Đặt chỗ của tôi. Nếu đã thanh toán, nên gửi hỗ trợ để nhân viên kiểm tra trạng thái và hoàn tiền theo chính sách.",
+      action: { label: "Gửi hỗ trợ", to: "/me" },
+    };
+  }
+
+  if (
+    coTu(text, [
+      "voucher",
+      "mã giảm",
+      "ma giam",
+      "ưu đãi",
+      "uu dai",
+      "giảm giá",
+      "giam gia",
+    ])
+  ) {
     return {
       text: 'Bạn có thể nhập voucher trước khi tạo QR thanh toán. Nếu mã hợp lệ, hệ thống tự trừ tiền và cập nhật tổng cuối cùng. Mẹo demo: hỏi Trâm theo dạng "phòng Đà Nẵng dưới 1 triệu" để vừa tìm phòng vừa tính ngân sách.',
-      action: { label: 'Mở tài khoản/voucher', to: '/me' },
+      action: { label: "Mở tài khoản/voucher", to: "/me" },
     };
   }
 
@@ -125,25 +179,35 @@ async function taoPhanHoi(noiDung) {
     if (place) parts.push(`ở ${place.label}`);
     if (budget) parts.push(`ngân sách khoảng ${dinhDangTien(budget)}/đêm`);
     if (guests) parts.push(`${guests} khách`);
-    const scope = parts.length ? parts.join(', ') : 'phù hợp';
+    const scope = parts.length ? parts.join(", ") : "phù hợp";
 
     if (place || budget || guests) {
       try {
-        const payload = await layDanhSachPhong(taoQueryPhong(place, budget, guests));
+        const payload = await layDanhSachPhong(
+          taoQueryPhong(place, budget, guests),
+        );
         const rooms = Array.isArray(payload?.data) ? payload.data : [];
-        const totalItems = Number(payload?.pagination?.totalItems || rooms.length || 0);
-        const roomLabel = totalItems === 1 ? '1 phòng' : `${totalItems} phòng`;
+        const totalItems = Number(
+          payload?.pagination?.totalItems || rooms.length || 0,
+        );
+        const roomLabel = totalItems === 1 ? "1 phòng" : `${totalItems} phòng`;
 
         if (!totalItems) {
           return {
             text: `Trâm chưa thấy phòng nào ${scope}. Bạn thử tăng ngân sách, đổi điểm đến hoặc bỏ bớt điều kiện để có nhiều lựa chọn hơn.`,
-            action: { label: 'Mở bộ lọc phòng', to: taoLinkPhong(place, budget, guests) },
+            action: {
+              label: "Mở bộ lọc phòng",
+              to: taoLinkPhong(place, budget, guests),
+            },
           };
         }
 
         return {
           text: `Hiện có ${roomLabel} ${scope}. Một số phòng có ưu đãi như bữa sáng, hủy miễn phí hoặc tiện nghi nổi bật. Bạn có thể bấm xem ngay để so sánh giá và áp voucher nếu đơn đủ điều kiện.`,
-          action: { label: `Xem ${roomLabel} phù hợp`, to: taoLinkPhong(place, budget, guests) },
+          action: {
+            label: `Xem ${roomLabel} phù hợp`,
+            to: taoLinkPhong(place, budget, guests),
+          },
           rooms: rooms.slice(0, 3).map((room) => ({
             id: room.id,
             hotelName: room.hotel_name,
@@ -154,15 +218,18 @@ async function taoPhanHoi(noiDung) {
         };
       } catch {
         return {
-          text: 'Trâm chưa kết nối được dữ liệu phòng lúc này. Bạn vẫn có thể mở danh sách phòng để tự lọc theo điểm đến, giá và số khách.',
-          action: { label: 'Mở danh sách phòng', to: taoLinkPhong(place, budget, guests) },
+          text: "Trâm chưa kết nối được dữ liệu phòng lúc này. Bạn vẫn có thể mở danh sách phòng để tự lọc theo điểm đến, giá và số khách.",
+          action: {
+            label: "Mở danh sách phòng",
+            to: taoLinkPhong(place, budget, guests),
+          },
         };
       }
     }
 
     return {
       text: 'Trâm cần thêm điểm đến hoặc ngân sách để tư vấn sát hơn. Bạn có thể hỏi: "Đà Nẵng dưới 1 triệu", "Phú Quốc 2 người", hoặc "khách sạn rẻ nhất".',
-      action: { label: 'Tìm chỗ ở', to: '/rooms' },
+      action: { label: "Tìm chỗ ở", to: "/rooms" },
     };
   }
 
@@ -178,7 +245,7 @@ function AvatarChatbot({ compact = false, online = false }) {
     <span className="relative shrink-0">
       <span
         className={`grid place-items-center overflow-hidden rounded-full border-2 border-white bg-brand-600 text-white shadow-md shadow-slate-900/20 ${
-          compact ? 'h-10 w-10 text-xs' : 'h-16 w-16 text-sm'
+          compact ? "h-10 w-10 text-xs" : "h-16 w-16 text-sm"
         }`}
       >
         {!imageError ? (
@@ -199,16 +266,18 @@ function AvatarChatbot({ compact = false, online = false }) {
   );
 }
 
-function BongBongTinNhan({ children, type = 'bot' }) {
-  const isUser = type === 'user';
+function BongBongTinNhan({ children, type = "bot" }) {
+  const isUser = type === "user";
 
   return (
-    <div className={`chat-message-in flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div
+      className={`chat-message-in flex ${isUser ? "justify-end" : "justify-start"}`}
+    >
       <div
         className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-6 ${
           isUser
-            ? 'rounded-br-md bg-brand-600 text-white'
-            : 'rounded-bl-md border border-slate-200 bg-slate-50 text-slate-700'
+            ? "rounded-br-md bg-brand-600 text-white"
+            : "rounded-bl-md border border-slate-200 bg-slate-50 text-slate-700"
         }`}
       >
         {children}
@@ -243,10 +312,18 @@ function DanhSachPhongGoiY({ rooms = [] }) {
           to={`/rooms/${room.id}`}
           className="rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
         >
-          <p className="line-clamp-1 text-sm font-black text-slate-950">{room.hotelName}</p>
-          <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-slate-500">{room.roomName}</p>
-          <p className="mt-2 text-sm font-black text-brand-700">{dinhDangTien(room.price)} / đêm</p>
-          <p className="mt-1 text-xs font-semibold text-emerald-700">Ưu đãi: {room.perks}</p>
+          <p className="line-clamp-1 text-sm font-black text-slate-950">
+            {room.hotelName}
+          </p>
+          <p className="mt-0.5 line-clamp-1 text-xs font-semibold text-slate-500">
+            {room.roomName}
+          </p>
+          <p className="mt-2 text-sm font-black text-brand-700">
+            {dinhDangTien(room.price)} / đêm
+          </p>
+          <p className="mt-1 text-xs font-semibold text-emerald-700">
+            Ưu đãi: {room.perks}
+          </p>
         </Link>
       ))}
     </div>
@@ -255,14 +332,14 @@ function DanhSachPhongGoiY({ rooms = [] }) {
 
 function ChatbotNoi() {
   const [isOpen, setIsOpen] = useState(false);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef(null);
   const [messages, setMessages] = useState([
     {
       id: 1,
-      type: 'bot',
-      text: 'Chào quý khách, Trâm có thể hỗ trợ tìm phòng theo điểm đến, ngân sách, số khách, voucher và thông tin đặt chỗ.',
+      type: "bot",
+      text: "Chào quý khách, Trâm có thể hỗ trợ tìm phòng theo điểm đến, ngân sách, số khách, voucher và thông tin đặt chỗ.",
     },
   ]);
 
@@ -270,7 +347,7 @@ function ChatbotNoi() {
     if (!isOpen || !scrollRef.current) return;
     scrollRef.current.scrollTo({
       top: scrollRef.current.scrollHeight,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
   }, [isOpen, messages, isThinking]);
 
@@ -279,15 +356,24 @@ function ChatbotNoi() {
     if (!message || isThinking) return;
 
     const time = Date.now();
-    setMessages((current) => [...current, { id: time, type: 'user', text: message }]);
-    setDraft('');
+    setMessages((current) => [
+      ...current,
+      { id: time, type: "user", text: message },
+    ]);
+    setDraft("");
     setIsOpen(true);
     setIsThinking(true);
 
     const reply = await taoPhanHoi(message);
     setMessages((current) => [
       ...current,
-      { id: time + 1, type: 'bot', text: reply.text, action: reply.action, rooms: reply.rooms },
+      {
+        id: time + 1,
+        type: "bot",
+        text: reply.text,
+        action: reply.action,
+        rooms: reply.rooms,
+      },
     ]);
     setIsThinking(false);
   };
@@ -304,8 +390,12 @@ function ChatbotNoi() {
           <div className="flex items-center gap-3 border-b border-slate-100 bg-white px-4 py-3">
             <AvatarChatbot compact online />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-black text-slate-950">Trợ lý Trâm</p>
-              <p className="truncate text-xs font-semibold text-slate-500">Tư vấn phòng, giá và voucher</p>
+              <p className="truncate text-sm font-black text-slate-950">
+                Trợ lý Trâm
+              </p>
+              <p className="truncate text-xs font-semibold text-slate-500">
+                Tư vấn phòng, giá và voucher
+              </p>
             </div>
             <button
               type="button"
@@ -317,10 +407,15 @@ function ChatbotNoi() {
             </button>
           </div>
 
-          <div ref={scrollRef} className="max-h-[52vh] min-h-[320px] space-y-3 overflow-y-auto px-4 py-4 sm:max-h-[520px]">
+          <div
+            ref={scrollRef}
+            className="max-h-[52vh] min-h-[320px] space-y-3 overflow-y-auto px-4 py-4 sm:max-h-[520px]"
+          >
             {messages.map((message) => (
               <div key={message.id} className="space-y-2">
-                <BongBongTinNhan type={message.type}>{message.text}</BongBongTinNhan>
+                <BongBongTinNhan type={message.type}>
+                  {message.text}
+                </BongBongTinNhan>
                 {message.action ? (
                   <div className="chat-message-in flex justify-start">
                     <Link
@@ -332,7 +427,9 @@ function ChatbotNoi() {
                     </Link>
                   </div>
                 ) : null}
-                {message.rooms ? <DanhSachPhongGoiY rooms={message.rooms} /> : null}
+                {message.rooms ? (
+                  <DanhSachPhongGoiY rooms={message.rooms} />
+                ) : null}
               </div>
             ))}
             {isThinking ? <TypingDots /> : null}
@@ -379,9 +476,15 @@ function ChatbotNoi() {
       >
         <AvatarChatbot online />
         <span className="grid text-left leading-tight">
-          <span className="text-sm font-black text-slate-950">Hỗ trợ đặt phòng</span>
-          <span className="text-xs font-bold text-brand-700">Chat với Trâm</span>
-          <span className="text-[11px] font-bold text-emerald-600">Đang online</span>
+          <span className="text-sm font-black text-slate-950">
+            Hỗ trợ đặt phòng
+          </span>
+          <span className="text-xs font-bold text-brand-700">
+            Chat với Trâm
+          </span>
+          <span className="text-[11px] font-bold text-emerald-600">
+            Đang online
+          </span>
         </span>
       </button>
     </div>
