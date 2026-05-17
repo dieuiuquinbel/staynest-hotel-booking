@@ -113,10 +113,10 @@ const THONG_KE_TIN_CAY = [
 ];
 
 const DIEM_TIN_CAY = [
-  { title: 'Giá minh bạch', detail: 'Hiển thị giá mỗi đêm, sức chứa và tình trạng phòng rõ ràng trước khi đặt.' },
-  { title: 'Phòng được chọn lọc', detail: 'Danh sách tập trung vào khách sạn, resort và căn hộ phù hợp nhu cầu phổ biến.' },
-  { title: 'Hủy linh hoạt', detail: 'Lọc nhanh những chỗ ở có chính sách hủy miễn phí và còn phòng.' },
-  { title: 'Quản lý dễ dàng', detail: 'Theo dõi lịch sử xem, yêu thích và các đặt chỗ đang giữ trong cùng một nơi.' },
+  { title: 'Giá rõ ràng', detail: 'Thông tin giá phòng, phụ phí và ưu đãi được hiển thị trước khi khách xác nhận đặt phòng.' },
+  { title: 'Lựa chọn phù hợp', detail: 'Dễ dàng tìm khách sạn, resort hoặc căn hộ theo vị trí, ngân sách và nhu cầu lưu trú.' },
+  { title: 'Chính sách linh hoạt', detail: 'Nhiều chỗ ở hỗ trợ giữ chỗ, đặt cọc và hủy phòng theo điều kiện hiển thị sẵn.' },
+  { title: 'Theo dõi thuận tiện', detail: 'Khách có thể xem lại đặt phòng, trạng thái thanh toán và thông tin nhận phòng khi cần.' },
 ];
 
 const DANH_GIA = [
@@ -186,6 +186,13 @@ const BINH_LUAN_POPUP = [
   { name: 'Hạ Vy', trip: 'Gia đình Hội An', text: 'Có phòng family đúng số khách, giá cuối cùng dễ hiểu.', score: '9.6' },
 ];
 
+const SO_DANH_GIA_MOI_LUOT = 4;
+const CAC_SLOT_DANH_GIA = Array.from({ length: SO_DANH_GIA_MOI_LUOT }, (_, index) => index);
+const THOI_GIAN_HIEN_TUNG_DANH_GIA = 1000;
+const THOI_GIAN_BAT_DAU_THOAT_DANH_GIA = 4500;
+const THOI_GIAN_THOAT_NHOM_DANH_GIA = 1250;
+const TONG_NHOM_DANH_GIA = Math.ceil(BINH_LUAN_POPUP.length / SO_DANH_GIA_MOI_LUOT);
+
 function ganThamSoTimKiem(params, form) {
   Object.entries(form).forEach(([key, value]) => {
     if (Array.isArray(value)) {
@@ -201,6 +208,24 @@ function ganThamSoTimKiem(params, form) {
     if (value === false || value === '' || value === null || value === undefined) return;
     params.set(key, String(value));
   });
+}
+
+function TheDanhGiaPopup({ review, isExiting, exitDirection }) {
+  return (
+    <article className={`review-popup-card ${isExiting ? `review-popup-exit-${exitDirection}` : ''}`}>
+      <div className="flex items-start gap-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-slate-950">
+          {review.name.charAt(0)}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="line-clamp-1 text-xs font-bold text-slate-400">Đánh giá từ {review.trip}</p>
+          <p className="mt-0.5 text-sm font-black text-slate-950">{review.name}</p>
+          <p className="mt-1 line-clamp-2 text-sm font-black leading-snug text-slate-900">{review.text}</p>
+        </div>
+        <span className="rounded-lg bg-brand-600 px-2 py-1 text-xs font-black text-white">{review.score}</span>
+      </div>
+    </article>
+  );
 }
 
 function HinhVoucher({ voucher, className = '' }) {
@@ -331,6 +356,9 @@ function TrangChu() {
   const [savedCodes, setSavedCodes] = useState(() => docQuaDaDoi().map((reward) => reward.code));
   const [vouchers, setVouchers] = useState(VOUCHER_KHUYEN_MAI);
   const [voucherMessage, setVoucherMessage] = useState('');
+  const [reviewGroup, setReviewGroup] = useState(0);
+  const [isReviewExiting, setIsReviewExiting] = useState(false);
+  const [visibleReviewCount, setVisibleReviewCount] = useState(1);
   const { data, isLoading, isError } = useQuery({
     queryKey: ['featured-rooms'],
     queryFn: () => layPhongNoiBat(6),
@@ -349,6 +377,27 @@ function TrangChu() {
 
     return () => window.clearInterval(timer);
   }, [isHeroPaused, showLoginOffer, showHopThoaiVoucher]);
+
+  useEffect(() => {
+    setVisibleReviewCount(1);
+    setIsReviewExiting(false);
+
+    const revealTimers = CAC_SLOT_DANH_GIA.slice(1).map((slot) =>
+      window.setTimeout(() => setVisibleReviewCount(slot + 1), slot * THOI_GIAN_HIEN_TUNG_DANH_GIA),
+    );
+    const exitTimer = window.setTimeout(() => setIsReviewExiting(true), THOI_GIAN_BAT_DAU_THOAT_DANH_GIA);
+    const nextGroupTimer = window.setTimeout(() => {
+      setVisibleReviewCount(1);
+      setIsReviewExiting(false);
+      setReviewGroup((current) => (current + 1) % TONG_NHOM_DANH_GIA);
+    }, THOI_GIAN_BAT_DAU_THOAT_DANH_GIA + THOI_GIAN_THOAT_NHOM_DANH_GIA);
+
+    return () => {
+      revealTimers.forEach((timer) => window.clearTimeout(timer));
+      window.clearTimeout(exitTimer);
+      window.clearTimeout(nextGroupTimer);
+    };
+  }, [reviewGroup]);
 
   useEffect(() => {
     if (token || window.sessionStorage.getItem('dieubel_login_offer_closed') === 'true') {
@@ -626,42 +675,32 @@ function TrangChu() {
                 </p>
               </div>
 
-              <div className="review-popup-stage relative z-10 mt-5 h-[380px] overflow-hidden sm:h-[400px] lg:h-[392px]">
-                {[0, 1, 2, 3].map((slot) => (
-                  <div key={slot} className="review-popup-slot">
-                    {BINH_LUAN_POPUP.map((review, index) => {
-                      if (index % 4 !== slot) return null;
+              <div className="review-popup-stage relative z-10 mt-5 h-[420px] overflow-hidden sm:h-[448px] lg:h-[432px]">
+                {CAC_SLOT_DANH_GIA.map((slot) => {
+                  const review = BINH_LUAN_POPUP[reviewGroup * SO_DANH_GIA_MOI_LUOT + slot];
+                  if (!review) return null;
 
-                      return (
-                        <article
-                          key={review.name}
-                          className="review-popup-card"
-                          style={{ animationDelay: `${Math.floor(index / 4) * 7 + slot * 0.75}s` }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-slate-950">
-                              {review.name.charAt(0)}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="line-clamp-1 text-xs font-bold text-slate-400">Đánh giá từ {review.trip}</p>
-                              <p className="mt-0.5 text-sm font-black text-slate-950">{review.name}</p>
-                              <p className="mt-1 line-clamp-2 text-sm font-black leading-snug text-slate-900">{review.text}</p>
-                            </div>
-                            <span className="rounded-lg bg-brand-600 px-2 py-1 text-xs font-black text-white">{review.score}</span>
-                          </div>
-                        </article>
-                      );
-                    })}
-                  </div>
-                ))}
+                  return (
+                    <div key={slot} className="review-popup-slot">
+                      {slot < visibleReviewCount ? (
+                        <TheDanhGiaPopup
+                          key={`${review.name}-${reviewGroup}`}
+                          review={review}
+                          isExiting={isReviewExiting}
+                          exitDirection={slot % 2 === 0 ? 'left' : 'right'}
+                        />
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             <aside className="bg-gradient-to-br from-white via-slate-50 to-brand-50/60 p-5 sm:p-6">
-              <span className="eyebrow">Vì sao khách chọn DieuBel</span>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Ưu điểm được kiểm chứng bằng trải nghiệm thật</h2>
+              <span className="eyebrow">Vì sao chọn DieuBel</span>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Đặt phòng nhanh, thông tin rõ ràng</h2>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                Giữ phần ưu điểm cố định để khách đọc nhanh, còn review bên trái liên tục tạo cảm giác có hoạt động thật.
+                DieuBel giúp khách so sánh chỗ ở, kiểm tra giá và hoàn tất đặt phòng trong vài bước. Mọi thông tin cần thiết đều được trình bày rõ trước khi thanh toán.
               </p>
 
               <div className="mt-5 grid gap-3">

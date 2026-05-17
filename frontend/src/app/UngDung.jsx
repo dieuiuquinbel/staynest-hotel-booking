@@ -1,6 +1,6 @@
 // Dieu phoi ung dung frontend: khai bao route, layout khach/admin va dong bo phien dang nhap.
 import { useQuery } from '@tanstack/react-query';
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import TuyenDuongBaoVe from '../components/auth/TuyenDuongBaoVe';
 import AdminLayout from '../components/admin/AdminLayout';
@@ -27,8 +27,14 @@ const AdminOperations = lazy(() => import('../pages/admin/AdminOperations'));
 function CuonLenDauTrang() {
   const { pathname } = useLocation();
 
-  useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    const timer = window.setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   return null;
