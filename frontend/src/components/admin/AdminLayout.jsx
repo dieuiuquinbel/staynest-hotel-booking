@@ -2,11 +2,11 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import useKhoXacThuc from '../../store/khoXacThuc';
 
 const NAV_ITEMS = [
-  { to: '/admin/overview', label: 'Tổng quan', short: 'TQ' },
-  { to: '/admin/bookings', label: 'Đặt phòng', short: 'DP' },
-  { to: '/admin/operations', label: 'Vận hành', short: 'VH' },
-  { to: '/admin/customers', label: 'Khách hàng', short: 'KH' },
-  { to: '/admin/invoices', label: 'Hóa đơn', short: 'HD' },
+  { to: '/admin/overview', label: 'Tổng quan', short: 'TQ', hint: 'Dashboard' },
+  { to: '/admin/bookings', label: 'Đặt phòng', short: 'DP', hint: 'Duyệt đơn' },
+  { to: '/admin/operations', label: 'Vận hành', short: 'VH', hint: 'Check-in/out' },
+  { to: '/admin/customers', label: 'Khách hàng', short: 'KH', hint: 'Tài khoản' },
+  { to: '/admin/invoices', label: 'Hóa đơn', short: 'HD', hint: 'Thanh toán' },
 ];
 
 function AdminLayout() {
@@ -24,34 +24,37 @@ function AdminLayout() {
       <div className="grid min-h-screen lg:grid-cols-[264px_minmax(0,1fr)]">
         <aside className="border-r border-slate-200 bg-white">
           <div className="sticky top-0 flex min-h-screen flex-col p-4">
-            <Link to="/admin/overview" className="flex items-center gap-3 rounded-xl px-2 py-3">
-                <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-600 text-sm font-black text-white">DB</span>
+            <Link to="/admin/overview" className="flex items-center gap-3 rounded-2xl px-2 py-3">
+              <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-600 text-sm font-black text-white shadow-sm shadow-brand-500/25">DB</span>
               <span className="min-w-0">
                 <span className="block truncate text-lg font-black text-slate-950">DieuBel Admin</span>
-                <span className="block truncate text-xs font-bold text-slate-500">Điều hành khách sạn</span>
+                <span className="block truncate text-xs font-bold text-slate-500">Điều hành đặt phòng</span>
               </span>
             </Link>
 
-            <nav className="mt-7 grid gap-1.5">
+            <nav className="mt-7 grid gap-2">
               {NAV_ITEMS.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-black transition ${
+                    `group flex items-center gap-3 rounded-2xl px-3 py-3 transition ${
                       isActive ? 'bg-slate-950 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                     }`
                   }
                 >
-                  <span className="grid h-8 w-8 place-items-center rounded-lg border border-current/10 text-[11px] font-black">{item.short}</span>
-                  {item.label}
+                  <span className="grid h-9 w-9 place-items-center rounded-xl border border-current/10 bg-white/5 text-[11px] font-black">{item.short}</span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-black">{item.label}</span>
+                    <span className="block text-[11px] font-bold opacity-70">{item.hint}</span>
+                  </span>
                 </NavLink>
               ))}
             </nav>
 
-            <div className="mt-auto grid gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="mt-auto grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Tài khoản admin</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-slate-500">Tài khoản quản trị</p>
                 <p className="mt-2 truncate text-sm font-black text-slate-950">{user?.full_name || user?.username || 'Admin'}</p>
                 <p className="mt-1 truncate text-xs font-bold text-slate-500">{user?.email || 'Đăng nhập quản trị'}</p>
               </div>
@@ -59,7 +62,7 @@ function AdminLayout() {
                 <button
                   type="button"
                   onClick={logout}
-                  className="rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50"
+                  className="rounded-xl border border-rose-200 bg-white px-3 py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50"
                 >
                   Đăng xuất
                 </button>

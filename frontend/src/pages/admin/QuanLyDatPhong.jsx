@@ -375,18 +375,26 @@ function QuanLyDatPhong() {
       {notice ? <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-black text-emerald-700">{notice}</div> : null}
       {error ? <div className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm font-black text-rose-700">{error}</div> : null}
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_430px]">
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_400px]">
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-          <div className="overflow-x-auto">
-            <table className="min-w-[1180px] w-full text-left text-sm">
+          <div>
+            <table className="w-full table-fixed text-left text-[13px]">
+              <colgroup>
+                <col className="w-[24%]" />
+                <col className="w-[23%]" />
+                <col className="w-[15%]" />
+                <col className="w-[16%]" />
+                <col className="w-[14%]" />
+                <col className="w-[8%]" />
+              </colgroup>
               <thead className="bg-slate-50 text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">
                 <tr>
-                  <th className="px-4 py-3">Mã đơn / khách</th>
-                  <th className="px-4 py-3">Phòng</th>
-                  <th className="px-4 py-3">Nhận - trả</th>
-                  <th className="px-4 py-3">Thanh toán</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3">Xử lý</th>
+                  <th className="px-3 py-3">Đơn / khách</th>
+                  <th className="px-3 py-3">Phòng</th>
+                  <th className="px-3 py-3">Nhận - trả</th>
+                  <th className="px-3 py-3">Thanh toán</th>
+                  <th className="px-3 py-3">Trạng thái</th>
+                  <th className="px-3 py-3">Xử lý</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -395,34 +403,35 @@ function QuanLyDatPhong() {
                 ) : filteredBookings.length ? (
                   filteredBookings.map((booking) => (
                     <tr key={booking.id} onClick={() => setSelectedId(booking.id)} className={`cursor-pointer transition hover:bg-sky-50 ${selectedBooking?.id === booking.id ? 'bg-sky-50' : 'bg-white'}`}>
-                      <td className="px-4 py-4 align-top">
-                        <p className="font-black text-slate-950">{booking.id}</p>
+                      <td className="px-3 py-4 align-top">
+                        <p className="break-words font-black leading-snug text-slate-950">{booking.id}</p>
                         <p className="mt-1 font-bold text-slate-700">{booking.guestName}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.guestEmail}</p>
+                        <p className="mt-1 break-words text-[11px] font-bold leading-snug text-slate-500">{booking.guestEmail}</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
-                        <p className="font-black text-slate-950">{booking.hotel_name}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.room_name}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.city || booking.address}</p>
+                      <td className="px-3 py-4 align-top">
+                        <p className="line-clamp-2 font-black leading-snug text-slate-950">{booking.hotel_name}</p>
+                        <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">{booking.room_name}</p>
+                        <p className="mt-1 line-clamp-1 text-xs font-bold text-slate-500">{booking.city || booking.address}</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-3 py-4 align-top">
                         <p className="font-black text-slate-950">{dinhDangNgay(booking.checkIn)}</p>
                         <p className="mt-1 text-xs font-bold text-slate-500">{dinhDangNgay(booking.checkOut)}</p>
-                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.guests} khách · {booking.rooms} phòng</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.guests} khách</p>
+                        <p className="mt-1 text-xs font-bold text-slate-500">{booking.rooms} phòng</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-3 py-4 align-top">
                         <p className="font-black text-brand-700">{dinhDangTien(booking.totalPrice)}</p>
                         <p className="mt-1 text-xs font-bold text-slate-500">Đã trả {dinhDangTien(booking.paidAmount)}</p>
                         <p className="mt-1 text-xs font-bold text-slate-500">Còn {dinhDangTien(booking.remainingAmount)}</p>
                       </td>
-                      <td className="px-4 py-4 align-top">
+                      <td className="px-3 py-4 align-top">
                         <div className="grid gap-2">
                           <Badge tone={STATUS_TONE[booking.bookingStatus]}>{bookingLabel(booking.bookingStatus)}</Badge>
                           <Badge tone={PAYMENT_TONE[booking.paymentStatus]}>{paymentLabel(booking.paymentStatus)}</Badge>
                         </div>
                       </td>
-                      <td className="px-4 py-4 align-top">
-                        <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(booking.id); }} className="rounded-lg border border-slate-300 px-3 py-2 text-xs font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
+                      <td className="px-3 py-4 align-top">
+                        <button type="button" onClick={(event) => { event.stopPropagation(); setSelectedId(booking.id); }} className="rounded-lg border border-slate-300 px-2.5 py-2 text-xs font-black text-slate-700 transition hover:border-brand-500 hover:text-brand-700">
                           Chi tiết
                         </button>
                       </td>

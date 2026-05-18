@@ -190,7 +190,7 @@ const SO_DANH_GIA_MOI_LUOT = 4;
 const CAC_SLOT_DANH_GIA = Array.from({ length: SO_DANH_GIA_MOI_LUOT }, (_, index) => index);
 const THOI_GIAN_HIEN_TUNG_DANH_GIA = 1000;
 const THOI_GIAN_BAT_DAU_THOAT_DANH_GIA = 4500;
-const THOI_GIAN_THOAT_NHOM_DANH_GIA = 1250;
+const THOI_GIAN_THOAT_NHOM_DANH_GIA = 780;
 const TONG_NHOM_DANH_GIA = Math.ceil(BINH_LUAN_POPUP.length / SO_DANH_GIA_MOI_LUOT);
 
 function ganThamSoTimKiem(params, form) {
