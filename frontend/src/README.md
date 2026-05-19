@@ -19,6 +19,7 @@ Chứa các khối giao diện dùng lại.
   - `customers/`: danh sách khách, form tạo khách, panel chi tiết.
   - `rooms/`: danh sách phòng, form tạo phòng, helper kho phòng.
 - `auth/`: chặn route hoặc hỗ trợ đăng nhập.
+- `bookings/`: component dùng riêng cho các màn đặt phòng phía khách.
 - `chatbot/`: chatbot nội bộ.
 - `layout/`: header, footer, khung chung.
 - `public/home/`: section lớn và dữ liệu tĩnh của trang chủ.
@@ -64,6 +65,6 @@ Nếu cần hiểu frontend từ đầu:
 1. `main.jsx`
 2. `app/UngDung.jsx`
 3. `pages/admin/*` hoặc `pages/public/*` tùy khu vực cần tìm
-4. `components/admin/*` hoặc `components/public/home/*` nếu page đã được tách nhỏ
+4. `components/admin/*`, `components/bookings/*` hoặc `components/public/home/*` nếu page đã được tách nhỏ
 5. `services/*`
 6. `utils/*`

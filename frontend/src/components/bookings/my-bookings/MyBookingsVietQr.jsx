@@ -1,6 +1,8 @@
-import { taoAnhVietQr, daCauHinhVietQr } from '../../utils/vietQr';
+// Ảnh VietQR dùng cho màn "Đặt phòng của tôi".
+// Tách riêng để file trang chính chỉ còn điều phối dữ liệu thanh toán.
+import { taoAnhVietQr, daCauHinhVietQr } from '../../../utils/vietQr';
 
-function DatPhongCuaToiThanhToanVietQr({ amount, bookingId, paymentMethod, paymentCode }) {
+export default function MyBookingsVietQr({ amount, bookingId, paymentMethod, paymentCode }) {
   const qrUrl = taoAnhVietQr({ amount, bookingId, paymentMethod, paymentCode });
 
   if (!daCauHinhVietQr()) {
@@ -24,5 +26,3 @@ function DatPhongCuaToiThanhToanVietQr({ amount, bookingId, paymentMethod, payme
     />
   );
 }
-
-export default DatPhongCuaToiThanhToanVietQr;

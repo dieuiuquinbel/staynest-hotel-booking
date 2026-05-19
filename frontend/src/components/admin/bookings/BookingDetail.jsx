@@ -1,7 +1,7 @@
 // Panel chi tiết đơn đặt phòng cho quản lý.
 // File này gom toàn bộ phần ra quyết định và hiển thị mốc chính của một đơn.
 import { dinhDangNgay, dinhDangTien } from '../../../utils/dinhDang';
-import { dinhDangNgayGio } from '../../../pages/admin/QuanLyDatPhong-TienIch.jsx';
+import { dinhDangNgayGio } from '../../../utils/dinhDang';
 import {
   PHUONG_THUC_THANH_TOAN,
   TRANG_THAI_DAT_PHONG,

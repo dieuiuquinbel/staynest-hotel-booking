@@ -1,4 +1,6 @@
-﻿function DatPhongCuaToiQrMinhHoa({ token }) {
+// QR minh họa nội bộ dùng khi chưa cần ảnh QR thật.
+// File này chỉ tạo khối hiển thị phụ để người đọc dễ hiểu vai trò.
+export default function MyBookingsQrMock({ token }) {
   return (
     <div className="grid h-28 w-28 shrink-0 place-items-center rounded-2xl border border-slate-200 bg-white p-3">
       <div className="grid h-full w-full grid-cols-5 grid-rows-5 gap-1">
@@ -14,5 +16,3 @@
     </div>
   );
 }
-
-export default DatPhongCuaToiQrMinhHoa;

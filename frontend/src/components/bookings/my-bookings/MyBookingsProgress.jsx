@@ -1,4 +1,6 @@
-import { TRANG_THAI_DAT_PHONG, TRANG_THAI_THANH_TOAN } from '../../utils/lichSuDatPhong';
+// Thanh tiến trình đặt phòng cho khách.
+// Mỗi bước phản ánh trạng thái từ giữ chỗ đến trả phòng.
+import { TRANG_THAI_DAT_PHONG, TRANG_THAI_THANH_TOAN } from '../../../utils/lichSuDatPhong';
 
 const CAC_BUOC = ['Giữ chỗ', 'Thanh toán', 'Xác nhận', 'Nhận phòng', 'Trả phòng'];
 
@@ -10,7 +12,7 @@ function layBuocHienTai(booking) {
   return 0;
 }
 
-function DatPhongCuaToiTienTrinh({ booking }) {
+export default function MyBookingsProgress({ booking }) {
   const buocHienTai = layBuocHienTai(booking);
 
   return (
@@ -35,5 +37,3 @@ function DatPhongCuaToiTienTrinh({ booking }) {
     </div>
   );
 }
-
-export default DatPhongCuaToiTienTrinh;

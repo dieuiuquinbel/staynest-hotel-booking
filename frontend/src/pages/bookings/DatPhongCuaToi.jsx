@@ -1,10 +1,11 @@
-// Trang dat cho cua toi: theo doi don, tao QR thanh toan, huy/hoan tien va xem hoa don.
+// Trang đặt chỗ của tôi.
+// File này cho phép khách theo dõi đơn, tạo QR thanh toán, gửi yêu cầu hủy/hoàn tiền và xem hóa đơn.
 import { useState } from 'react';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import DatPhongCuaToiQrMinhHoa from './DatPhongCuaToi-QrMinhHoa';
-import DatPhongCuaToiThanhToanVietQr from './DatPhongCuaToi-ThanhToanVietQr';
-import DatPhongCuaToiTienTrinh from './DatPhongCuaToi-TienTrinh';
+import MyBookingsQrMock from '../../components/bookings/my-bookings/MyBookingsQrMock';
+import MyBookingsVietQr from '../../components/bookings/my-bookings/MyBookingsVietQr';
+import MyBookingsProgress from '../../components/bookings/my-bookings/MyBookingsProgress';
 import {
   capNhatTrangThaiDatPhongApi,
   xacNhanThanhToanDatPhongApi,
@@ -376,7 +377,7 @@ function DatPhongCuaToi() {
                       <p className="mt-1 text-sm font-bold text-slate-600">{booking.room_name}</p>
                       <p className="mt-2 text-sm leading-7 text-slate-500">{booking.address}</p>
 
-                      <DatPhongCuaToiTienTrinh booking={booking} />
+                      <MyBookingsProgress booking={booking} />
 
                       <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
@@ -406,7 +407,7 @@ function DatPhongCuaToi() {
 
                       {hasCheckInQr ? (
                         <div className="mt-5 flex flex-wrap items-center gap-4 rounded-[14px] border border-[#dddddd] bg-[#f7f7f7] p-4">
-                          <DatPhongCuaToiQrMinhHoa token={booking.qrToken} />
+                          <MyBookingsQrMock token={booking.qrToken} />
                           <div>
                             <p className="text-sm font-black text-emerald-800">QR nhận phòng đã sẵn sàng</p>
                             <p className="mt-1 text-sm leading-6 text-emerald-700">
@@ -518,7 +519,7 @@ function DatPhongCuaToi() {
                         </div>
                         <div className="mt-4 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
                           <div className="md:max-w-[220px]">
-                            <DatPhongCuaToiThanhToanVietQr
+                            <MyBookingsVietQr
                               amount={payNowAmount}
                               bookingId={booking.id}
                               paymentMethod={paymentDraft.method}
