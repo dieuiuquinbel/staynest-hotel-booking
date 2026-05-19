@@ -1,6 +1,10 @@
-// Cau hinh Express API: gan middleware, route khach hang va route quan tri.
+// Bộ lắp route và middleware cho backend.
+// File này gắn middleware, route công khai, route khách hàng và route quản trị.
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const ketNoiDb = require('./config/coSoDuLieu');
 const { yeuCauDangNhap } = require('./middleware/xacThuc.middleware');
 const { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } = require('./modules/auth/xacThuc.service');
@@ -28,6 +32,7 @@ const {
   layDanhSachPhong,
   layPhongNoiBat,
   layPhongTheoId,
+  taoPhongAdmin,
 } = require('./modules/rooms/phong.service');
 const {
   layDanhSachVoucher,
@@ -38,12 +43,58 @@ const {
   layTongQuanQuanTri,
   layDanhSachKhachHang,
   layChiTietKhachHang,
+  taoKhachHang,
   capNhatKhachHang,
   capNhatTrangThaiKhachHang,
   xoaKhachHang,
 } = require('./modules/admin/quanTri.service');
 
 const ungDung = express();
+const CHO_PHEP_THANH_TOAN_DEMO = process.env.ENABLE_DEMO_PAYMENT === 'true';
+const uploadsRoot = path.join(__dirname, '..', 'uploads');
+const roomUploadsDir = path.join(uploadsRoot, 'rooms');
+
+if (!fs.existsSync(roomUploadsDir)) {
+  fs.mkdirSync(roomUploadsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, roomUploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+    const safeBase = path
+      .basename(file.originalname || 'room')
+      .replace(path.extname(file.originalname || ''), '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80) || 'room';
+
+    cb(null, `${Date.now()}-${safeBase}${ext}`);
+  },
+});
+
+const uploadRoomImages = multer({
+  storage,
+  limits: {
+    fileSize: 8 * 1024 * 1024,
+    files: 8,
+  },
+  fileFilter: (req, file, cb) => {
+    if (!String(file.mimetype || '').startsWith('image/')) {
+      cb(new Error('Chi chap nhan file anh.'));
+      return;
+    }
+
+    cb(null, true);
+  },
+}).fields([
+  { name: 'cover_image', maxCount: 1 },
+  { name: 'gallery_images', maxCount: 7 },
+]);
 
 ungDung.use(
   cors({
@@ -53,6 +104,7 @@ ungDung.use(
 );
 
 ungDung.use(express.json());
+ungDung.use('/uploads', express.static(uploadsRoot));
 
 function yeuCauQuanTri(req, res, next) {
   if (req.user?.role !== 'admin') {
@@ -351,8 +403,6 @@ ungDung.patch('/api/bookings/:id/status', yeuCauDangNhap, async (req, res) => {
 
 ungDung.post('/api/bookings/:id/payments/confirm', yeuCauDangNhap, async (req, res) => {
   try {
-    // Ban demo cho phep khach bam xac nhan thanh toan de cap nhat ngay.
-    // Khi trien khai that, nen doi sang trang thai "cho xac nhan" va de admin duyet.
     const data = await xacNhanThanhToan({
       bookingCode: req.params.id,
       method: req.body.method,
@@ -370,6 +420,12 @@ ungDung.post('/api/bookings/:id/payments/confirm', yeuCauDangNhap, async (req, r
 });
 
 ungDung.post('/api/payments/demo-confirm', yeuCauDangNhap, async (req, res) => {
+  if (!CHO_PHEP_THANH_TOAN_DEMO) {
+    return res.status(404).json({
+      message: 'Tinh nang nay da bi tat.',
+    });
+  }
+
   try {
     const result = await xacNhanThanhToanDemo({
       user: req.user,
@@ -417,6 +473,20 @@ ungDung.get('/api/admin/customers', yeuCauDangNhap, yeuCauQuanTri, async (req, r
   } catch (error) {
     res.status(error.status || 500).json({
       message: error.message || 'Khong the tai danh sach khach hang',
+    });
+  }
+});
+
+ungDung.post('/api/admin/customers', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  try {
+    const data = await taoKhachHang({
+      payload: req.body,
+      adminId: req.user.id,
+    });
+    res.status(201).json({ data });
+  } catch (error) {
+    res.status(error.status || 500).json({
+      message: error.message || 'Khong the tao khach hang',
     });
   }
 });
@@ -487,6 +557,33 @@ ungDung.get('/api/admin/bookings', yeuCauDangNhap, yeuCauQuanTri, async (req, re
   }
 });
 
+ungDung.post('/api/admin/rooms', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
+  uploadRoomImages(req, res, async (uploadError) => {
+    if (uploadError) {
+      return res.status(400).json({
+        message: uploadError.message || 'Khong tai len duoc anh phong',
+      });
+    }
+
+    try {
+      const coverImage = req.files?.cover_image?.[0];
+      const galleryImages = req.files?.gallery_images || [];
+      const data = await taoPhongAdmin({
+        ...req.body,
+        image_url: coverImage ? `/uploads/rooms/${coverImage.filename}` : req.body.image_url,
+        gallery: galleryImages.length
+          ? galleryImages.map((file) => `/uploads/rooms/${file.filename}`)
+          : req.body.gallery,
+      });
+      res.status(201).json({ data });
+    } catch (error) {
+      res.status(error.status || 500).json({
+        message: error.message || 'Khong the tao phong',
+      });
+    }
+  });
+});
+
 ungDung.get('/api/admin/refund-requests', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
   try {
     const data = await layTatCaYeuCauHoanTien();
@@ -545,7 +642,10 @@ ungDung.patch('/api/admin/support-tickets/:id', yeuCauDangNhap, yeuCauQuanTri, a
 
 ungDung.get('/api/admin/revenue-report', yeuCauDangNhap, yeuCauQuanTri, async (req, res) => {
   try {
-    const data = await layBaoCaoDoanhThu();
+    const data = await layBaoCaoDoanhThu({
+      dateFrom: req.query.date_from,
+      dateTo: req.query.date_to,
+    });
     res.json({ data });
   } catch (error) {
     res.status(error.status || 500).json({

@@ -12,6 +12,7 @@ import {
 } from '../../utils/lichSuDatPhong';
 import { chuyenNgayHienThiSangIso, dinhDangNgay, dinhDangTien } from '../../utils/dinhDang';
 import { congDiemThuong } from '../../utils/diemThuong';
+import { resolveMediaUrl } from '../../utils/media';
 import { taoDatPhong } from '../../services/datPhongApi';
 
 const DICH_VU_THEM = [
@@ -452,7 +453,7 @@ function DatPhong() {
         </div>
 
         <aside className="subtle-card p-5 lg:sticky lg:top-24 lg:self-start">
-          <img src={room.image_url} alt={`${room.hotel_name} ${room.room_name}`} className="h-56 w-full rounded-md object-cover" />
+          <img src={resolveMediaUrl(room.image_url)} alt={`${room.hotel_name} ${room.room_name}`} className="h-56 w-full rounded-md object-cover" />
           <div className="mt-5">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-700">Chỗ ở đã chọn</p>
             <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{room.hotel_name}</h2>

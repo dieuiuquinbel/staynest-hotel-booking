@@ -15,3 +15,8 @@ export async function layPhongTheoId(roomId) {
   const response = await ketNoiApi.get(`/rooms/${roomId}`);
   return response.data.data;
 }
+
+export async function taoPhongAdminApi(payload) {
+  const response = await ketNoiApi.post('/admin/rooms', payload);
+  return response.data.data;
+}

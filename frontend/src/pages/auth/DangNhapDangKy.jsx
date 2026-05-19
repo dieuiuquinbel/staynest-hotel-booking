@@ -26,7 +26,6 @@ const FORM_DANG_KY_BAN_DAU = {
 const XAC_MINH_BAN_DAU = {
   email: '',
   otp: '',
-  devOtp: '',
 };
 
 function docThongBaoLoi(error, defaultMessage) {
@@ -148,7 +147,7 @@ function DangNhapDangKy() {
         phone: registerForm.phone,
         password: registerForm.password,
       });
-      setVerification({ email: result.email, otp: '', devOtp: result.devOtp || '' });
+      setVerification({ email: result.email, otp: '' });
       window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
     } catch (error) {
       setRegisterError(docThongBaoLoi(error, 'Không thể tạo tài khoản. Vui lòng thử lại.'));
@@ -175,8 +174,7 @@ function DangNhapDangKy() {
     setVerifyError('');
 
     try {
-      const result = await resendMutation.mutateAsync({ email: verification.email });
-      setVerification((current) => ({ ...current, devOtp: result.devOtp || '' }));
+      await resendMutation.mutateAsync({ email: verification.email });
     } catch (error) {
       setVerifyError(docThongBaoLoi(error, 'Không thể gửi lại OTP.'));
     }
@@ -256,7 +254,6 @@ function DangNhapDangKy() {
               {isVerifying ? (
                 <form onSubmit={handleVerifySubmit} className="auth-form-panel mt-8 grid gap-5">
                   <ThongBao tone="info">OTP có hiệu lực trong 10 phút. Kiểm tra cả hộp thư spam nếu chưa thấy email.</ThongBao>
-                  {verification.devOtp ? <ThongBao tone="warning">SMTP chưa cấu hình, dùng mã dev OTP: {verification.devOtp}</ThongBao> : null}
                   <TruongBieuMau
                     label="Mã OTP"
                     type="text"

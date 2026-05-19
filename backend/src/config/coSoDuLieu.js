@@ -1,4 +1,4 @@
-// Cau hinh pool ket noi MySQL dung chung cho cac module backend.
+// Cấu hình pool kết nối MySQL dùng chung cho toàn bộ backend.
 const mysql = require('mysql2/promise');
 
 const ketNoiDb = mysql.createPool({

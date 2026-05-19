@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import useKhoXacThuc from '../../store/khoXacThuc';
 import { dinhDangTien } from '../../utils/dinhDang';
 import { taoDuongDanDatPhong, taoDuongDanDangNhapChuyenHuong } from '../../utils/duongDan';
+import { resolveMediaUrl } from '../../utils/media';
 import { layThongTinTinhTrangPhong } from '../../utils/tinhTrangPhong';
 import { laPhongYeuThich, daoTrangThaiPhongYeuThich } from '../../utils/lichSuXemPhong';
 
@@ -102,7 +103,7 @@ function ThePhong({ room, layout = 'horizontal' }) {
       >
         <div className="relative h-56 overflow-hidden bg-[#f7f7f7]">
           <img
-            src={room.image_url}
+            src={resolveMediaUrl(room.image_url)}
             alt={`${room.hotel_name} ${room.room_name}`}
             loading="lazy"
             className="h-full w-full object-cover transition duration-500 hover:scale-105"
@@ -157,7 +158,7 @@ function ThePhong({ room, layout = 'horizontal' }) {
     >
       <div className="relative min-h-[250px] overflow-hidden bg-[#f7f7f7]">
         <img
-          src={room.image_url}
+          src={resolveMediaUrl(room.image_url)}
           alt={`${room.hotel_name} ${room.room_name}`}
           loading="lazy"
           className="h-full w-full object-cover transition duration-500 hover:scale-105"

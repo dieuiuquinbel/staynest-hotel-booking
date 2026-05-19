@@ -39,6 +39,48 @@ function docMangJson(value) {
   }
 }
 
+function taoLoi(status, message) {
+  const error = new Error(message);
+  error.status = status;
+  return error;
+}
+
+function taoSlug(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 150);
+}
+
+function docMangNhap(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  if (typeof value !== 'string') return [];
+
+  return value
+    .split(/\r?\n|,/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+async function taoSlugPhongDuyNhat(roomName, hotelName) {
+  const baseSlug = taoSlug(`${hotelName} ${roomName}`) || `room-${Date.now()}`;
+  let slug = baseSlug;
+  let index = 2;
+
+  while (true) {
+    const [rows] = await ketNoiDb.query('SELECT id FROM rooms WHERE slug = ? LIMIT 1', [slug]);
+    if (!rows.length) return slug;
+    slug = `${baseSlug}-${index}`;
+    index += 1;
+  }
+}
+
 function chuanHoaPhong(row) {
   return {
     ...row,
@@ -245,8 +287,89 @@ async function layPhongTheoId(roomId) {
   return chuanHoaPhong(rows[0]);
 }
 
+async function taoPhongAdmin(payload = {}) {
+  const hotelName = String(payload.hotel_name || '').trim();
+  const roomName = String(payload.room_name || '').trim();
+  const city = String(payload.city || '').trim();
+  const address = String(payload.address || '').trim();
+  const roomType = String(payload.room_type || '').trim();
+  const description = String(payload.description || '').trim();
+  const imageUrl = String(payload.image_url || '').trim() || null;
+  const amenities = docMangNhap(payload.amenities);
+  const gallery = docMangNhap(payload.gallery);
+  const pricePerNight = Number(payload.price_per_night);
+  const maxGuests = Number(payload.max_guests);
+  const inventoryCount = Number(payload.inventory_count);
+  const breakfastIncluded = Boolean(payload.breakfast_included);
+  const freeCancellation = Boolean(payload.free_cancellation);
+  const isActive = payload.is_active === false ? false : true;
+
+  if (!hotelName || !roomName || !city || !address || !roomType) {
+    throw taoLoi(400, 'Vui long nhap day du ten khach san, ten phong, thanh pho, dia chi va loai phong.');
+  }
+
+  if (!['standard', 'deluxe', 'superior', 'suite', 'family'].includes(roomType)) {
+    throw taoLoi(400, 'Loai phong khong hop le.');
+  }
+
+  if (!Number.isFinite(pricePerNight) || pricePerNight <= 0) {
+    throw taoLoi(400, 'Gia phong phai lon hon 0.');
+  }
+
+  if (!Number.isInteger(maxGuests) || maxGuests <= 0) {
+    throw taoLoi(400, 'So khach toi da phai lon hon 0.');
+  }
+
+  if (!Number.isInteger(inventoryCount) || inventoryCount < 0) {
+    throw taoLoi(400, 'So luong phong khong hop le.');
+  }
+
+  const slug = await taoSlugPhongDuyNhat(roomName, hotelName);
+  const [result] = await ketNoiDb.query(
+    `INSERT INTO rooms (
+       hotel_name,
+       room_name,
+       slug,
+       city,
+       address,
+       room_type,
+       description,
+       amenities_json,
+       image_url,
+       gallery_json,
+       price_per_night,
+       max_guests,
+       inventory_count,
+       breakfast_included,
+       free_cancellation,
+       is_active
+     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      hotelName,
+      roomName,
+      slug,
+      city,
+      address,
+      roomType,
+      description,
+      JSON.stringify(amenities),
+      imageUrl,
+      JSON.stringify(gallery),
+      pricePerNight,
+      maxGuests,
+      inventoryCount,
+      breakfastIncluded,
+      freeCancellation,
+      isActive,
+    ],
+  );
+
+  return layPhongTheoId(result.insertId);
+}
+
 module.exports = {
   layDanhSachPhong,
   layPhongNoiBat,
   layPhongTheoId,
+  taoPhongAdmin,
 };

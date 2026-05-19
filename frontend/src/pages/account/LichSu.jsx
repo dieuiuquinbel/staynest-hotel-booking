@@ -14,6 +14,7 @@ import {
   luuDanhGiaDatPhong,
 } from '../../utils/lichSuDatPhong';
 import { dinhDangNgay, dinhDangTien } from '../../utils/dinhDang';
+import { resolveMediaUrl } from '../../utils/media';
 import { xoaPhongDaXem, docPhongYeuThich, docPhongDaXem } from '../../utils/lichSuXemPhong';
 import { useDatPhongCuaToi } from '../../hooks/useDatPhongCuaToi';
 import { taoYeuCauHoanTienApi } from '../../services/datPhongApi';
@@ -45,7 +46,7 @@ function TheLichSuDatPhong({
 
   return (
     <article className="subtle-card grid overflow-hidden md:grid-cols-[220px_minmax(0,1fr)]">
-      <img src={booking.image_url} alt={booking.hotel_name} className="h-52 w-full object-cover md:h-full" />
+      <img src={resolveMediaUrl(booking.image_url)} alt={booking.hotel_name} className="h-52 w-full object-cover md:h-full" />
       <div className="p-5">
         <div className="flex flex-wrap items-center gap-2">
           <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">

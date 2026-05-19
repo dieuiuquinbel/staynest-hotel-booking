@@ -1,4 +1,5 @@
-// Diem vao frontend: gan React vao DOM, cau hinh React Query va router.
+// Điểm vào của frontend.
+// File này gắn React vào DOM, cấu hình React Query và bọc Router cho toàn bộ ứng dụng.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';

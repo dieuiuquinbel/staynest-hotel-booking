@@ -500,30 +500,3 @@ export function hoanTatDatPhongCuaToi(bookingId) {
   ghiMang(next);
   return next;
 }
-
-export function xacNhanThanhToanDemo(bookingId, paymentMethod, paymentMeta = {}) {
-  const next = docMangDaChuanHoa().map((booking) => {
-    if (booking.id !== bookingId) return booking;
-
-    const totalPrice = Number(booking.totalPrice || 0);
-    const isDeposit = paymentMethod === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT;
-    const paidAmount = isDeposit ? Number(booking.depositAmount || Math.ceil(totalPrice * 0.1)) : totalPrice;
-
-    return {
-      ...booking,
-      bookingStatus: TRANG_THAI_DAT_PHONG.CONFIRMED,
-      paymentStatus: isDeposit ? TRANG_THAI_THANH_TOAN.DEPOSIT_PAID : TRANG_THAI_THANH_TOAN.PAID,
-      paymentMethod,
-      paymentCode: paymentMeta.paymentCode || booking.paymentCode || null,
-      transferContent: paymentMeta.transferContent || paymentMeta.paymentCode || booking.transferContent || null,
-      paymentQrUrl: paymentMeta.paymentQrUrl || booking.paymentQrUrl || null,
-      paidAmount,
-      remainingAmount: Math.max(0, totalPrice - paidAmount),
-      qrToken: booking.qrToken || taoMaQr(booking.id),
-      paidAt: new Date().toISOString(),
-    };
-  });
-
-  ghiMang(next);
-  return next;
-}

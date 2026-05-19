@@ -1,4 +1,5 @@
-// Middleware xac thuc JWT: doc token, nap user va chan request chua dang nhap.
+// Middleware xác thực JWT.
+// File này đọc access token, nạp user hiện tại và chặn request chưa đăng nhập.
 const jwt = require('jsonwebtoken');
 const { timNguoiDungTheoId } = require('../modules/auth/xacThuc.service');
 

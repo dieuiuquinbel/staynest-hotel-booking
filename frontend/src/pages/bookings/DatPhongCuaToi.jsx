@@ -23,6 +23,7 @@ import {
 } from '../../utils/lichSuDatPhong';
 import { dinhDangNgay, dinhDangTien } from '../../utils/dinhDang';
 import { kiemTraDieuKienVoucher, moTaDieuKienVoucher } from '../../utils/diemThuong';
+import { resolveMediaUrl } from '../../utils/media';
 import { taoAnhVietQr, taoMaThanhToan } from '../../utils/vietQr';
 import { useDatPhongCuaToi } from '../../hooks/useDatPhongCuaToi';
 import { useKhoVoucherCuaToi } from '../../hooks/useKhoVoucherCuaToi';
@@ -353,7 +354,7 @@ function DatPhongCuaToi() {
                   className="subtle-card grid overflow-hidden 2xl:grid-cols-[minmax(0,1fr)_300px]"
                 >
                   <div className="grid min-w-0 lg:grid-cols-[220px_minmax(0,1fr)] 2xl:grid-cols-[240px_minmax(0,1fr)]">
-                    <img src={booking.image_url} alt={booking.hotel_name} className="h-56 w-full object-cover lg:h-full" />
+                    <img src={resolveMediaUrl(booking.image_url)} alt={booking.hotel_name} className="h-56 w-full object-cover lg:h-full" />
 
                     <div className="min-w-0 p-5">
                       <div className="flex flex-wrap items-center gap-2">

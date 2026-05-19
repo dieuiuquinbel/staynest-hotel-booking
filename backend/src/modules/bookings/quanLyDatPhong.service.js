@@ -678,8 +678,42 @@ async function capNhatYeuCauHoTro({ ticketId, status, reply, adminId }) {
   return layTatCaYeuCauHoTro();
 }
 
-async function layBaoCaoDoanhThu() {
+function chuanHoaNgayBaoCao(value, fallback) {
+  if (!value) return fallback;
+  const text = String(value).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return fallback;
+  return text;
+}
+
+async function layBaoCaoDoanhThu({ dateFrom, dateTo } = {}) {
   await damBaoCauTrucVanHanh();
+
+  const today = new Date().toISOString().slice(0, 10);
+  const safeDateFrom = chuanHoaNgayBaoCao(dateFrom, today);
+  const safeDateTo = chuanHoaNgayBaoCao(dateTo, today);
+  const rangeStart = safeDateFrom <= safeDateTo ? safeDateFrom : safeDateTo;
+  const rangeEnd = safeDateFrom <= safeDateTo ? safeDateTo : safeDateFrom;
+
+  const [[periodBookingStats]] = await ketNoiDb.query(
+    `SELECT
+       COUNT(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) THEN 1 END) AS total_bookings,
+       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) AND booking_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_bookings,
+       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) AND booking_status = 'no_show' THEN 1 ELSE 0 END) AS no_show_bookings,
+       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(original_total_price, total_price, 0) ELSE 0 END) AS gross_revenue,
+       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(discount_amount, 0) ELSE 0 END) AS voucher_discount,
+       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(paid_amount, 0) ELSE 0 END) AS paid_revenue,
+       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(remaining_amount, 0) ELSE 0 END) AS receivable_amount
+     FROM bookings`,
+    [
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+    ],
+  );
 
   const [[bookingStats]] = await ketNoiDb.query(
     `SELECT
@@ -708,20 +742,54 @@ async function layBaoCaoDoanhThu() {
      WHERE is_active = TRUE`,
   );
 
+  const [[periodRefundStats]] = await ketNoiDb.query(
+    `SELECT
+       COUNT(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) THEN 1 END) AS refund_requests,
+       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) AND status = 'pending' THEN 1 ELSE 0 END) AS pending_refunds,
+       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(cancel_fee_amount, 0) ELSE 0 END) AS cancel_fee_revenue,
+       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) THEN COALESCE(refund_amount, 0) ELSE 0 END) AS refund_amount
+     FROM refund_requests`,
+    [
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+      rangeStart, rangeEnd,
+    ],
+  );
+
   return {
-    totalBookings: Number(bookingStats.total_bookings || 0),
-    cancelledBookings: Number(bookingStats.cancelled_bookings || 0),
-    noShowBookings: Number(bookingStats.no_show_bookings || 0),
-    grossRevenue: Number(bookingStats.gross_revenue || 0),
-    voucherDiscount: Number(bookingStats.voucher_discount || 0),
-    paidRevenue: Number(bookingStats.paid_revenue || 0),
-    receivableAmount: Number(bookingStats.receivable_amount || 0),
-    refundRequests: Number(refundStats.refund_requests || 0),
-    pendingRefunds: Number(refundStats.pending_refunds || 0),
-    cancelFeeRevenue: Number(refundStats.cancel_fee_revenue || 0),
-    refundAmount: Number(refundStats.refund_amount || 0),
-    availableRooms: Number(roomStats.available_rooms || 0),
-    roomTypes: Number(roomStats.room_types || 0),
+    period: {
+      dateFrom: rangeStart,
+      dateTo: rangeEnd,
+      totalBookings: Number(periodBookingStats.total_bookings || 0),
+      cancelledBookings: Number(periodBookingStats.cancelled_bookings || 0),
+      noShowBookings: Number(periodBookingStats.no_show_bookings || 0),
+      grossRevenue: Number(periodBookingStats.gross_revenue || 0),
+      voucherDiscount: Number(periodBookingStats.voucher_discount || 0),
+      paidRevenue: Number(periodBookingStats.paid_revenue || 0),
+      receivableAmount: Number(periodBookingStats.receivable_amount || 0),
+      refundRequests: Number(periodRefundStats.refund_requests || 0),
+      pendingRefunds: Number(periodRefundStats.pending_refunds || 0),
+      cancelFeeRevenue: Number(periodRefundStats.cancel_fee_revenue || 0),
+      refundAmount: Number(periodRefundStats.refund_amount || 0),
+    },
+    lifetime: {
+      totalBookings: Number(bookingStats.total_bookings || 0),
+      cancelledBookings: Number(bookingStats.cancelled_bookings || 0),
+      noShowBookings: Number(bookingStats.no_show_bookings || 0),
+      grossRevenue: Number(bookingStats.gross_revenue || 0),
+      voucherDiscount: Number(bookingStats.voucher_discount || 0),
+      paidRevenue: Number(bookingStats.paid_revenue || 0),
+      receivableAmount: Number(bookingStats.receivable_amount || 0),
+      refundRequests: Number(refundStats.refund_requests || 0),
+      pendingRefunds: Number(refundStats.pending_refunds || 0),
+      cancelFeeRevenue: Number(refundStats.cancel_fee_revenue || 0),
+      refundAmount: Number(refundStats.refund_amount || 0),
+    },
+    inventory: {
+      availableRooms: Number(roomStats.available_rooms || 0),
+      roomTypes: Number(roomStats.room_types || 0),
+    },
   };
 }
 

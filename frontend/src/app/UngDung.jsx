@@ -1,4 +1,5 @@
-// Dieu phoi ung dung frontend: khai bao route, layout khach/admin va dong bo phien dang nhap.
+// Bộ điều phối chính của frontend.
+// File này khai báo route, gắn layout khách hàng/admin và đồng bộ phiên đăng nhập.
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
@@ -23,6 +24,9 @@ const AdminDashboard = lazy(() => import('../pages/admin/AdminDashboard'));
 const AdminCustomers = lazy(() => import('../pages/admin/AdminCustomers'));
 const AdminInvoices = lazy(() => import('../pages/admin/AdminInvoices'));
 const AdminOperations = lazy(() => import('../pages/admin/AdminOperations'));
+const AdminRooms = lazy(() => import('../pages/admin/AdminRooms'));
+const AdminRevenue = lazy(() => import('../pages/admin/AdminRevenue'));
+const AdminMarketing = lazy(() => import('../pages/admin/AdminMarketing'));
 
 function CuonLenDauTrang() {
   const { pathname } = useLocation();
@@ -213,9 +217,12 @@ function UngDung() {
               <Route index element={<Navigate to="/admin/overview" replace />} />
               <Route path="overview" element={<AdminDashboard />} />
               <Route path="bookings" element={<QuanLyDatPhong />} />
+              <Route path="rooms" element={<AdminRooms />} />
               <Route path="operations" element={<AdminOperations />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="revenue" element={<AdminRevenue />} />
               <Route path="invoices" element={<AdminInvoices />} />
+              <Route path="marketing" element={<AdminMarketing />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

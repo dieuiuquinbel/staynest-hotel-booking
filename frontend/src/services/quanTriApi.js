@@ -10,6 +10,11 @@ export async function layDanhSachKhachHangAdminApi(params = {}) {
   return response.data.data;
 }
 
+export async function taoKhachHangAdminApi(payload) {
+  const response = await ketNoiApi.post('/admin/customers', payload);
+  return response.data.data;
+}
+
 export async function layChiTietKhachHangAdminApi(customerId) {
   const response = await ketNoiApi.get(`/admin/customers/${customerId}`);
   return response.data.data;

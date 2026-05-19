@@ -1,136 +1,91 @@
 # DieuBel Hotel Booking
 
-Ung dung demo dat phong khach san gom frontend React, backend Express va MySQL. Ban nay duoc dong goi de chia se trong nhom, nen thong tin ket noi database va tai khoan demo duoc cong khai trong project.
+Đây là bản `final` của đồ án đặt phòng khách sạn, gồm:
 
-## 1. Cau truc thu muc
+- `frontend`: giao diện khách hàng và giao diện quản trị.
+- `backend`: API Express + MySQL.
+- `database`: schema, seed và các file migration SQL.
 
-```text
-frontend/   Giao dien khach hang va admin
-backend/    API, xac thuc, dat phong, thanh toan, hoa don
-database/   Schema, seed du lieu va migration MySQL
-```
-
-## 2. Tai khoan va database demo
-
-Tai khoan admin tren website:
+## 1. Kiến trúc tổng quan
 
 ```text
-Username: admin
-Password: admin123
+Frontend React
+  -> gọi API qua src/services/*
+  -> route chính nằm ở frontend/src/app/UngDung.jsx
+
+Backend Express
+  -> route chính nằm ở backend/src/ungDung.js
+  -> mỗi nhóm nghiệp vụ tách trong backend/src/modules/*
+
+MySQL
+  -> schema và seed nằm trong database/*
 ```
 
-Thong tin MySQL khi chay bang Docker:
+## 2. Cấu trúc thư mục chính
 
 ```text
-Host: 127.0.0.1
-Port: 3307
-Username: root
-Password: 123456
-Database/Schema: hotel_booking_db
+frontend/
+  src/
+    app/            Bộ điều phối route và layout gốc
+    components/     Thành phần UI dùng lại
+    pages/          Trang theo từng khu vực
+    services/       Hàm gọi API
+    store/          Trạng thái đăng nhập
+    utils/          Hàm tiện ích
+
+backend/
+  src/
+    config/         Kết nối DB
+    middleware/     Middleware xác thực
+    modules/        Nghiệp vụ theo từng nhóm
+    mayChu.js       Điểm khởi động backend
+    ungDung.js      Khai báo toàn bộ route API
+
+database/
+  *.sql             Schema, seed và migration
 ```
 
-Thong tin backend dung trong container:
+## 3. Quy ước đọc code
 
-```text
-DB_HOST=database
-DB_PORT=3306
-DB_NAME=hotel_booking_db
-DB_USER=root
-DB_PASSWORD=123456
-JWT_SECRET=staynest_jwt_dev_secret_2026
-```
+### Frontend
 
-File cau hinh demo nam tai `backend/.env` va da duoc de kem project. Khi chay bang Docker Compose, cac bien moi truong trong `docker-compose.yml` se duoc uu tien cho container.
+- `pages/*`: mỗi file là một màn hình lớn.
+- `components/*`: phần UI có thể ghép lại.
+- `services/*`: chỉ chuyên gọi API, không chứa layout.
+- `utils/*`: chỉ chứa hàm tiện ích, định dạng, ánh xạ trạng thái, xử lý local.
 
-## 3. Chay bang Docker Desktop
+### Backend
 
-Yeu cau:
+- `ungDung.js`: nơi khai báo route.
+- `modules/*/*.service.js`: nơi chứa logic nghiệp vụ.
+- `middleware/*`: nơi xử lý xác thực hoặc kiểm tra request.
 
-- Da cai Docker Desktop.
-- Mo Docker Desktop truoc khi chay lenh.
-- Chay lenh tai thu muc goc cua project.
+## 4. Những gì đã được dọn trong pass cuối
 
-Chay lan dau:
+- Bỏ query thừa `recentBookings` khỏi admin overview.
+- Thu gọn module `Marketing` về đúng phần có dữ liệu thật là `Voucher`.
+- Khóa route thanh toán demo riêng bằng env:
+  - `ENABLE_DEMO_PAYMENT=false`
+- Ẩn gợi ý OTP dev khỏi UI thường:
+  - `ALLOW_DEV_OTP_HINT=false`
+- Tách trang `Khách hàng`, `Đơn đặt phòng`, `Quản lý phòng`, `Trang chủ` thành các component con để dễ sửa tiếp.
 
-```powershell
-docker compose up --build
-```
+## 5. Trạng thái dữ liệu hiện tại
 
-Chay nen:
+Hệ thống hiện dùng dữ liệu thật từ MySQL cho các phần:
 
-```powershell
-docker compose up --build -d
-```
+- `users`
+- `rooms`
+- `bookings`
+- `refund_requests`
+- `support_tickets`
+- `vouchers`
 
-Mo ung dung:
+Những phần còn mang tính nội dung trình bày tĩnh chủ yếu nằm ở `frontend/src/components/public/home/trangChuData.js`.
 
-```text
-Website: http://localhost:5714
-Backend health check: http://localhost:5000/api/health
-MySQL host port: 127.0.0.1:3307
-```
+## 6. Chạy dự án
 
-Dung chuong trinh:
-
-```powershell
-docker compose down
-```
-
-Xem log:
-
-```powershell
-docker compose logs -f
-```
-
-## 4. Mo database bang MySQL Workbench 8.0
-
-Tao connection moi trong MySQL Workbench:
-
-```text
-Connection Name: DieuBel Docker MySQL
-Connection Method: Standard (TCP/IP)
-Hostname: 127.0.0.1
-Port: 3307
-Username: root
-Password: 123456
-Default Schema: hotel_booking_db
-```
-
-Sau khi ket noi, mo tab `Schemas`, bam refresh neu chua thay database. Schema can xem la `hotel_booking_db`.
-
-Cac file tao bang va seed du lieu nam trong thu muc `database/`:
-
-```text
-01_init_schema.sql
-02_seed_sample_data.sql
-03_add_auth_booking_invoice.sql
-03_seed_more_rooms.sql
-05_clean_demo_data.sql
-06_expand_hotel_booking_system.sql
-```
-
-## 5. Import lai database tu dau
-
-MySQL container chi tu import cac file trong `database/` khi volume du lieu con trong. Neu muon xoa du lieu cu va tao lai database tu dau:
-
-```powershell
-docker compose down -v
-docker compose up --build
-```
-
-Lenh `docker compose down -v` se xoa volume MySQL cua project, bao gom booking/tai khoan da tao trong luc demo.
-
-## 6. Chay khong dung Docker
-
-Neu cai MySQL truc tiep tren may, tao database:
-
-```sql
-CREATE DATABASE hotel_booking_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
-
-Sau do import cac file trong `database/` theo thu tu o muc 4.
-
-Chay backend:
+### Chạy backend
 
 ```powershell
 cd backend
@@ -138,7 +93,7 @@ npm install
 npm run dev
 ```
 
-Chay frontend:
+### Chạy frontend
 
 ```powershell
 cd frontend
@@ -146,34 +101,29 @@ npm install
 npm run dev
 ```
 
-Khi chay backend truc tiep tren may, backend doc cau hinh tu `backend/.env`:
+### Địa chỉ mặc định
 
 ```text
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=hotel_booking_db
-DB_USER=root
-DB_PASSWORD=123456
+Frontend: http://localhost:5714
+Backend:  http://localhost:5000
 ```
 
-## 7. Luu y khi gui cho nguoi khac
+## 7. File nên đọc đầu tiên
 
-Gui ca thu muc project, gom cac phan quan trong:
+Nếu cần hiểu nhanh toàn bộ chương trình, nên đọc theo thứ tự:
 
-```text
-docker-compose.yml
-backend/.env
-backend/Dockerfile
-frontend/Dockerfile
-database/
-backend/
-frontend/
-```
+1. [frontend/src/app/UngDung.jsx](D:/Website khách sạn final/frontend/src/app/UngDung.jsx)
+2. [backend/src/ungDung.js](D:/Website khách sạn final/backend/src/ungDung.js)
+3. [frontend/src/pages/admin/README.md](D:/Website khách sạn final/frontend/src/pages/admin/README.md)
+4. [frontend/src/components/public/home/README.md](D:/Website khách sạn final/frontend/src/components/public/home/README.md)
+5. [backend/src/modules/README.md](D:/Website khách sạn final/backend/src/modules/README.md)
 
-Nguoi nhan chi can mo Docker Desktop va chay:
+## 8. Hướng mở rộng tiếp theo
 
-```powershell
-docker compose up --build
-```
-
-Neu port `3307`, `5000` hoac `5714` dang bi may khac su dung, doi mapping port trong `docker-compose.yml`.
+- Chuyển dữ liệu trình bày ở trang chủ từ dữ liệu tĩnh sang nguồn cấu hình riêng hoặc DB nếu cần quản trị nội dung.
+- Làm chức năng sửa phòng, khóa bán/mở bán và đổi phòng cho admin.
+- Tách tiếp `AdminRevenue.jsx` và `AdminDashboard.jsx` nếu muốn giảm độ dài file thêm nữa.
+- Thêm test cho các luồng:
+  - tạo khách hàng,
+  - thêm phòng với ảnh local,
+  - báo cáo doanh thu theo khoảng ngày.

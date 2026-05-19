@@ -1,4 +1,5 @@
-// Module auth: dang ky, dang nhap, OTP email, JWT va admin mac dinh.
+// Nghiệp vụ xác thực.
+// File này xử lý đăng ký, đăng nhập, OTP email, JWT và tài khoản admin mặc định.
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
@@ -13,6 +14,7 @@ const TAI_KHOAN_QUAN_TRI_MAC_DINH = {
   email: 'admin@dieubel.local',
   password: 'admin123',
 };
+const CHO_PHEP_GOI_Y_DEV_OTP = process.env.ALLOW_DEV_OTP_HINT === 'true';
 
 function taoLoi(status, message) {
   const error = new Error(message);
@@ -270,7 +272,10 @@ async function guiOtpXacMinhEmail(user) {
 
   return {
     mailSkipped: Boolean(mailResult?.skipped),
-    devOtp: process.env.NODE_ENV === 'production' || daCauHinhGuiMail() ? undefined : otp,
+    devOtp:
+      CHO_PHEP_GOI_Y_DEV_OTP && process.env.NODE_ENV !== 'production' && !daCauHinhGuiMail()
+        ? otp
+        : undefined,
   };
 }
 

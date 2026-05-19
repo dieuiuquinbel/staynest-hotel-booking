@@ -7,6 +7,7 @@ import useKhoXacThuc from "../../store/khoXacThuc";
 import { dinhDangTien } from "../../utils/dinhDang";
 import { taoDuongDanDatPhong, taoDuongDanDangNhapChuyenHuong } from "../../utils/duongDan";
 import { layThongTinTinhTrangPhong } from "../../utils/tinhTrangPhong";
+import { resolveMediaUrl } from "../../utils/media";
 import { docDanhGiaPhong } from "../../utils/lichSuDatPhong";
 import {
   docPhongYeuThich,
@@ -88,6 +89,7 @@ function ChiTietPhong() {
 
   const availability = layThongTinTinhTrangPhong(room.inventory_count);
   const gallery = [room.image_url, ...(room.gallery || [])]
+    .map((image) => resolveMediaUrl(image))
     .filter(Boolean)
     .filter((image, index, array) => array.indexOf(image) === index)
     .slice(0, 5);

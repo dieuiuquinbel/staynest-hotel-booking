@@ -80,7 +80,9 @@ export async function capNhatYeuCauHoTroAdminApi(ticketId, status, reply) {
   return response.data.data;
 }
 
-export async function layBaoCaoDoanhThuAdminApi() {
-  const response = await ketNoiApi.get('/admin/revenue-report');
+export async function layBaoCaoDoanhThuAdminApi(params = {}) {
+  const response = await ketNoiApi.get('/admin/revenue-report', {
+    params,
+  });
   return response.data.data;
 }
