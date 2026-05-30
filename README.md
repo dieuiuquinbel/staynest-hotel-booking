@@ -1,129 +1,76 @@
-# DieuBel Hotel Booking
+# DieuBel - Website dat phong khach san
 
-Đây là bản `final` của đồ án đặt phòng khách sạn, gồm:
+DieuBel la ung dung full-stack mo phong he thong dat phong khach san, gom khu vuc khach hang, khu vuc admin, API backend va database MySQL. Du an tap trung vao luong dat phong qua dem, thanh toan demo, ma QR nhan phong qua mang LAN, hoa don, voucher, danh gia va quan ly van hanh.
 
-- `frontend`: giao diện khách hàng và giao diện quản trị.
-- `backend`: API Express + MySQL.
-- `database`: schema, seed và các file migration SQL.
-
-## 1. Kiến trúc tổng quan
+## Thanh phan chinh
 
 ```text
-Frontend React
-  -> gọi API qua src/services/*
-  -> route chính nằm ở frontend/src/app/UngDung.jsx
-
-Backend Express
-  -> route chính nằm ở backend/src/ungDung.js
-  -> mỗi nhóm nghiệp vụ tách trong backend/src/modules/*
-
-MySQL
-  -> schema và seed nằm trong database/*
+D:\Website khach san final
+├─ frontend/              React + Vite SPA cho khach hang va admin
+├─ backend/               Express REST API va nghiep vu he thong
+├─ database/              SQL final va cac migration lich su
+├─ Tài liệu dự án/         Tai lieu tong quan, cau truc, luong van hanh
+└─ Hóa đơn admin/          File hoa don HTML sinh tu he thong
 ```
 
-## 2. Cấu trúc thư mục chính
+## Cong nghe
 
-```text
-frontend/
-  src/
-    app/            Bộ điều phối route và layout gốc
-    components/     Thành phần UI dùng lại
-    pages/          Trang theo từng khu vực
-    services/       Hàm gọi API
-    store/          Trạng thái đăng nhập
-    utils/          Hàm tiện ích
+- Frontend: React, Vite, React Router DOM, TanStack React Query, Zustand, Axios, Tailwind CSS.
+- Backend: Node.js, Express, mysql2/promise, JWT, bcryptjs, multer, nodemailer.
+- Database: MySQL.
+- Demo thanh toan: VietQR mock/manual confirmation.
+- Demo nhan phong: QR token cong khai, co the quet bang dien thoai trong cung mang LAN.
 
-backend/
-  src/
-    config/         Kết nối DB
-    middleware/     Middleware xác thực
-    modules/        Nghiệp vụ theo từng nhóm
-    mayChu.js       Điểm khởi động backend
-    ungDung.js      Khai báo toàn bộ route API
+## Luong nghiep vu noi bat
 
-database/
-  *.sql             Schema, seed và migration
-```
+- Khach xem phong, loc phong, dat phong, ap voucher va thanh toan.
+- Don da thanh toan trong tuong lai nam o trang thai cho ngay nhan phong.
+- Tu 00:00 ngay check-in, backend tu mo trang thai nhan phong.
+- Le tan hoac dien thoai LAN quet QR de xac minh nhan phong lan cuoi.
+- Khach co the tra phong sau khi da duoc xac minh LAN; he thong cung co quet nen de tu dong tra phong khi het ngay luu tru.
+- Admin co hang doi don, tab cho ngay nhan phong, hoa don, doanh thu, khach hang, phong, voucher va khieu nai/ho tro.
 
-## 3. Quy ước đọc code
+## Chay du an
 
-### Frontend
+Backend:
 
-- `pages/*`: mỗi file là một màn hình lớn.
-- `components/*`: phần UI có thể ghép lại.
-- `services/*`: chỉ chuyên gọi API, không chứa layout.
-- `utils/*`: chỉ chứa hàm tiện ích, định dạng, ánh xạ trạng thái, xử lý local.
-
-### Backend
-
-- `ungDung.js`: nơi khai báo route.
-- `modules/*/*.service.js`: nơi chứa logic nghiệp vụ.
-- `middleware/*`: nơi xử lý xác thực hoặc kiểm tra request.
-
-## 4. Những gì đã được dọn trong pass cuối
-
-- Bỏ query thừa `recentBookings` khỏi admin overview.
-- Thu gọn module `Marketing` về đúng phần có dữ liệu thật là `Voucher`.
-- Khóa route thanh toán demo riêng bằng env:
-  - `ENABLE_DEMO_PAYMENT=false`
-- Ẩn gợi ý OTP dev khỏi UI thường:
-  - `ALLOW_DEV_OTP_HINT=false`
-- Tách trang `Khách hàng`, `Đơn đặt phòng`, `Quản lý phòng`, `Trang chủ` thành các component con để dễ sửa tiếp.
-
-## 5. Trạng thái dữ liệu hiện tại
-
-Hệ thống hiện dùng dữ liệu thật từ MySQL cho các phần:
-
-- `users`
-- `rooms`
-- `bookings`
-- `refund_requests`
-- `support_tickets`
-- `vouchers`
-
-Những phần còn mang tính nội dung trình bày tĩnh chủ yếu nằm ở `frontend/src/components/public/home/trangChuData.js`.
-
-## 6. Chạy dự án
-
-### Chạy backend
-
-```powershell
+```bash
 cd backend
 npm install
 npm run dev
 ```
 
-### Chạy frontend
+Frontend:
 
-```powershell
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Địa chỉ mặc định
+Build frontend:
 
-```text
-Frontend: http://localhost:5714
-Backend:  http://localhost:5000
+```bash
+cd frontend
+npm run build
 ```
 
-## 7. File nên đọc đầu tiên
+Kiem tra backend:
 
-Nếu cần hiểu nhanh toàn bộ chương trình, nên đọc theo thứ tự:
+```bash
+curl http://127.0.0.1:5000/api/health
+```
 
-1. [frontend/src/app/UngDung.jsx](D:/Website khách sạn final/frontend/src/app/UngDung.jsx)
-2. [backend/src/ungDung.js](D:/Website khách sạn final/backend/src/ungDung.js)
-3. [frontend/src/pages/admin/README.md](D:/Website khách sạn final/frontend/src/pages/admin/README.md)
-4. [frontend/src/components/public/home/README.md](D:/Website khách sạn final/frontend/src/components/public/home/README.md)
-5. [backend/src/modules/README.md](D:/Website khách sạn final/backend/src/modules/README.md)
+## Cau hinh moi truong
 
-## 8. Hướng mở rộng tiếp theo
+- Mau backend: `backend/.env.example`
+- Mau frontend: `frontend/.env.example`
+- File `.env` thuc te khong nen dua len git vi co the chua mat khau DB, JWT secret va SMTP.
 
-- Chuyển dữ liệu trình bày ở trang chủ từ dữ liệu tĩnh sang nguồn cấu hình riêng hoặc DB nếu cần quản trị nội dung.
-- Làm chức năng sửa phòng, khóa bán/mở bán và đổi phòng cho admin.
-- Tách tiếp `AdminRevenue.jsx` và `AdminDashboard.jsx` nếu muốn giảm độ dài file thêm nữa.
-- Thêm test cho các luồng:
-  - tạo khách hàng,
-  - thêm phòng với ảnh local,
-  - báo cáo doanh thu theo khoảng ngày.
+## Tai lieu chi tiet
+
+- `Tài liệu dự án/README.md`: muc luc tai lieu.
+- `Tài liệu dự án/CAU_TRUC_CHUONG_TRINH.md`: cau truc thu muc, module, quy uoc sap xep file.
+- `Tài liệu dự án/TINH_NANG_NOI_BAT.md`: danh sach tinh nang noi bat cua chuong trinh.
+- `Tài liệu dự án/GHI_CHU_DU_AN.md`: luong van hanh va cac diem can giu khi phat trien tiep.
+- `database/README.md`: cach dung SQL final va ghi chu database.

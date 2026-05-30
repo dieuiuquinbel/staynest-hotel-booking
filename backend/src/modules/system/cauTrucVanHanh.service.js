@@ -1,7 +1,21 @@
+// Chức năng: Đảm bảo các bảng/cột vận hành cần thiết tồn tại.
 // Module system: dam bao cac bang/cot mo rong ton tai truoc khi xu ly nghiep vu.
 const ketNoiDb = require('../../config/coSoDuLieu');
 
 let khoiTaoCauTrucVanHanhPromise = null;
+
+async function themCotNeuThieu(tableName, columnName, definition) {
+  const [columns] = await ketNoiDb.query(
+    `SHOW COLUMNS FROM \`${tableName}\` LIKE ?`,
+    [columnName],
+  );
+
+  if (!columns.length) {
+    await ketNoiDb.query(
+      `ALTER TABLE \`${tableName}\` ADD COLUMN ${columnName} ${definition}`,
+    );
+  }
+}
 
 async function damBaoCauTrucVanHanh() {
   if (!khoiTaoCauTrucVanHanhPromise) {
@@ -31,6 +45,18 @@ async function damBaoCauTrucVanHanh() {
            'pay_at_counter',
            'refunded'
          ) NOT NULL DEFAULT 'unpaid'`,
+      );
+
+      await themCotNeuThieu(
+        'bookings',
+        'frontdesk_verified_at',
+        'TIMESTAMP NULL AFTER checked_out_at',
+      );
+
+      await themCotNeuThieu(
+        'bookings',
+        'frontdesk_verified_note',
+        'VARCHAR(255) NULL AFTER frontdesk_verified_at',
       );
 
       await ketNoiDb.query(

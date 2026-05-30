@@ -1,70 +1,89 @@
 # Cấu trúc `frontend/src`
 
-Thư mục này là toàn bộ mã nguồn React.
+Thư mục này chứa toàn bộ source React của frontend DieuBel.
 
-## Các nhóm chính
+## Nhóm chính
 
 ### `app/`
 
-Chứa bộ điều phối chính của frontend.
-
-- `UngDung.jsx`: nơi khai báo route, gắn layout khách hàng/admin, đồng bộ phiên đăng nhập.
-
-### `components/`
-
-Chứa các khối giao diện dùng lại.
-
-- `admin/`: component dùng riêng cho khu vực quản trị.
-  - `bookings/`: hàng đợi đơn, panel chi tiết, helper đặt phòng.
-  - `customers/`: danh sách khách, form tạo khách, panel chi tiết.
-  - `rooms/`: danh sách phòng, form tạo phòng, helper kho phòng.
-- `auth/`: chặn route hoặc hỗ trợ đăng nhập.
-- `bookings/`: component dùng riêng cho các màn đặt phòng phía khách.
-- `chatbot/`: chatbot nội bộ.
-- `layout/`: header, footer, khung chung.
-- `public/home/`: section lớn và dữ liệu tĩnh của trang chủ.
-- `rooms/`: card phòng, bộ lọc đang dùng.
-- `search/`: thanh tìm kiếm và bộ lọc tìm phòng.
+- `UngDung.jsx`  
+  Khai báo router, React Query provider, layout chung, route bảo vệ, chatbot và thông báo toàn cục.
 
 ### `pages/`
 
-Chứa màn hình hoàn chỉnh theo từng khu vực.
+- `public/`  
+  Trang công khai như trang chủ.
 
-- `public/`: trang công khai.
-- `rooms/`: danh sách phòng, chi tiết phòng.
-- `bookings/`: tạo đơn, xem đơn của tôi.
-- `account/`: tài khoản, lịch sử.
-- `auth/`: đăng nhập, đăng ký, OTP.
-- `admin/`: giao diện quản trị.
+- `rooms/`  
+  Danh sách phòng và chi tiết phòng.
+
+- `bookings/`  
+  Tạo booking, xem booking của tôi và trang quét QR check-in.
+
+- `account/`  
+  Tài khoản, lịch sử và dữ liệu cá nhân.
+
+- `auth/`  
+  Đăng nhập, đăng ký và OTP.
+
+- `admin/`  
+  Dashboard, quản lý đặt phòng, phòng, khách hàng, hóa đơn, doanh thu, marketing và vận hành.
+
+### `components/`
+
+- `admin/`  
+  Component cho khu vực quản trị.
+
+- `auth/`  
+  Component bảo vệ route.
+
+- `bookings/`  
+  Component phục vụ luồng đặt phòng phía khách.
+
+- `chatbot/`  
+  Chatbot hỗ trợ đặt phòng và logic gợi ý.
+
+- `layout/`  
+  Header, footer, bảng mời thành viên và toast toàn cục.
+
+- `public/home/`  
+  Section trang chủ, dữ liệu tĩnh, voucher và popup.
+
+- `rooms/`  
+  Card phòng, skeleton, bộ lọc đang dùng.
+
+- `search/`  
+  Thanh tìm kiếm và cấu hình bộ lọc.
 
 ### `services/`
 
-Chứa các hàm gọi API.  
-Quy ước: mỗi file chỉ chuyên giao tiếp với backend, không chứa layout.
+Các file gọi API backend bằng Axios. Quy ước: service chỉ gửi/nhận dữ liệu, không chứa layout hoặc JSX.
+
+### `hooks/`
+
+Custom hook tái sử dụng logic lấy dữ liệu hoặc đồng bộ localStorage.
 
 ### `store/`
 
-Chứa state chung của frontend.
-
-- `khoXacThuc.js`: lưu token và thông tin user.
+- `khoXacThuc.js`: user/token.
+- `khoThongBao.js`: toast toàn cục.
 
 ### `utils/`
 
-Chứa hàm tiện ích:
+Hàm tiện ích thuần: định dạng tiền/ngày, phân quyền, localStorage, media URL, VietQR, trạng thái phòng và trạng thái booking.
 
-- định dạng ngày, tiền,
-- ánh xạ trạng thái,
-- xử lý local storage,
-- dựng QR,
-- xử lý media local.
+## Quy ước sắp xếp
 
-## Gợi ý đọc code
+- Page giữ luồng chính của màn hình.
+- Component giữ UI có thể tái sử dụng hoặc UI theo domain.
+- Helper thuần đặt ở `*Helpers.js`.
+- Dữ liệu tĩnh đặt ở `*Data.js` hoặc `*Options.js`.
+- API đặt ở `services/`.
+- State dùng chung đặt ở `store/`.
+- Logic không phụ thuộc React đặt ở `utils/`.
 
-Nếu cần hiểu frontend từ đầu:
+## Các điểm cần chú ý
 
-1. `main.jsx`
-2. `app/UngDung.jsx`
-3. `pages/admin/*` hoặc `pages/public/*` tùy khu vực cần tìm
-4. `components/admin/*`, `components/bookings/*` hoặc `components/public/home/*` nếu page đã được tách nhỏ
-5. `services/*`
-6. `utils/*`
+- `DatPhongCuaToi.jsx` là màn hình lớn, đã có component phụ trong `components/bookings/my-bookings`.
+- `QuetCheckIn.jsx` là trang công khai phục vụ QR LAN, phải giữ logic không cho check-in sớm trước ngày nhận phòng.
+- `components/admin/bookings` là nhóm quan trọng của admin booking; khi đổi trạng thái booking phải rà lại helper và constants trong nhóm này.

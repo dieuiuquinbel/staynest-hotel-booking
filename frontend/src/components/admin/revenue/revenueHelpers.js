@@ -1,3 +1,4 @@
+// Chức năng: Hàm tạo khoảng ngày và phân tích doanh thu.
 // Helper xử lý mốc thời gian và dữ liệu biểu diễn cho trang doanh thu.
 export function ymdToday() {
   const now = new Date();
@@ -36,10 +37,12 @@ export function buildRange(preset) {
 
 export function taoPhanTichTrongKy(period = {}) {
   return [
-    ['Đã thu trong kỳ', period.paidRevenue || 0],
-    ['Còn phải thu trong kỳ', period.receivableAmount || 0],
+    ['Giá trị đơn gốc', period.grossRevenue || 0],
     ['Giảm giá trong kỳ', period.voucherDiscount || 0],
-    ['Phí hủy giữ lại', period.cancelFeeRevenue || 0],
+    ['Khách đã thanh toán', period.customerPaidAmount || 0],
     ['Hoàn tiền trong kỳ', period.refundAmount || 0],
+    ['Phí hủy giữ lại', period.cancelFeeRevenue || 0],
+    ['Doanh thu ròng', period.netRevenue || 0],
+    ['Còn phải thu còn hiệu lực', period.receivableAmount || 0],
   ];
 }

@@ -1,3 +1,4 @@
+// Chức năng: Tạo pool kết nối MySQL dùng chung cho backend.
 // Cấu hình pool kết nối MySQL dùng chung cho toàn bộ backend.
 const mysql = require('mysql2/promise');
 

@@ -1,3 +1,4 @@
+// Chức năng: Hiển thị mã VietQR cho thanh toán đơn đặt phòng.
 // Ảnh VietQR dùng cho màn "Đặt phòng của tôi".
 // Tách riêng để file trang chính chỉ còn điều phối dữ liệu thanh toán.
 import { taoAnhVietQr, daCauHinhVietQr } from '../../../utils/vietQr';

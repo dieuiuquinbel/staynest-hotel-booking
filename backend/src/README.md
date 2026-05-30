@@ -1,37 +1,54 @@
 # Cấu trúc `backend/src`
 
-Đây là mã nguồn backend Express.
+Thư mục này chứa Express app, cấu hình database, middleware xác thực và các module nghiệp vụ của backend DieuBel.
 
-## Chức năng từng file/thư mục
-
-### File gốc
+## File gốc
 
 - `mayChu.js`  
-  Điểm khởi động backend: nạp `.env`, chuẩn bị tài khoản admin mặc định và mở cổng HTTP.
+  Điểm khởi động backend. File này nạp `.env`, chuẩn bị admin mặc định, mở HTTP server và khởi động scanner nền cho trạng thái booking.
 
 - `ungDung.js`  
-  Nơi lắp toàn bộ middleware, route công khai, route khách hàng và route quản trị.
+  Lắp Express app: CORS, JSON parser, static upload/invoice, route public, route khách hàng và route admin.
 
-### `config/`
+## Thư mục cấu hình
 
-- `coSoDuLieu.js`  
-  Tạo pool kết nối MySQL dùng chung cho toàn backend.
+- `config/coSoDuLieu.js`  
+  Tạo MySQL connection pool dùng chung. Service nào cần transaction sẽ lấy connection từ pool này.
 
-### `middleware/`
+## Middleware
 
-- `xacThuc.middleware.js`  
-  Kiểm tra JWT và nạp `req.user`.
+- `middleware/xacThuc.middleware.js`  
+  Kiểm tra JWT, gán `req.user`, bảo vệ route cần đăng nhập và route cần quyền admin.
 
-### `modules/`
+## Modules
 
-Mỗi thư mục con là một nhóm nghiệp vụ:
+- `auth/`  
+  Đăng ký, đăng nhập, OTP, JWT, hồ sơ người dùng và admin mặc định.
 
-- `auth/`: đăng nhập, đăng ký, OTP, JWT
-- `bookings/`: tạo đơn, đổi trạng thái, báo cáo doanh thu
-- `rooms/`: danh sách phòng, chi tiết phòng, thêm phòng
-- `vouchers/`: danh sách voucher, lưu voucher
-- `admin/`: tổng quan và quản lý khách hàng
-- `payments/`: luồng hỗ trợ thanh toán demo
-- `notifications/`: gửi email
-- `invoices/`: xuất và xem hóa đơn
-- `system/`: hàm kiểm tra/cấu trúc hỗ trợ chung
+- `bookings/`  
+  Tạo booking, xác nhận thanh toán, quản lý trạng thái, QR check-in, check-out, hoàn tiền, hỗ trợ và doanh thu.
+
+- `rooms/`  
+  Danh sách phòng, chi tiết phòng, phòng nổi bật, CRUD phòng admin và đánh giá phòng.
+
+- `vouchers/`  
+  Voucher công khai, voucher của người dùng và lưu voucher.
+
+- `admin/`  
+  Dashboard, khách hàng, audit, báo cáo và dữ liệu tổng hợp cho admin.
+
+- `notifications/`  
+  Gửi email OTP, xác nhận booking và các email nghiệp vụ.
+
+- `invoices/`  
+  Sinh, đọc và phục vụ hóa đơn HTML.
+
+- `system/`  
+  Đảm bảo cấu trúc vận hành bổ sung khi database cần cột mới.
+
+## Quy ước sửa backend
+
+- Route chỉ điều phối request/response; logic chi tiết đặt trong service.
+- Nghiệp vụ cập nhật nhiều bảng phải dùng transaction.
+- Trạng thái booking quan trọng phải ghi log.
+- Không commit `.env`, upload, storage hoặc hóa đơn sinh tự động.

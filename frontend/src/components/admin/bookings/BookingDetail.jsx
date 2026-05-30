@@ -1,9 +1,8 @@
-// Panel chi tiết đơn đặt phòng cho quản lý.
-// File này gom toàn bộ phần ra quyết định và hiển thị mốc chính của một đơn.
-import { dinhDangNgay, dinhDangTien } from '../../../utils/dinhDang';
-import { dinhDangNgayGio } from '../../../utils/dinhDang';
+﻿// Chá»©c nÄƒng: Hiá»ƒn thá»‹ chi tiáº¿t Ä‘Æ¡n Ä‘áº·t phÃ²ng vÃ  cÃ¡c thao tÃ¡c admin.
+// Panel chi tiáº¿t Ä‘Æ¡n Ä‘áº·t phÃ²ng cho quáº£n lÃ½ â€” 2 tab cá»¥c bá»™, ghi chÃº gá»™p vÃ o Tab 1.
+import { useState, useEffect } from 'react';
+import { dinhDangNgay, dinhDangNgayGio, dinhDangTien } from '../../../utils/dinhDang';
 import {
-  PHUONG_THUC_THANH_TOAN,
   TRANG_THAI_DAT_PHONG,
   TRANG_THAI_THANH_TOAN,
 } from '../../../utils/lichSuDatPhong';
@@ -13,174 +12,439 @@ import {
   MAU_TRANG_THAI_THANH_TOAN,
 } from './bookingConstants';
 import {
-  daThanhToanDu,
-  ghiChuHanhDong,
+  laDonChoNgayNhanPhong,
+  laDonConPhaiThu,
   laDonNhanPhongHomNay,
-  laNgoaiLeThanhToan,
   nhanDatPhong,
   nhanHoanTien,
   nhanThanhToan,
 } from './bookingHelpers';
-import { BadgeDatPhong, DongThongTinChiTiet } from './BookingShared';
+import { BadgeDatPhong } from './BookingShared';
+
+function IconCheckin() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+      <path fillRule="evenodd" d="M3 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-.293.707L12 11.414V15a1 1 0 0 1-.293.707l-2 2A1 1 0 0 1 8 17v-5.586L3.293 6.707A1 1 0 0 1 3 6V3z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
+function IconCheckout() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+      <path fillRule="evenodd" d="M16.707 10.293a1 1 0 0 1 0 1.414l-6 6a1 1 0 0 1-1.414 0l-6-6a1 1 0 1 1 1.414-1.414L9 14.586V3a1 1 0 0 1 2 0v11.586l4.293-4.293a1 1 0 0 1 1.414 0z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
+function IconCancel() {
+  return (
+    <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+      <path fillRule="evenodd" d="M4.293 4.293a1 1 0 0 1 1.414 0L10 8.586l4.293-4.293a1 1 0 1 1 1.414 1.414L11.414 10l4.293 4.293a1 1 0 0 1-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L8.586 10 4.293 5.707a1 1 0 0 1 0-1.414z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
+const MILESTONES = [
+  ['Táº¡o Ä‘Æ¡n', 'createdAt'],
+  ['XÃ¡c nháº­n', 'confirmedAt'],
+  ['Thanh toÃ¡n', 'paidAt'],
+  ['Check-in', 'checkedInAt'],
+  ['Check-out', 'checkedOutAt'],
+  ['Há»§y / no-show', 'cancelledAt'],
+];
 
 export default function BookingDetail({
   booking,
   note,
   refundDecisionNote,
+  activeTab,
   setNote,
   setRefundDecisionNote,
   onStatus,
-  onPayment,
   onSaveNote,
   onRefundDecision,
 }) {
+  const [localTab, setLocalTab] = useState('overview');
+
+  // Reset tab vá» overview khi Ä‘á»•i Ä‘Æ¡n hÃ ng khÃ¡c
+  useEffect(() => {
+    setLocalTab('overview');
+  }, [booking?.id]);
+
   if (!booking) {
     return (
-      <aside className="rounded-lg border border-slate-200 bg-white p-5 text-sm font-bold text-slate-500">
-        Chọn một đơn để xem chi tiết.
+      <aside className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm" style={{ minHeight: '320px' }}>
+        <svg viewBox="0 0 20 20" fill="currentColor" className="h-10 w-10 text-slate-300">
+          <path fillRule="evenodd" d="M3 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm0 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-2zm0 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-2z" clipRule="evenodd" />
+        </svg>
+        <p className="text-sm font-bold text-slate-400">Chá»n má»™t Ä‘Æ¡n á»Ÿ danh sÃ¡ch bÃªn trÃ¡i Ä‘á»ƒ kiá»ƒm tra chi tiáº¿t</p>
       </aside>
     );
   }
 
-  const canManualDeposit = booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED
-    && booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID;
-  const canManualFullPay = laNgoaiLeThanhToan(booking);
-  const canCheckIn = laDonNhanPhongHomNay(booking);
-  const canCheckOut = booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN;
+  const canCheckIn = laDonNhanPhongHomNay(booking) || (laDonConPhaiThu(booking) && !laDonChoNgayNhanPhong(booking));
+  const canVerifyLan = booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && !booking.frontdeskVerifiedAt;
+  const canCheckOut = booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && Boolean(booking.frontdeskVerifiedAt);
   const canCancelHold = booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING
     && booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID;
   const refundRequest = booking.refundRequest || null;
   const canApproveRefund = refundRequest?.status === 'pending';
+  const noAction = !canCheckIn && !canVerifyLan && !canCheckOut && !canCancelHold;
+
+  // Timeline
+  const milestones = MILESTONES.map(([label, key]) => ({
+    label,
+    value: booking[key] || (key === 'cancelledAt' ? booking.noShowAt : null),
+  }));
+  const activeMilestones = milestones.filter((m) => m.value);
+  const pendingMilestones = milestones.filter((m) => !m.value);
 
   return (
-    <aside className="rounded-lg border border-slate-200 bg-white p-5 xl:sticky xl:top-6 xl:self-start">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <p className="text-[11px] font-black uppercase tracking-[0.16em] text-brand-700">Điều hành đơn</p>
-          <h3 className="mt-2 break-all text-xl font-black text-slate-950">{booking.id}</h3>
-          <p className="mt-1 text-sm font-bold text-slate-500">{booking.guestName}</p>
-          <p className="mt-1 break-words text-xs font-bold text-slate-500">{booking.guestEmail}</p>
-        </div>
-        <div className="grid gap-2">
-          <BadgeDatPhong tone={MAU_TRANG_THAI_DAT_PHONG[booking.bookingStatus]}>{nhanDatPhong(booking.bookingStatus)}</BadgeDatPhong>
-          <BadgeDatPhong tone={MAU_TRANG_THAI_THANH_TOAN[booking.paymentStatus]}>{nhanThanhToan(booking.paymentStatus)}</BadgeDatPhong>
+    <aside className="rounded-2xl border-2 border-slate-200 bg-white shadow-md overflow-hidden">
+
+      {/* 1. Header ÄÆ¡n HÃ ng */}
+      <div className="border-b border-slate-100 p-5 bg-white">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">ThÃ´ng tin Ä‘iá»u hÃ nh</p>
+            <h3 className="mt-1 font-mono text-lg font-black tracking-wider text-slate-900 break-all">
+              {booking.bookingCode || booking.id}
+            </h3>
+            <p className="mt-1.5 text-base font-black text-slate-900 truncate">{booking.guestName}</p>
+          </div>
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <BadgeDatPhong tone={MAU_TRANG_THAI_DAT_PHONG[booking.bookingStatus]}>
+              {nhanDatPhong(booking.bookingStatus)}
+            </BadgeDatPhong>
+            <BadgeDatPhong tone={MAU_TRANG_THAI_THANH_TOAN[booking.paymentStatus]}>
+              {nhanThanhToan(booking.paymentStatus)}
+            </BadgeDatPhong>
+          </div>
         </div>
       </div>
 
-      <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-sm font-bold text-slate-600">{ghiChuHanhDong(booking)}</p>
-
-      <section className="mt-5">
-        <h4 className="text-sm font-black text-slate-950">Hành động quản lý</h4>
-        <div className="mt-3 grid gap-2">
-          {canManualDeposit ? (
-            <button onClick={() => onPayment(booking.id, PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT)} className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-700">
-              Ghi nhận đã thu cọc
-            </button>
-          ) : null}
-          {canManualFullPay ? (
-            <button onClick={() => onPayment(booking.id, PHUONG_THUC_THANH_TOAN.ONLINE_FULL)} className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-black text-slate-700">
-              Ghi nhận đã thanh toán đủ
-            </button>
-          ) : null}
-          {canCheckIn ? (
-            <button onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN, 'Admin check-in tại khách sạn')} className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm font-black text-sky-700">
-              Check-in
-            </button>
-          ) : null}
-          {canCheckOut ? (
-            <button onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_OUT, 'Admin check-out')} className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm font-black text-emerald-700">
-              Check-out
-            </button>
-          ) : null}
-          {canCancelHold ? (
-            <button onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'Admin hủy giữ chỗ chưa thanh toán')} className="rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-sm font-black text-rose-700">
-              Hủy giữ chỗ
-            </button>
-          ) : null}
-          {!canManualDeposit && !canManualFullPay && !canCheckIn && !canCheckOut && !canCancelHold ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-bold text-slate-500">
-              Trạng thái hiện tại không cần thao tác tay.
-            </div>
-          ) : null}
-        </div>
-      </section>
-
-      {refundRequest ? (
-        <section className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-sm font-black text-amber-900">Yêu cầu hủy / hoàn tiền</p>
-              <p className="mt-1 text-xs font-bold text-amber-800">{refundRequest.code}</p>
-            </div>
-            <BadgeDatPhong tone={MAU_TRANG_THAI_HOAN_TIEN[refundRequest.status]}>{nhanHoanTien(refundRequest.status)}</BadgeDatPhong>
-          </div>
-          <div className="mt-3 grid gap-2 text-sm font-bold text-amber-900">
-            <p>Đã thu: {dinhDangTien(refundRequest.paidAmount)}</p>
-            <p>Phí hủy: {dinhDangTien(refundRequest.cancelFeeAmount)}</p>
-            <p>Dự kiến hoàn: {dinhDangTien(refundRequest.refundAmount)}</p>
-            {refundRequest.reason ? <p>Lý do: {refundRequest.reason}</p> : null}
-          </div>
-          {canApproveRefund ? (
-            <>
-              <textarea
-                value={refundDecisionNote}
-                onChange={(event) => setRefundDecisionNote(event.target.value)}
-                rows={3}
-                placeholder="Ghi chú khi duyệt / từ chối"
-                className="mt-3 w-full rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm font-bold outline-none focus:border-amber-400"
-              />
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button onClick={() => onRefundDecision(refundRequest.id, 'approved')} className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-black text-white">
-                  Duyệt hủy / hoàn tiền
-                </button>
-                <button onClick={() => onRefundDecision(refundRequest.id, 'rejected')} className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-black text-rose-700">
-                  Từ chối yêu cầu
-                </button>
-              </div>
-            </>
-          ) : null}
-        </section>
-      ) : null}
-
-      <section className="mt-5 grid grid-cols-2 gap-2">
-        <DongThongTinChiTiet label="Khách sạn" value={booking.hotel_name} />
-        <DongThongTinChiTiet label="Phòng" value={booking.room_name} />
-        <DongThongTinChiTiet label="Nhận phòng" value={dinhDangNgay(booking.checkIn)} />
-        <DongThongTinChiTiet label="Trả phòng" value={dinhDangNgay(booking.checkOut)} />
-        <DongThongTinChiTiet label="Số khách" value={booking.guests} />
-        <DongThongTinChiTiet label="Số phòng" value={booking.rooms} />
-        <DongThongTinChiTiet label="Tổng tiền" value={dinhDangTien(booking.totalPrice)} />
-        <DongThongTinChiTiet label="Còn lại" value={dinhDangTien(booking.remainingAmount)} />
-      </section>
-
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-        <p className="text-sm font-black text-slate-950">Mốc chính</p>
-        <div className="mt-3 grid gap-2 text-sm">
-          {[
-            ['Tạo đơn', booking.createdAt],
-            ['Xác nhận', booking.confirmedAt],
-            ['Thanh toán', booking.paidAt],
-            ['Check-in', booking.checkedInAt],
-            ['Check-out', booking.checkedOutAt],
-            ['Hủy / no-show', booking.cancelledAt || booking.noShowAt],
-          ].map(([label, value]) => (
-            <div key={label} className="flex justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2">
-              <span className="font-bold text-slate-600">{label}</span>
-              <span className="text-right font-black text-slate-950">{dinhDangNgayGio(value)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
-        <label className="grid gap-2">
-          <span className="text-sm font-black text-slate-950">Ghi chú nội bộ</span>
-          <textarea value={note} onChange={(event) => setNote(event.target.value)} rows={4} className="rounded-lg border border-slate-200 px-3 py-2 text-sm font-semibold outline-none focus:border-brand-500" />
-        </label>
-        <button onClick={() => onSaveNote(booking.id)} className="mt-3 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-black text-slate-700">
-          Lưu ghi chú
+      {/* 2. Menu Chá»n Tab Cá»¥c Bá»™ */}
+      <div className="border-b border-slate-100 bg-slate-50/50 p-2 flex gap-1.5">
+        <button
+          type="button"
+          onClick={() => setLocalTab('overview')}
+          className={`flex-1 rounded-xl py-3.5 text-center font-black transition-all text-sm ${
+            localTab === 'overview'
+              ? 'bg-slate-950 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+          }`}
+        >
+          ðŸ“‹ ThÃ´ng tin phÃ²ng
         </button>
-      </section>
+        <button
+          type="button"
+          onClick={() => setLocalTab('finance')}
+          className={`flex-1 rounded-xl py-3.5 text-center font-black transition-all relative text-sm ${
+            localTab === 'finance'
+              ? 'bg-slate-950 text-white shadow-md'
+              : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+          }`}
+        >
+          ðŸ’³ TÃ i chÃ­nh & HoÃ n tiá»n
+          {refundRequest?.status === 'pending' && (
+            <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
+          )}
+        </button>
+      </div>
+
+      {/* 3. VÃ¹ng Ná»™i Dung */}
+      <div className="p-5">
+
+        {/* Tab 1: ThÃ´ng tin phÃ²ng + HÃ nh Ä‘á»™ng + Ghi chÃº ná»™i bá»™ */}
+        {localTab === 'overview' && (
+          <div className="grid gap-4">
+            {/* Tháº» khÃ¡ch lÆ°u trÃº */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">KhÃ¡ch lÆ°u trÃº</p>
+              <div className="mt-2.5 flex items-center gap-3">
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-200/80 text-sm">ðŸ‘¤</div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black text-slate-800">{booking.guestName}</p>
+                  <p className="text-[11px] font-bold text-slate-400 truncate mt-0.5">{booking.guestEmail}</p>
+                  {booking.guestPhone && (
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">ðŸ“ž {booking.guestPhone}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* NgÃ y nháº­n / ngÃ y tráº£ */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Nháº­n phÃ²ng ðŸ“…</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{dinhDangNgay(booking.checkIn)}</p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Tráº£ phÃ²ng ðŸ“…</p>
+                <p className="mt-1 text-sm font-black text-slate-800">{dinhDangNgay(booking.checkOut)}</p>
+              </div>
+            </div>
+
+            {/* Chi tiáº¿t phÃ²ng á»Ÿ */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Chi tiáº¿t phÃ²ng</p>
+              <div className="mt-2.5 grid grid-cols-2 gap-y-3 gap-x-4">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">KhÃ¡ch sáº¡n</p>
+                  <p className="text-xs font-black text-slate-800 truncate mt-0.5">{booking.hotel_name}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">PhÃ²ng á»Ÿ</p>
+                  <p className="text-xs font-black text-slate-800 truncate mt-0.5">{booking.room_name}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">Quy mÃ´ Ä‘áº·t</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.rooms} phÃ²ng Â· {booking.guests} khÃ¡ch</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">MÃ£ phÃ²ng gÃ¡n</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.roomCode || 'Há»‡ thá»‘ng xáº¿p khi Check-in'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Cáº£nh bÃ¡o ná»£ tiá»n phÃ²ng cho Ä‘Æ¡n cá»c 10% */}
+            {canCheckIn && booking.paymentStatus === 'deposit_paid' && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm text-left">
+                <div className="flex gap-3">
+                  <span className="text-xl shrink-0">âš ï¸</span>
+                  <div>
+                    <p className="text-xs font-black text-amber-950">ChÆ°a thanh toÃ¡n Ä‘á»§ tiá»n phÃ²ng!</p>
+                    <p className="text-[11px] font-bold text-amber-800 mt-1 leading-relaxed">
+                      ÄÆ¡n nÃ y má»›i thanh toÃ¡n cá»c 10% ({dinhDangTien(booking.paidAmount)}). Lá»… tÃ¢n vui lÃ²ng thu ná»‘t <span className="font-black text-amber-950 text-xs">{dinhDangTien(booking.totalPrice - booking.paidAmount)}</span> tiá»n máº·t hoáº·c chuyá»ƒn khoáº£n QR táº¡i quáº§y trÆ°á»›c khi giao phÃ²ng!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* HÃ nh Ä‘á»™ng chÃ­nh */}
+            <div className="grid gap-2">
+              {canCheckIn && (
+                <button
+                  onClick={() => {
+                    if (booking.paymentStatus === 'deposit_paid') {
+                      if (!window.confirm(`ÄÆ¡n nÃ y má»›i Ä‘áº·t cá»c 10%. Báº¡n xÃ¡c nháº­n Ä‘Ã£ thu Ä‘á»§ sá»‘ tiá»n ná»‘t 90% cÃ²n thiáº¿u lÃ  ${dinhDangTien(booking.totalPrice - booking.paidAmount)} tá»« khÃ¡ch vÃ  tiáº¿n hÃ nh nháº­n phÃ²ng?`)) {
+                        return;
+                      }
+                    }
+                    onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN, 'Admin check-in táº¡i khÃ¡ch sáº¡n');
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-sky-700 active:scale-[.98]"
+                >
+                  <IconCheckin /> Nháº­n phÃ²ng (Check-in)
+                </button>
+              )}
+              {canVerifyLan && (
+                <button
+                  onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN, 'Admin xác minh nhận phòng qua LAN')}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-brand-700 active:scale-[.98]"
+                >
+                  <IconCheckin /> Xác minh nhận phòng LAN
+                </button>
+              )}
+              {canCheckOut && (
+                <button
+                  onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_OUT, 'Admin check-out')}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 active:scale-[.98]"
+                >
+                  <IconCheckout /> Tráº£ phÃ²ng (Check-out)
+                </button>
+              )}
+              {canCancelHold && (
+                <button
+                  onClick={() => {
+                    if (window.confirm(`XÃ¡c nháº­n há»§y giá»¯ chá»— Ä‘Æ¡n ${booking.bookingCode || booking.id}?`)) {
+                      onStatus(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'Admin há»§y giá»¯ chá»—');
+                    }
+                  }}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50 active:scale-[.98]"
+                >
+                  <IconCancel /> Há»§y giá»¯ chá»—
+                </button>
+              )}
+              {noAction && activeTab !== 'action' && (
+                <div className="rounded-xl border border-slate-100 bg-slate-50/50 py-3 text-center text-xs font-bold text-slate-400">
+                  ÄÆ¡n Ä‘Ã£ Ä‘Æ°á»£c xÃ¡c nháº­n thanh toÃ¡n tá»± Ä‘á»™ng
+                </div>
+              )}
+            </div>
+
+            {/* Ghi chÃº ná»™i bá»™ (gá»™p tá»« Tab 3 cÅ©) */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-2">Ghi chÃº ná»™i bá»™</p>
+              <textarea
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                rows={2}
+                placeholder="ThÃªm ghi chÃº lÆ°u Ã½ ná»™i bá»™..."
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none transition focus:border-sky-400 resize-none"
+              />
+              <button
+                onClick={() => onSaveNote(booking.id)}
+                className="mt-2 w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 active:scale-[.98]"
+              >
+                ðŸ’¾ LÆ°u ghi chÃº
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 2: TÃ i chÃ­nh & HoÃ n tiá»n + Timeline */}
+        {localTab === 'finance' && (
+          <div className="grid gap-4">
+
+            {/* LÆ°á»›i phÃ¢n tÃ­ch sá»‘ tiá»n */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Tá»•ng tiá»n</p>
+                <p className="mt-1 text-[11px] font-black text-slate-900">{dinhDangTien(booking.totalPrice)}</p>
+              </div>
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-3 text-center shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-600">ÄÃ£ thu</p>
+                <p className="mt-1 text-[11px] font-black text-emerald-700">{dinhDangTien(booking.paidAmount)}</p>
+              </div>
+              <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 text-center shadow-sm">
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-amber-600">CÃ²n láº¡i</p>
+                <p className="mt-1 text-[11px] font-black text-amber-700">{dinhDangTien(booking.remainingAmount)}</p>
+              </div>
+            </div>
+
+            {/* PhÆ°Æ¡ng thá»©c thanh toÃ¡n */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">PhÆ°Æ¡ng thá»©c thanh toÃ¡n</p>
+              <div className="mt-2.5 grid grid-cols-2 gap-y-3 gap-x-4">
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">HÃ¬nh thá»©c GD</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">MÃ£ QR</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400">Ná»n táº£ng</p>
+                  <p className="text-xs font-black text-sky-700 mt-0.5 font-mono tracking-wider">VietQR</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Khu vá»±c xá»­ lÃ½ hoÃ n tiá»n */}
+            {refundRequest ? (
+              <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 grid gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs font-black text-rose-950">YÃªu cáº§u hoÃ n tiá»n</p>
+                    <p className="font-mono text-[10px] font-bold text-rose-500 mt-0.5">{refundRequest.code}</p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${MAU_TRANG_THAI_HOAN_TIEN[refundRequest.status]}`}>
+                    {nhanHoanTien(refundRequest.status)}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-3 gap-1.5">
+                  <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm">
+                    <p className="text-[9px] font-bold text-rose-500">ÄÃ£ cá»c</p>
+                    <p className="mt-0.5 text-xs font-black text-rose-900">{dinhDangTien(refundRequest.paidAmount)}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm">
+                    <p className="text-[9px] font-bold text-rose-500">PhÃ­ há»§y (20%)</p>
+                    <p className="mt-0.5 text-xs font-black text-rose-900">{dinhDangTien(refundRequest.cancelFeeAmount)}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm border border-emerald-100">
+                    <p className="text-[9px] font-bold text-emerald-600">HoÃ n láº¡i (80%)</p>
+                    <p className="mt-0.5 text-xs font-black text-emerald-700">{dinhDangTien(refundRequest.refundAmount)}</p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-white p-2.5 border border-slate-200 text-slate-700">
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TÃ i khoáº£n nháº­n hoÃ n tiá»n</p>
+                  <p className="text-xs font-black text-slate-800 mt-1">{refundRequest.bankName}</p>
+                  <p className="text-xs font-bold text-slate-700 mt-0.5">Sá»‘ TK: {refundRequest.bankAccountNumber}</p>
+                  <p className="text-xs font-bold text-slate-700">Chá»§ TK: {refundRequest.bankAccountName}</p>
+                </div>
+
+                {refundRequest.reason && (
+                  <p className="text-xs font-semibold text-rose-800">
+                    LÃ½ do há»§y: <span className="italic">{refundRequest.reason}</span>
+                  </p>
+                )}
+
+                {canApproveRefund && (
+                  <div className="grid gap-2 border-t border-rose-200/50 pt-3">
+                    <textarea
+                      value={refundDecisionNote}
+                      onChange={(event) => setRefundDecisionNote(event.target.value)}
+                      rows={2}
+                      placeholder="Nháº­p ghi chÃº pháº£n há»“i..."
+                      className="w-full rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-rose-400 resize-none"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Duyá»‡t hoÃ n ${dinhDangTien(refundRequest.refundAmount)} cho khÃ¡ch ${booking.guestName}?`)) {
+                            onRefundDecision(refundRequest.id, 'approved');
+                          }
+                        }}
+                        className="rounded-xl bg-emerald-600 py-2.5 text-xs font-black text-white transition hover:bg-emerald-700 active:scale-95 shadow-sm"
+                      >
+                        âœ“ Duyá»‡t hoÃ n
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Tá»« chá»‘i hoÃ n tiá»n cho khÃ¡ch ${booking.guestName}?`)) {
+                            onRefundDecision(refundRequest.id, 'rejected');
+                          }
+                        }}
+                        className="rounded-xl border border-rose-300 bg-white py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50 active:scale-95"
+                      >
+                        âœ• Tá»« chá»‘i
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-slate-100 bg-slate-50/50 py-4 text-center text-xs font-bold text-slate-400">
+                KhÃ´ng cÃ³ yÃªu cáº§u há»§y / hoÃ n tiá»n cho Ä‘Æ¡n nÃ y
+              </div>
+            )}
+
+            {/* DÃ²ng thá»i gian (gá»™p tá»« Tab 3 cÅ©) */}
+            {activeMilestones.length > 0 && (
+              <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-3">DÃ²ng thá»i gian</p>
+                <div className="relative pl-5">
+                  {activeMilestones.length > 1 && (
+                    <div className="absolute left-[4px] top-2 bottom-2 w-px bg-slate-200" />
+                  )}
+                  <div className="grid gap-3">
+                    {activeMilestones.map((m) => (
+                      <div key={m.label} className="flex items-start gap-3 text-left relative">
+                        <span className="absolute mt-1 h-[9px] w-[9px] rounded-full border-2 border-white bg-emerald-500 shadow-sm" style={{ left: '-20px' }} />
+                        <div>
+                          <p className="text-xs font-black text-slate-700">{m.label}</p>
+                          <p className="text-[10px] font-semibold text-slate-400 mt-0.5">{dinhDangNgayGio(m.value)}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {pendingMilestones.map((m) => (
+                      <div key={m.label} className="flex items-start gap-3 opacity-40 text-left relative">
+                        <span className="absolute mt-1 h-[9px] w-[9px] rounded-full border-2 border-slate-300 bg-white" style={{ left: '-20px' }} />
+                        <div>
+                          <p className="text-xs font-bold text-slate-400">{m.label}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </aside>
   );
 }

@@ -1,11 +1,14 @@
+// Chức năng: Nạp môi trường, chuẩn bị admin mặc định và khởi động server.
 // Điểm khởi động của backend.
 // File này nạp biến môi trường, chuẩn bị tài khoản admin mặc định và mở cổng HTTP.
 require('dotenv').config();
 
 const ungDung = require('./ungDung');
 const { taoHoacCapNhatQuanTriMacDinh } = require('./modules/auth/xacThuc.service');
+const { khoiDongQuetTrangThaiDatPhongNen } = require('./modules/bookings/quanLyDatPhong.service');
 
 const cong = Number(process.env.PORT) || 5000;
+const diaChiLangNghe = process.env.HOST || '0.0.0.0';
 let mayChu = null;
 
 function xuLyLoiKhoiDong(error) {
@@ -27,8 +30,12 @@ async function khoiDongMayChu() {
     console.warn(`Default admin seed skipped: ${error.message}`);
   }
 
-  mayChu = ungDung.listen(cong, () => {
-    console.log(`Server is running at http://localhost:${cong}`);
+  mayChu = ungDung.listen(cong, diaChiLangNghe, () => {
+    console.log(`Server is running at http://${diaChiLangNghe}:${cong}`);
+    khoiDongQuetTrangThaiDatPhongNen();
+    if (diaChiLangNghe === '0.0.0.0') {
+      console.log(`LAN clients can call http://<IP-may-chu>:${cong}`);
+    }
   });
 
   mayChu.on('error', xuLyLoiKhoiDong);

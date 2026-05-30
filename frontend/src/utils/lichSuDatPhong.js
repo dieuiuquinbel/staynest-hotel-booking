@@ -1,9 +1,5 @@
-﻿import { KHOA_LUU_TRU } from './khoaLuuTru';
-
+﻿// Chá»©c nÄƒng: Háº±ng sá»‘ vÃ  hÃ m tÃ­nh toÃ¡n nghiá»‡p vá»¥ Ä‘áº·t phÃ²ng dÃ¹ng á»Ÿ frontend.
 import { dinhDangNgay } from './dinhDang';
-
-const KHOA_DAT_PHONG = KHOA_LUU_TRU.bookings;
-const KHOA_DANH_GIA = KHOA_LUU_TRU.reviews;
 
 export const TRANG_THAI_DAT_PHONG = {
   HOLDING: 'holding',
@@ -47,94 +43,66 @@ export const KIEU_DAT_PHONG = {
   DAY_USE: 'day_use',
 };
 
+export function layNgayHomNayYmd() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+export function chuyenNgayThanhYmd(value) {
+  if (!value) return '';
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  }
+
+  return String(value).slice(0, 10);
+}
+
+export function daDenNgayNhanPhong(checkIn) {
+  const checkInYmd = chuyenNgayThanhYmd(checkIn);
+  return Boolean(checkInYmd && checkInYmd <= layNgayHomNayYmd());
+}
+
+export function laDonDatPhongTuongLai(booking) {
+  return chuyenNgayThanhYmd(booking?.checkIn) > layNgayHomNayYmd();
+}
+
+export function moTaHieuLucNhanPhong(booking) {
+  return `00:00 ngÃ y ${dinhDangNgay(booking?.checkIn)}`;
+}
+
 export const NHAN_KIEU_DAT_PHONG = {
-  [KIEU_DAT_PHONG.OVERNIGHT]: 'Qua đêm',
-  [KIEU_DAT_PHONG.DAY_USE]: 'Trong ngày',
+  [KIEU_DAT_PHONG.OVERNIGHT]: 'Qua Ä‘Ãªm',
+  [KIEU_DAT_PHONG.DAY_USE]: 'Trong ngÃ y',
 };
 
 export const KHUNG_GIO_THUE_NGAY = [
-  { id: 'morning', label: 'Sáng', time: '08:00 - 12:00', priceRate: 0.45 },
-  { id: 'noon', label: 'Trưa', time: '11:00 - 14:00', priceRate: 0.35 },
-  { id: 'afternoon', label: 'Chiều', time: '13:00 - 18:00', priceRate: 0.5 },
-  { id: 'evening', label: 'Tối', time: '18:00 - 22:00', priceRate: 0.6 },
-  { id: 'full-day', label: 'Cả ngày', time: '08:00 - 18:00', priceRate: 0.8 },
+  { id: 'morning', label: 'SÃ¡ng', time: '08:00 - 12:00', priceRate: 0.45 },
+  { id: 'noon', label: 'TrÆ°a', time: '11:00 - 14:00', priceRate: 0.35 },
+  { id: 'afternoon', label: 'Chiá»u', time: '13:00 - 18:00', priceRate: 0.5 },
+  { id: 'evening', label: 'Tá»‘i', time: '18:00 - 22:00', priceRate: 0.6 },
+  { id: 'full-day', label: 'Cáº£ ngÃ y', time: '08:00 - 18:00', priceRate: 0.8 },
 ];
 
 export const NHAN_TRANG_THAI_DAT_PHONG = {
-  [TRANG_THAI_DAT_PHONG.HOLDING]: 'Đang giữ chỗ',
-  [TRANG_THAI_DAT_PHONG.CONFIRMED]: 'Đã xác nhận',
-  [TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED]: 'Chờ duyệt hủy/hoàn tiền',
-  [TRANG_THAI_DAT_PHONG.CHECKED_IN]: 'Đã nhận phòng',
-  [TRANG_THAI_DAT_PHONG.CHECKED_OUT]: 'Đã trả phòng',
-  [TRANG_THAI_DAT_PHONG.CANCELLED]: 'Đã hủy',
-  [TRANG_THAI_DAT_PHONG.EXPIRED]: 'Quá hạn thanh toán',
-  [TRANG_THAI_DAT_PHONG.NO_SHOW]: 'Không đến nhận phòng',
+  [TRANG_THAI_DAT_PHONG.HOLDING]: 'Äang giá»¯ chá»—',
+  [TRANG_THAI_DAT_PHONG.CONFIRMED]: 'ÄÃ£ xÃ¡c nháº­n',
+  [TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED]: 'Chá» duyá»‡t há»§y/hoÃ n tiá»n',
+  [TRANG_THAI_DAT_PHONG.CHECKED_IN]: 'ÄÃ£ nháº­n phÃ²ng',
+  [TRANG_THAI_DAT_PHONG.CHECKED_OUT]: 'ÄÃ£ tráº£ phÃ²ng',
+  [TRANG_THAI_DAT_PHONG.CANCELLED]: 'ÄÃ£ há»§y',
+  [TRANG_THAI_DAT_PHONG.EXPIRED]: 'QuÃ¡ háº¡n thanh toÃ¡n',
+  [TRANG_THAI_DAT_PHONG.NO_SHOW]: 'KhÃ´ng Ä‘áº¿n nháº­n phÃ²ng',
 };
 
 export const NHAN_TRANG_THAI_THANH_TOAN = {
-  [TRANG_THAI_THANH_TOAN.UNPAID]: 'Chờ thanh toán',
-  [TRANG_THAI_THANH_TOAN.DEPOSIT_PAID]: 'Đã cọc 10%',
-  [TRANG_THAI_THANH_TOAN.PAID]: 'Đã thanh toán',
-  [TRANG_THAI_THANH_TOAN.PAY_AT_COUNTER]: 'Thanh toán tại quầy',
-  [TRANG_THAI_THANH_TOAN.REFUNDED]: 'Đã hoàn tiền',
+  [TRANG_THAI_THANH_TOAN.UNPAID]: 'Chá» thanh toÃ¡n',
+  [TRANG_THAI_THANH_TOAN.DEPOSIT_PAID]: 'ÄÃ£ cá»c 10%',
+  [TRANG_THAI_THANH_TOAN.PAID]: 'ÄÃ£ thanh toÃ¡n',
+  [TRANG_THAI_THANH_TOAN.PAY_AT_COUNTER]: 'Thanh toÃ¡n táº¡i quáº§y',
+  [TRANG_THAI_THANH_TOAN.REFUNDED]: 'ÄÃ£ hoÃ n tiá»n',
 };
-
-const BAN_DO_TRANG_THAI_CU = {
-  'Đang giữ chỗ': TRANG_THAI_DAT_PHONG.HOLDING,
-  'Đã hoàn tất': TRANG_THAI_DAT_PHONG.CHECKED_OUT,
-  'Đã hủy': TRANG_THAI_DAT_PHONG.CANCELLED,
-};
-
-function docMang() {
-  try {
-    const value = window.localStorage.getItem(KHOA_DAT_PHONG);
-    if (!value) return [];
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function ghiMang(bookings) {
-  window.localStorage.setItem(KHOA_DAT_PHONG, JSON.stringify(bookings));
-}
-
-function chuanHoaDatPhong(booking) {
-  const bookingStatus = booking.bookingStatus || BAN_DO_TRANG_THAI_CU[booking.status] || booking.status || TRANG_THAI_DAT_PHONG.HOLDING;
-  const paymentStatus = booking.paymentStatus || (bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_OUT ? TRANG_THAI_THANH_TOAN.PAID : TRANG_THAI_THANH_TOAN.UNPAID);
-  const bookingType = booking.bookingType || KIEU_DAT_PHONG.OVERNIGHT;
-  const totalPrice = Number(booking.totalPrice || booking.price_per_night || 0);
-  const paidAmount = Number(booking.paidAmount || 0);
-
-  return {
-    ...booking,
-    bookingStatus,
-    paymentStatus,
-    bookingType,
-    timeSlot: booking.timeSlot || null,
-    paymentMethod: booking.paymentMethod || null,
-    depositAmount: Number(booking.depositAmount || Math.ceil(totalPrice * 0.1)),
-    paidAmount,
-    remainingAmount: Number.isFinite(Number(booking.remainingAmount)) ? Number(booking.remainingAmount) : Math.max(0, totalPrice - paidAmount),
-    qrToken: booking.qrToken || null,
-    paymentDeadline: booking.paymentDeadline || null,
-  };
-}
-
-function docMangDaChuanHoa() {
-  return docMang().map(chuanHoaDatPhong);
-}
-
-function taoMaDatPhong(date) {
-  return `DB-${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}-${String(
-    date.getTime(),
-  ).slice(-5)}`;
-}
-
-function taoMaQr(bookingId) {
-  return `CHECKIN-${bookingId}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-}
 
 export function tinhSoDem(checkIn, checkOut) {
   if (!checkIn || !checkOut) return 0;
@@ -164,147 +132,10 @@ export function tinhTienPhong({ bookingType, checkIn, checkOut, rooms = 1, price
   const nights = tinhSoDem(checkIn, checkOut);
   return {
     units: nights,
-    unitLabel: `${nights} đêm`,
+    unitLabel: `${nights} Ä‘Ãªm`,
     roomPrice: nightlyPrice * nights * roomCount,
     timeSlot: null,
   };
-}
-
-export function docDatPhongCuaToi(userId) {
-  const bookings = docMangDaChuanHoa();
-  if (!userId) return bookings;
-  return bookings.filter((booking) => String(booking.userId) === String(userId));
-}
-
-export function docTatCaDatPhong() {
-  return docMangDaChuanHoa();
-}
-
-export function hetHanDatPhongQuaHan(userId) {
-  const now = Date.now();
-  let changed = false;
-  const next = docMangDaChuanHoa().map((booking) => {
-    const belongsToUser = !userId || String(booking.userId) === String(userId);
-    const deadline = booking.paymentDeadline ? new Date(booking.paymentDeadline).getTime() : Number.NaN;
-
-    if (
-      belongsToUser &&
-      booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING &&
-      booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID &&
-      Number.isFinite(deadline) &&
-      deadline <= now
-    ) {
-      changed = true;
-      return {
-        ...booking,
-        bookingStatus: TRANG_THAI_DAT_PHONG.CANCELLED,
-        cancelledAt: new Date().toISOString(),
-        cancelReason: 'Quá hạn thanh toán',
-      };
-    }
-
-    return booking;
-  });
-
-  if (changed) ghiMang(next);
-  return next;
-}
-
-export function capNhatTrangThaiDatPhong(bookingId, bookingStatus) {
-  const next = docMangDaChuanHoa().map((booking) => {
-    if (booking.id !== bookingId) return booking;
-
-    const isCheckedOut = bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_OUT;
-    const isCheckedIn = bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN;
-    const isCancelled = bookingStatus === TRANG_THAI_DAT_PHONG.CANCELLED;
-    const isNoShow = bookingStatus === TRANG_THAI_DAT_PHONG.NO_SHOW;
-
-    return {
-      ...booking,
-      bookingStatus,
-      checkedInAt: isCheckedIn ? new Date().toISOString() : booking.checkedInAt,
-      completedAt: isCheckedOut ? new Date().toISOString() : booking.completedAt,
-      cancelledAt: isCancelled || isNoShow ? new Date().toISOString() : booking.cancelledAt,
-      cancelReason: isNoShow ? 'Khách không đến nhận phòng' : isCancelled ? booking.cancelReason || 'Admin hủy đơn' : booking.cancelReason,
-      paymentStatus: isCheckedOut ? TRANG_THAI_THANH_TOAN.PAID : booking.paymentStatus,
-      paidAmount: isCheckedOut ? Number(booking.totalPrice || 0) : booking.paidAmount,
-      remainingAmount: isCheckedOut ? 0 : booking.remainingAmount,
-    };
-  });
-
-  ghiMang(next);
-  return next;
-}
-
-export function xacNhanThanhToanAdmin(bookingId, loaiThanhToan) {
-  const next = docMangDaChuanHoa().map((booking) => {
-    if (booking.id !== bookingId) return booking;
-
-    const totalPrice = Number(booking.totalPrice || 0);
-    const depositAmount = Number(booking.depositAmount || Math.ceil(totalPrice * 0.1));
-    const isDeposit = loaiThanhToan === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT;
-    const paidAmount = isDeposit ? depositAmount : totalPrice;
-    const paymentCode = booking.paymentCode || `ADMIN-${String(Date.now()).slice(-6)}`;
-
-    return {
-      ...booking,
-      bookingStatus: TRANG_THAI_DAT_PHONG.CONFIRMED,
-      paymentStatus: isDeposit ? TRANG_THAI_THANH_TOAN.DEPOSIT_PAID : TRANG_THAI_THANH_TOAN.PAID,
-      paymentMethod: loaiThanhToan,
-      paymentCode,
-      transferContent: booking.transferContent || paymentCode,
-      paidAmount,
-      remainingAmount: Math.max(0, totalPrice - paidAmount),
-      qrToken: booking.qrToken || taoMaQr(booking.id),
-      paidAt: new Date().toISOString(),
-      adminConfirmedAt: new Date().toISOString(),
-    };
-  });
-
-  ghiMang(next);
-  return next;
-}
-
-export function luuGhiChuAdmin(bookingId, note) {
-  const next = docMangDaChuanHoa().map((booking) =>
-    booking.id === bookingId
-      ? {
-          ...booking,
-          adminNote: String(note || '').trim(),
-          adminNoteUpdatedAt: new Date().toISOString(),
-        }
-      : booking,
-  );
-
-  ghiMang(next);
-  return next;
-}
-
-export function luuPhanHoiKhachHang(bookingId, feedback) {
-  const cleanContent = String(feedback?.content || '').trim();
-  if (!cleanContent) return docMangDaChuanHoa();
-
-  const createdAt = new Date().toISOString();
-  const next = docMangDaChuanHoa().map((booking) => {
-    if (booking.id !== bookingId) return booking;
-
-    const nextFeedback = {
-      id: `FB-${createdAt.replace(/\D/g, '').slice(0, 14)}`,
-      type: feedback?.type || 'feedback',
-      content: cleanContent,
-      createdAt,
-      status: 'new',
-    };
-
-    return {
-      ...booking,
-      customerFeedbacks: [nextFeedback, ...(booking.customerFeedbacks || [])].slice(0, 10),
-      latestCustomerFeedback: nextFeedback,
-    };
-  });
-
-  ghiMang(next);
-  return next;
 }
 
 export function tinhGiamGiaVoucher(totalPrice, voucher) {
@@ -323,180 +154,32 @@ export function tinhGiamGiaVoucher(totalPrice, voucher) {
   return Math.min(safeTotal, Math.max(0, discountAmount));
 }
 
-export function apDungVoucherVaoDatPhong(bookingId, voucher) {
-  if (!voucher) return docMangDaChuanHoa();
-
-  const next = docMangDaChuanHoa().map((booking) => {
-    if (booking.id !== bookingId || booking.voucherCode) return booking;
-
-    const totalPrice = Number(booking.totalPrice || 0);
-    const discountAmount = tinhGiamGiaVoucher(totalPrice, voucher);
-    const nextTotal = Math.max(0, totalPrice - discountAmount);
-    const nextPaid = Math.min(Number(booking.paidAmount || 0), nextTotal);
-
-    return {
-      ...booking,
-      originalTotalPrice: totalPrice,
-      totalPrice: nextTotal,
-      discountAmount,
-      voucherCode: voucher.code,
-      voucherTitle: voucher.title,
-      voucherDiscountType: voucher.discountType,
-      depositAmount: Math.ceil(nextTotal * 0.1),
-      paidAmount: nextPaid,
-      remainingAmount: Math.max(0, nextTotal - nextPaid),
-    };
-  });
-
-  ghiMang(next);
-  return next;
-}
-
 export function taoHtmlHoaDon(booking) {
   const originalTotalPrice = Number(booking.originalTotalPrice || Number(booking.totalPrice || 0) + Number(booking.discountAmount || 0));
   const discountAmount = Number(booking.discountAmount || 0);
   const rows = [
-    ['Mã đơn', booking.id],
-    ['Khách hàng', booking.guestName],
+    ['MÃ£ Ä‘Æ¡n', booking.id],
+    ['KhÃ¡ch hÃ ng', booking.guestName],
     ['Email', booking.guestEmail],
-    ['Khách sạn', booking.hotel_name],
-    ['Phòng', booking.room_name],
-    ['Ngày nhận', dinhDangNgay(booking.checkIn)],
-    ['Ngày trả', dinhDangNgay(booking.checkOut)],
-    ['Tổng tiền', Number(booking.totalPrice || 0).toLocaleString('vi-VN') + ' đ'],
-    ['Đã thanh toán', Number(booking.paidAmount || 0).toLocaleString('vi-VN') + ' đ'],
-    ['Còn lại', Number(booking.remainingAmount || 0).toLocaleString('vi-VN') + ' đ'],
+    ['KhÃ¡ch sáº¡n', booking.hotel_name],
+    ['PhÃ²ng', booking.room_name],
+    ['NgÃ y nháº­n', dinhDangNgay(booking.checkIn)],
+    ['NgÃ y tráº£', dinhDangNgay(booking.checkOut)],
+    ['Tá»•ng tiá»n', Number(booking.totalPrice || 0).toLocaleString('vi-VN') + ' Ä‘'],
+    ['ÄÃ£ thanh toÃ¡n', Number(booking.paidAmount || 0).toLocaleString('vi-VN') + ' Ä‘'],
+    ['CÃ²n láº¡i', Number(booking.remainingAmount || 0).toLocaleString('vi-VN') + ' Ä‘'],
   ];
 
   rows.splice(
     7,
     1,
-    ['Giá gốc', originalTotalPrice.toLocaleString('vi-VN') + ' đ'],
-    ['Voucher', booking.voucherTitle ? `${booking.voucherTitle} (${booking.voucherCode})` : 'Không áp dụng'],
-    ['Giảm bởi voucher', discountAmount.toLocaleString('vi-VN') + ' đ'],
-    ['Tổng cuối cùng', Number(booking.totalPrice || 0).toLocaleString('vi-VN') + ' đ'],
+    ['GiÃ¡ gá»‘c', originalTotalPrice.toLocaleString('vi-VN') + ' Ä‘'],
+    ['Voucher', booking.voucherTitle ? `${booking.voucherTitle} (${booking.voucherCode})` : 'KhÃ´ng Ã¡p dá»¥ng'],
+    ['Giáº£m bá»Ÿi voucher', discountAmount.toLocaleString('vi-VN') + ' Ä‘'],
+    ['Tá»•ng cuá»‘i cÃ¹ng', Number(booking.totalPrice || 0).toLocaleString('vi-VN') + ' Ä‘'],
   );
 
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${booking.id}</title></head><body style="font-family:Arial;line-height:1.7;padding:28px"><h1>Hóa đơn DieuBel</h1>${rows
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${booking.id}</title></head><body style="font-family:Arial;line-height:1.7;padding:28px"><h1>HÃ³a Ä‘Æ¡n DieuBel</h1>${rows
     .map(([label, value]) => `<p><strong>${label}:</strong> ${value || ''}</p>`)
-    .join('')}<p><strong>Dịch vụ:</strong> ${(booking.services || []).map((item) => item.title).join(', ') || 'Không có'}</p></body></html>`;
-}
-
-function docDanhGia() {
-  try {
-    const parsed = JSON.parse(window.localStorage.getItem(KHOA_DANH_GIA) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export function docDanhGiaPhong(roomId) {
-  return docDanhGia().filter((review) => String(review.roomId) === String(roomId));
-}
-
-export function luuDanhGiaDatPhong({ booking, rating, content }) {
-  const review = {
-    id: `RV-${Date.now()}`,
-    bookingId: booking.id,
-    roomId: booking.roomId,
-    hotelName: booking.hotel_name,
-    guestName: booking.guestName,
-    rating: Number(rating || 5),
-    content: String(content || '').trim(),
-    createdAt: new Date().toISOString(),
-  };
-  const reviews = [review, ...docDanhGia().filter((item) => item.bookingId !== booking.id)].slice(0, 100);
-  window.localStorage.setItem(KHOA_DANH_GIA, JSON.stringify(reviews));
-
-  const next = docMangDaChuanHoa().map((item) => (item.id === booking.id ? { ...item, reviewId: review.id } : item));
-  ghiMang(next);
-  return review;
-}
-
-export function luuDatPhongCuaToi({
-  room,
-  user,
-  checkIn,
-  checkOut,
-  guests = '2',
-  rooms = '1',
-  services = [],
-  totalPriceOverride,
-  bookingType = KIEU_DAT_PHONG.OVERNIGHT,
-  timeSlotId = null,
-}) {
-  const current = docMangDaChuanHoa();
-  const pricePerNight = Number(room.price_per_night || 0);
-  const roomCharge = tinhTienPhong({ bookingType, checkIn, checkOut, rooms, pricePerNight, timeSlotId });
-  const totalPrice = Number(totalPriceOverride || 0) || roomCharge.roomPrice;
-  const createdAt = new Date();
-  const paymentDeadline = new Date(createdAt.getTime() + 15 * 60 * 1000);
-
-  const booking = {
-    id: taoMaDatPhong(createdAt),
-    userId: user?.id || user?.email || 'guest',
-    guestName: user?.full_name || '',
-    guestEmail: user?.email || '',
-    roomId: room.id,
-    hotel_name: room.hotel_name,
-    room_name: room.room_name,
-    city: room.city,
-    address: room.address,
-    image_url: room.image_url,
-    price_per_night: pricePerNight,
-    totalPrice,
-    nights: bookingType === KIEU_DAT_PHONG.OVERNIGHT ? roomCharge.units : 0,
-    bookingType,
-    timeSlot: roomCharge.timeSlot,
-    guests,
-    rooms,
-    services,
-    checkIn: checkIn || '',
-    checkOut: checkOut || '',
-    bookingStatus: TRANG_THAI_DAT_PHONG.HOLDING,
-    paymentStatus: TRANG_THAI_THANH_TOAN.UNPAID,
-    paymentMethod: null,
-    depositAmount: Math.ceil(totalPrice * 0.1),
-    paidAmount: 0,
-    remainingAmount: totalPrice,
-    qrToken: null,
-    paymentDeadline: paymentDeadline.toISOString(),
-    createdAt: createdAt.toISOString(),
-  };
-
-  const next = [booking, ...current].slice(0, 30);
-  ghiMang(next);
-  return booking;
-}
-
-export function huyDatPhongCuaToi(bookingId) {
-  const next = docMangDaChuanHoa().map((booking) =>
-    booking.id === bookingId
-      ? {
-          ...booking,
-          bookingStatus: TRANG_THAI_DAT_PHONG.CANCELLED,
-          cancelledAt: new Date().toISOString(),
-        }
-      : booking,
-  );
-  ghiMang(next);
-  return next;
-}
-
-export function hoanTatDatPhongCuaToi(bookingId) {
-  const next = docMangDaChuanHoa().map((booking) =>
-    booking.id === bookingId
-      ? {
-          ...booking,
-          bookingStatus: TRANG_THAI_DAT_PHONG.CHECKED_OUT,
-          paymentStatus: TRANG_THAI_THANH_TOAN.PAID,
-          paidAmount: Number(booking.totalPrice || 0),
-          remainingAmount: 0,
-          completedAt: new Date().toISOString(),
-        }
-      : booking,
-  );
-  ghiMang(next);
-  return next;
+    .join('')}<p><strong>Dá»‹ch vá»¥:</strong> ${(booking.services || []).map((item) => item.title).join(', ') || 'KhÃ´ng cÃ³'}</p></body></html>`;
 }

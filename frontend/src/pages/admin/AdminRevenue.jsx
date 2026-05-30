@@ -1,3 +1,4 @@
+// Chức năng: Trang admin xem báo cáo doanh thu.
 // Trang doanh thu của admin.
 // File này tách rõ số liệu theo khoảng thời gian và số liệu tích lũy toàn hệ thống.
 import { useEffect, useMemo, useState } from 'react';
@@ -53,28 +54,34 @@ export default function AdminRevenue() {
     refresh(range.dateFrom, range.dateTo);
   };
 
-  const period = report?.period || {};
-  const lifetime = report?.lifetime || {};
-  const inventory = report?.inventory || {};
+  const period = useMemo(() => report?.period || {}, [report?.period]);
+  const lifetime = useMemo(() => report?.lifetime || {}, [report?.lifetime]);
+  const inventory = useMemo(() => report?.inventory || {}, [report?.inventory]);
 
   const periodCards = [
     {
-      label: 'Đã thu trong kỳ',
-      value: dinhDangTien(period.paidRevenue || 0),
+      label: 'Doanh thu ròng trong kỳ',
+      value: dinhDangTien(period.netRevenue || 0),
       tone: 'text-brand-700',
-      hint: 'Theo khoảng ngày đang chọn',
+      hint: 'Tiền khách trả trừ tiền đã hoàn',
+    },
+    {
+      label: 'Khách đã thanh toán',
+      value: dinhDangTien(period.customerPaidAmount || 0),
+      tone: 'text-emerald-700',
+      hint: 'Tổng tiền hệ thống đã ghi nhận',
+    },
+    {
+      label: 'Đã hoàn trong kỳ',
+      value: dinhDangTien(period.refundAmount || 0),
+      tone: 'text-rose-700',
+      hint: `${period.refundRequests || 0} yêu cầu phát sinh`,
     },
     {
       label: 'Còn phải thu trong kỳ',
       value: dinhDangTien(period.receivableAmount || 0),
       tone: 'text-amber-700',
-      hint: 'Các đơn phát sinh trong kỳ chưa tất toán',
-    },
-    {
-      label: 'Hoàn tiền trong kỳ',
-      value: dinhDangTien(period.refundAmount || 0),
-      tone: 'text-rose-700',
-      hint: `${period.refundRequests || 0} yêu cầu phát sinh`,
+      hint: 'Chỉ tính đơn còn hiệu lực',
     },
     {
       label: 'Số đơn trong kỳ',
@@ -85,22 +92,28 @@ export default function AdminRevenue() {
 
   const lifetimeCards = [
     {
-      label: 'Tổng đã thu',
-      value: dinhDangTien(lifetime.paidRevenue || 0),
+      label: 'Doanh thu ròng',
+      value: dinhDangTien(lifetime.netRevenue || 0),
       tone: 'text-brand-700',
-      hint: 'Toàn bộ lịch sử hệ thống',
+      hint: 'Khách đã trả trừ tiền đã hoàn',
+    },
+    {
+      label: 'Tổng khách đã trả',
+      value: dinhDangTien(lifetime.customerPaidAmount || 0),
+      tone: 'text-emerald-700',
+      hint: 'Toàn bộ tiền đã ghi nhận',
+    },
+    {
+      label: 'Tổng đã hoàn',
+      value: dinhDangTien(lifetime.refundAmount || 0),
+      tone: 'text-rose-700',
+      hint: `${lifetime.pendingRefunds || 0} yêu cầu đang chờ`,
     },
     {
       label: 'Tổng còn phải thu',
       value: dinhDangTien(lifetime.receivableAmount || 0),
       tone: 'text-amber-700',
-      hint: 'Tất cả đơn chưa tất toán',
-    },
-    {
-      label: 'Tổng hoàn tiền',
-      value: dinhDangTien(lifetime.refundAmount || 0),
-      tone: 'text-rose-700',
-      hint: `${lifetime.pendingRefunds || 0} yêu cầu đang chờ`,
+      hint: 'Chỉ tính đơn còn hiệu lực',
     },
     {
       label: 'Tổng số đơn',

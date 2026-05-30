@@ -1,151 +1,142 @@
-# Luồng Dữ Liệu
+# Luồng dữ liệu chính
 
-Tài liệu này mô tả ngắn các luồng nghiệp vụ chính.
+Tài liệu này tóm tắt đường đi dữ liệu trong chương trình DieuBel.
 
-## 1. Tổng quan
-
-```text
-React page
-  -> frontend service Axios
-  -> Express route
-  -> backend service
-  -> MySQL
-  -> JSON trả về frontend
-```
-
-## 2. Đăng nhập
+## 1. Luồng frontend gọi backend
 
 ```text
-POST /api/auth/login
-  -> dangNhapTaiKhoan()
-  -> kiểm tra user, mật khẩu, status
-  -> ký JWT
-  -> frontend lưu token bằng Zustand
+Page/Component
+   ↓
+Hook hoặc service frontend
+   ↓
+ketNoiApi.js gắn token
+   ↓
+/api trên Vite proxy
+   ↓
+Express backend
+   ↓
+Service module
+   ↓
+MySQL
+   ↓
+Response JSON
+   ↓
+React render lại UI
 ```
 
-Sau đăng nhập:
-
-- `role = admin`: luôn về `/admin/overview`, không xem giao diện khách.
-- `role = customer`: về trang khách hàng hoặc redirect đang có.
-
-Backend luôn seed một admin duy nhất khi khởi động:
-
-- Username: `admin`
-- Password: `admin123`
-- Các tài khoản admin khác sẽ bị hạ xuống `customer`
-
-## 3. Đặt phòng
+## 2. Luồng tạo booking
 
 ```text
 DatPhong.jsx
-  -> POST /api/bookings
-  -> taoDatPhong()
-  -> SELECT rooms FOR UPDATE
-  -> kiểm tra inventory_count
-  -> UPDATE rooms SET inventory_count = inventory_count - rooms_count
-  -> INSERT bookings
-  -> tạo hóa đơn
-  -> commit transaction
+   ↓
+taoDatPhong trong datPhongApi.js
+   ↓
+POST /api/bookings
+   ↓
+datPhong.service.js
+   ↓
+transaction + SELECT phòng FOR UPDATE
+   ↓
+insert bookings/payment/status log
+   ↓
+commit
+   ↓
+DatPhongCuaToi.jsx hiển thị đơn
 ```
 
-Booking mới:
-
-- `booking_status = holding`
-- `payment_status = unpaid`
-- `deposit_amount = 10%`
-- `remaining_amount = total_price`
-
-## 4. Thanh toán và voucher
+## 3. Luồng thanh toán
 
 ```text
-DatPhongCuaToi.jsx
-  -> chọn voucher đủ điều kiện
-  -> POST /api/bookings/:id/payments/confirm
-  -> xacNhanThanhToan()
-  -> tính giảm giá
-  -> cập nhật booking
-  -> INSERT payment_transactions
-  -> INSERT booking_status_logs
+Khách/Admin xác nhận thanh toán
+   ↓
+/api/bookings/:id/payments/confirm
+   ↓
+quanLyDatPhong.service.js
+   ↓
+cập nhật payment_status, paid_amount, remaining_amount
+   ↓
+booking chuyển sang confirmed nếu đủ điều kiện
+   ↓
+frontend refetch danh sách booking
 ```
 
-Voucher không đủ điều kiện sẽ bị vô hiệu hóa ở UI.
-
-## 5. Hủy và hoàn tiền
-
-Đơn chưa thanh toán:
+## 4. Luồng check-in QR LAN
 
 ```text
-PATCH /api/bookings/:id/status
-  -> cancelled
-  -> trả rooms_count về rooms.inventory_count
+Khách mở QR trong DatPhongCuaToi.jsx
+   ↓
+Điện thoại LAN mở QuetCheckIn.jsx với token
+   ↓
+POST /api/bookings/public-checkin
+   ↓
+backend kiểm tra token và ngày nhận phòng
+   ↓
+Nếu chưa đến ngày: trả early, không đổi trạng thái
+   ↓
+Nếu đã đến ngày: ghi frontdesk_verified_at
+   ↓
+frontend báo nhận phòng thành công
 ```
 
-Đơn đã thanh toán:
+## 5. Luồng scanner nền
 
 ```text
-POST /api/bookings/:id/refund-requests
-  -> tạo refund_requests
-  -> phí hủy 20%
-  -> booking_status = cancel_requested
+backend khởi động
+   ↓
+khoiDongQuetTrangThaiDatPhongNen()
+   ↓
+mỗi BOOKING_STATUS_SCANNER_INTERVAL_MS
+   ↓
+đơn holding quá hạn thanh toán -> expired
+đơn confirmed + paid đến ngày nhận -> checked_in
+đơn checked_in hết ngày trả -> checked_out
 ```
 
-Admin duyệt:
+## 6. Luồng admin
 
 ```text
-PATCH /api/admin/refund-requests/:id
-  -> refund approved/completed
-  -> booking cancelled
-  -> payment refunded
-  -> trả phòng về inventory_count
+Admin mở QuanLyDatPhong.jsx
+   ↓
+layTatCaDatPhongAdminApi
+   ↓
+GET /api/admin/bookings
+   ↓
+backend đồng bộ trạng thái theo thời gian
+   ↓
+trả danh sách booking
+   ↓
+bookingHelpers.js lọc theo tab
+   ↓
+BookingQueueItem + BookingDetail render UI
 ```
 
-## 6. Khiếu nại/hỗ trợ
+## 7. Luồng hóa đơn
 
 ```text
-TaiKhoan.jsx
-  -> POST /api/me/support-tickets
-  -> INSERT support_tickets
-
-AdminOperations.jsx
-  -> GET /api/admin/support-tickets
-  -> PATCH /api/admin/support-tickets/:id
+Booking đủ dữ liệu
+   ↓
+hoaDon.service.js sinh HTML
+   ↓
+lưu vào Hóa đơn admin/
+   ↓
+Express phục vụ static file
+   ↓
+frontend mở hóa đơn
 ```
 
-Khiếu nại chung nằm ở MePage, admin xử lý trong khu vận hành.
-
-## 7. Quản lý khách hàng
+## 8. Luồng thông báo
 
 ```text
-AdminCustomers.jsx
-  -> GET /api/admin/customers
-  -> PATCH /api/admin/customers/:id
-  -> DELETE /api/admin/customers/:id
+Page gọi khoThongBao.js
+   ↓
+BoThongBaoToanCuc.jsx nhận state
+   ↓
+toast hiển thị toàn app
 ```
 
-Logic xóa:
+## 9. Điểm cần kiểm tra khi sửa dữ liệu
 
-- Chưa có booking: xóa thật khỏi `users`.
-- Đã có booking: khóa `status = inactive` để giữ lịch sử và doanh thu.
-
-## 8. Bảng chính
-
-| Bảng | Vai trò |
-| --- | --- |
-| `users` | Tài khoản khách/admin |
-| `rooms` | Phòng và `inventory_count` |
-| `bookings` | Đơn đặt phòng |
-| `invoices` | Hóa đơn |
-| `vouchers` | Mã ưu đãi |
-| `user_vouchers` | Voucher của user |
-| `payment_transactions` | Giao dịch thanh toán |
-| `booking_status_logs` | Log trạng thái |
-| `refund_requests` | Hủy/hoàn tiền |
-| `support_tickets` | Khiếu nại/hỗ trợ |
-| `admin_audit_logs` | Log thao tác admin |
-
-## 9. Kiểm tra lỗi nhanh
-
-- Không tải được admin booking: kiểm tra `refund_requests`, `support_tickets`, backend và MySQL.
-- Admin vẫn thấy giao diện khách: kiểm tra `UngDung.jsx` và `DangNhapDangKy.jsx`.
-- Số phòng không giảm: kiểm tra `datPhong.service.js` và `rooms.inventory_count`.
-- Xóa khách không mất: nếu khách đã có booking thì đó là khóa mềm, không phải lỗi.
+- Sửa booking status: kiểm tra backend constant, frontend constant/helper, admin tab, progress UI.
+- Sửa payment: kiểm tra API confirm payment, booking mapper, UI thanh toán.
+- Sửa database: cập nhật `final_database.sql` và service đảm bảo cấu trúc nếu cần.
+- Sửa route: kiểm tra `services/` frontend tương ứng.

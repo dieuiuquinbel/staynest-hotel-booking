@@ -1,5 +1,6 @@
+// Chức năng: Các khối UI cho báo cáo doanh thu admin.
 // Các card và section nhỏ cho trang doanh thu admin.
-import { dinhDangNgay, dinhDangTien } from '../../../utils/dinhDang';
+import { dinhDangTien } from '../../../utils/dinhDang';
 
 export function RevenueStatCard({ label, value, tone = 'text-slate-950', hint }) {
   return (
@@ -138,6 +139,11 @@ export function RevenueQuickAudit({ period, lifetime, inventory }) {
       <h2 className="text-lg font-black text-slate-950">Đối soát nhanh</h2>
       <div className="mt-4 grid gap-3">
         <div className="rounded-lg bg-slate-50 p-4">
+          <p className="text-sm font-black text-slate-700">Doanh thu ròng trong kỳ</p>
+          <p className="mt-2 text-2xl font-black text-brand-700">{dinhDangTien(period.netRevenue || 0)}</p>
+        </div>
+
+        <div className="rounded-lg bg-slate-50 p-4">
           <p className="text-sm font-black text-slate-700">Yêu cầu hoàn tiền trong kỳ</p>
           <p className="mt-2 text-2xl font-black text-rose-700">{period.refundRequests || 0}</p>
         </div>
@@ -153,7 +159,7 @@ export function RevenueQuickAudit({ period, lifetime, inventory }) {
         </div>
 
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm font-bold text-amber-800">
-          Nếu chọn khoảng ngày mà không có giao dịch, toàn bộ số liệu trong kỳ sẽ về 0. Khối tổng bên phải vẫn giữ số tích lũy toàn hệ thống.
+          Doanh thu ròng = tiền khách đã thanh toán - tiền đã hoàn. Phí hủy giữ lại chỉ là phần giải thích của khoản không hoàn, không cộng thêm lần nữa.
         </div>
       </div>
     </article>

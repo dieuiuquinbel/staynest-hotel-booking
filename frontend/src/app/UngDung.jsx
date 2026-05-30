@@ -1,3 +1,4 @@
+// Chức năng: Khai báo route, layout chính và đồng bộ phiên đăng nhập.
 // Bộ điều phối chính của frontend.
 // File này khai báo route, gắn layout khách hàng/admin và đồng bộ phiên đăng nhập.
 import { useQuery } from '@tanstack/react-query';
@@ -8,6 +9,7 @@ import AdminLayout from '../components/admin/AdminLayout';
 import ChatbotNoi from '../components/chatbot/ChatbotNoi';
 import ChanTrang from '../components/layout/ChanTrang';
 import DauTrang from '../components/layout/DauTrang';
+import BoThongBaoToanCuc from '../components/layout/BoThongBaoToanCuc';
 import { layNguoiDungHienTai } from '../services/xacThucApi';
 import useKhoXacThuc from '../store/khoXacThuc';
 import { laQuanTriVien } from '../utils/phanQuyen';
@@ -27,6 +29,10 @@ const AdminOperations = lazy(() => import('../pages/admin/AdminOperations'));
 const AdminRooms = lazy(() => import('../pages/admin/AdminRooms'));
 const AdminRevenue = lazy(() => import('../pages/admin/AdminRevenue'));
 const AdminMarketing = lazy(() => import('../pages/admin/AdminMarketing'));
+const ChinhSachCongTy = lazy(() => import('../pages/ChinhSachCongTy'));
+const ThongTinCongTy = lazy(() => import('../pages/ThongTinCongTy'));
+const DichVuDieuBel = lazy(() => import('../pages/DichVuDieuBel'));
+const QuetCheckIn = lazy(() => import('../pages/bookings/QuetCheckIn'));
 
 function CuonLenDauTrang() {
   const { pathname } = useLocation();
@@ -199,6 +205,7 @@ function UngDung() {
   return (
     <div className="flex min-h-screen flex-col text-slate-900">
       <CuonLenDauTrang />
+      <BoThongBaoToanCuc />
       {!isAdminExperience ? <DauTrang /> : null}
       <Suspense fallback={<DangTaiTrang />}>
         <Routes>
@@ -206,7 +213,11 @@ function UngDung() {
           <Route path="/rooms" element={customerPage(<DanhSachPhong />)} />
           <Route path="/rooms/:roomId" element={customerPage(<ChiTietPhong />)} />
           <Route path="/history" element={customerPage(<LichSu />)} />
+          <Route path="/policies" element={customerPage(<ChinhSachCongTy />)} />
+          <Route path="/about" element={customerPage(<ThongTinCongTy />)} />
+          <Route path="/services" element={customerPage(<DichVuDieuBel />)} />
           <Route path="/auth" element={<DangNhapDangKy />} />
+          <Route path="/checkin" element={<QuetCheckIn />} />
           <Route element={<TuyenDuongBaoVe chanAdmin />}>
             <Route path="/booking" element={<DatPhong />} />
             <Route path="/my-bookings" element={<DatPhongCuaToi />} />

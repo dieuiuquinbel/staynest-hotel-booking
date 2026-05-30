@@ -1,34 +1,26 @@
-# Cau truc chuong trinh
+# Cấu trúc chương trình
 
-Tai lieu nay mo ta nhanh cac khoi source code chinh sau khi sap xep lai. Database va du lieu seed duoc giu nguyen.
+Tài liệu cấu trúc chi tiết đã được chuẩn hóa tại:
 
-## Frontend
+- `Tài liệu dự án/CAU_TRUC_CHUONG_TRINH.md`
 
-- `frontend/src/app`: lop dieu phoi ung dung React, khai bao route va layout tong.
-- `frontend/src/pages/public`: trang cong khai nhu trang chu.
-- `frontend/src/pages/rooms`: danh sach phong va chi tiet phong.
-- `frontend/src/pages/bookings`: luong dat phong, dat cho cua toi, thanh toan va tien trinh don.
-- `frontend/src/pages/account`: tai khoan, lich su, diem thuong, voucher va ho tro.
-- `frontend/src/pages/auth`: dang nhap, dang ky va xac minh OTP.
-- `frontend/src/pages/admin`: cac man hinh quan tri.
-- `frontend/src/components`: component dung lai theo nhom `layout`, `rooms`, `search`, `auth`, `admin`.
-- `frontend/src/services`: cac ham goi backend API.
-- `frontend/src/hooks`: custom hook dung chung cho cac trang.
-- `frontend/src/store`: kho trang thai frontend.
-- `frontend/src/utils`: ham tien ich, dinh dang, localStorage, tinh trang phong, VietQR.
+File này được giữ ở thư mục gốc để người đọc dễ tìm khi mở repo. Nội dung chính của dự án hiện được tổ chức như sau:
 
-## Backend
+```text
+D:\Website khách sạn final
+├─ backend/          Express API, nghiệp vụ, upload, hóa đơn
+├─ frontend/         React/Vite SPA cho khách hàng và admin
+├─ database/         SQL final và script lịch sử
+└─ Tài liệu dự án/    Tài liệu kiến trúc, tính năng, vận hành
+```
 
-- `backend/src/mayChu.js`: diem khoi dong server.
-- `backend/src/ungDung.js`: cau hinh Express, middleware va route API.
-- `backend/src/config`: ket noi MySQL.
-- `backend/src/middleware`: middleware xac thuc/phan quyen.
-- `backend/src/modules/auth`: dang nhap, dang ky, OTP, JWT va admin mac dinh.
-- `backend/src/modules/rooms`: truy van phong.
-- `backend/src/modules/bookings`: tao dat phong va quan ly trang thai don.
-- `backend/src/modules/invoices`: tao va tra file hoa don.
-- `backend/src/modules/payments`: xu ly thanh toan demo.
-- `backend/src/modules/notifications`: gui email.
-- `backend/src/modules/vouchers`: ma uu dai va kho voucher.
-- `backend/src/modules/admin`: tong quan va quan ly khach hang.
-- `backend/src/modules/system`: dam bao cau truc bang/cot mo rong.
+Quy ước chính:
+
+- Backend route đặt trong `backend/src/ungDung.js`.
+- Backend nghiệp vụ đặt trong `backend/src/modules`.
+- Frontend page đặt trong `frontend/src/pages`.
+- Frontend component đặt trong `frontend/src/components`.
+- Frontend API client đặt trong `frontend/src/services`.
+- Helper thuần đặt trong `frontend/src/utils` hoặc file `*Helpers.js`.
+
+Khi cần chỉnh cấu trúc sâu hơn, đọc tài liệu chi tiết trong `Tài liệu dự án/CAU_TRUC_CHUONG_TRINH.md` trước để tránh move file làm gãy import.
