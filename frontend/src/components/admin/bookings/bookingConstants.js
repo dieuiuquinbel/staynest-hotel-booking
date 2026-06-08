@@ -1,18 +1,18 @@
-﻿// Chá»©c nÄƒng: Khai bÃ¡o mÃ u sáº¯c vÃ  háº±ng sá»‘ hiá»ƒn thá»‹ cho quáº£n lÃ½ Ä‘áº·t phÃ²ng.
-// Háº±ng sá»‘ giao diá»‡n cho mÃ n quáº£n lÃ½ Ä‘áº·t phÃ²ng.
-// File nÃ y chá»‰ chá»©a nhÃ£n tab vÃ  mÃ u hiá»ƒn thá»‹, khÃ´ng chá»©a logic gá»i API.
+// Chức năng: Khai báo màu sắc và hằng số hiển thị cho quản lý đặt phòng.
+// Hằng số giao diện cho màn quản lý đặt phòng.
+// File này chỉ chứa nhãn tab và màu hiển thị, không chứa logic gọi API.
 import {
   TRANG_THAI_DAT_PHONG,
   TRANG_THAI_THANH_TOAN,
 } from '../../../utils/lichSuDatPhong';
 
 export const TABS_DAT_PHONG = [
-  { key: 'all',     label: 'Táº¥t cáº£ Ä‘Æ¡n',         icon: 'ðŸ“¦', tone: 'slate' },
-  { key: 'today',   label: 'HÃ´m nay & LÆ°u trÃº',  icon: 'ðŸ“‹', tone: 'sky' },
+  { key: 'all', label: 'Tất cả đơn', icon: '📦', tone: 'slate' },
+  { key: 'today', label: 'Hôm nay & Lưu trú', icon: '📋', tone: 'sky' },
   { key: 'upcoming', label: 'Chờ ngày nhận phòng', icon: '📅', tone: 'emerald' },
-  { key: 'holding', label: 'Chá» thanh toÃ¡n',     icon: 'â³', tone: 'amber' },
-  { key: 'action',  label: 'Cáº§n xá»­ lÃ½',         icon: 'ðŸ”¥', tone: 'rose' },
-  { key: 'history', label: 'Lá»‹ch sá»­',            icon: 'ðŸ“œ', tone: 'slate' },
+  { key: 'holding', label: 'Chờ thanh toán', icon: '⏳', tone: 'amber' },
+  { key: 'action', label: 'Cần xử lý', icon: '🔥', tone: 'rose' },
+  { key: 'history', label: 'Lịch sử', icon: '📜', tone: 'slate' },
 ];
 
 export const MAU_TRANG_THAI_DAT_PHONG = {
@@ -42,8 +42,8 @@ export const MAU_TRANG_THAI_HOAN_TIEN = {
 };
 
 export const NHAN_HOAN_TIEN = {
-  pending: 'Chá» xá»­ lÃ½',
-  approved: 'ÄÃ£ duyá»‡t',
-  rejected: 'ÄÃ£ tá»« chá»‘i',
-  completed: 'ÄÃ£ hoÃ n táº¥t',
+  pending: 'Chờ xử lý',
+  approved: 'Đã duyệt',
+  rejected: 'Đã từ chối',
+  completed: 'Đã hoàn tất',
 };

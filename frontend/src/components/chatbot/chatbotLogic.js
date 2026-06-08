@@ -1,4 +1,4 @@
-// Ch?c n?ng: D? li?u v? logic tr? l?i thu?n cho chatbot h? tr? ??t ph?ng.
+// Chức năng: Cung cấp dữ liệu và logic trả lời tự động cho chatbot hỗ trợ đặt phòng.
 import { layDanhSachPhong } from '../../services/phongApi';
 
 export const AVATAR_SRC = "/chat-avatar.png";

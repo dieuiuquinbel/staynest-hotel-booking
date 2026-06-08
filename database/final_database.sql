@@ -368,7 +368,11 @@ INSERT INTO vouchers (
 ('FAMILY08', 'Giam 8% phong gia dinh', 'Uu dai cho nhom ban va gia dinh.', 'percent', 0.08, 1500000, 350000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 45 DAY), 300, TRUE),
 ('WEEKEND150', 'Giam 150.000 d cuoi tuan', 'Ap dung cho don tu 1.200.000 d.', 'fixed', 150000, 1200000, 150000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 250, TRUE),
 ('FREEBREAKFAST', 'Tang bua sang mien phi', 'Tang bua sang cho mot don dat phong du dieu kien.', 'service', 0, 700000, NULL, 'Bua sang mien phi', NOW(), DATE_ADD(NOW(), INTERVAL 75 DAY), 300, TRUE),
-('AIRPORTCAR', 'Mien phi dua don san bay', 'Tang mot chieu dua don san bay cho don cao cap.', 'service', 0, 2500000, NULL, 'Dua don san bay mot chieu', NOW(), DATE_ADD(NOW(), INTERVAL 75 DAY), 120, TRUE);
+('AIRPORTCAR', 'Mien phi dua don san bay', 'Tang mot chieu dua don san bay cho don cao cap.', 'service', 0, 2500000, NULL, 'Dua don san bay mot chieu', NOW(), DATE_ADD(NOW(), INTERVAL 75 DAY), 120, TRUE),
+('SUMMER20', 'Chao he giam 20%', 'Sieu uu dai cho mua he cuc nong, toi da 500k', 'percent', 0.20, 2000000, 500000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), 100, TRUE),
+('MEGA500', 'Sieu giam gia 500k', 'Voucher tien mat truc tiep', 'fixed', 500000, 3000000, 500000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 10 DAY), 50, TRUE),
+('LATECHECKOUT', 'Tra phong muon', 'Duoc phep tra phong muon mien phi den 14:00', 'service', 0, 1500000, NULL, 'Tra phong muon den 14:00', NOW(), DATE_ADD(NOW(), INTERVAL 60 DAY), 200, TRUE),
+('STAYNESTVIP', 'Voucher VIP giam 15%', 'Ap dung cho cac phong hang sang', 'percent', 0.15, 2500000, 1000000, NULL, NOW(), DATE_ADD(NOW(), INTERVAL 120 DAY), 300, TRUE);
 
 INSERT INTO room_images (room_id, image_url, sort_order, is_cover)
 SELECT id, image_url, 0, TRUE

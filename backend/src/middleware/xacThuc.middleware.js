@@ -3,8 +3,7 @@
 // File này đọc access token, nạp user hiện tại và chặn request chưa đăng nhập.
 const jwt = require('jsonwebtoken');
 const { timNguoiDungTheoId } = require('../modules/auth/xacThuc.service');
-
-const KHOA_BI_MAT_JWT = process.env.JWT_SECRET || 'staynest_dev_secret_change_me';
+const { layJwtSecret } = require('../config/baoMat');
 
 async function yeuCauDangNhap(req, res, next) {
   try {
@@ -17,7 +16,7 @@ async function yeuCauDangNhap(req, res, next) {
     }
 
     const token = authorization.slice(7);
-    const payload = jwt.verify(token, KHOA_BI_MAT_JWT);
+    const payload = jwt.verify(token, layJwtSecret());
     const user = await timNguoiDungTheoId(payload.sub);
 
     if (!user || user.status !== 'active') {

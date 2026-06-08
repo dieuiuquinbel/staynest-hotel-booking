@@ -9,6 +9,8 @@ const useKhoXacThuc = create(
       token: null,
       user: null,
       isAuthReady: false,
+      showLoginOffer: false,
+      favoriteRooms: [],
       setSession: ({ token, user }) =>
         set({
           token,
@@ -19,11 +21,20 @@ const useKhoXacThuc = create(
         set({
           user,
         }),
+      setShowLoginOffer: (show) => set({ showLoginOffer: show }),
+      setFavoriteRooms: (roomIds) => set({ favoriteRooms: roomIds }),
+      addFavoriteRoom: (roomId) =>
+        set((state) => ({ favoriteRooms: [...state.favoriteRooms, roomId] })),
+      removeFavoriteRoom: (roomId) =>
+        set((state) => ({
+          favoriteRooms: state.favoriteRooms.filter((id) => id !== roomId),
+        })),
       clearSession: () =>
         set({
           token: null,
           user: null,
           isAuthReady: true,
+          favoriteRooms: [],
         }),
       markReady: () =>
         set({

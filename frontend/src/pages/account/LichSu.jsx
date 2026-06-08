@@ -2,6 +2,7 @@
 // Trang lich su: tong hop phong da xem, phong yeu thich, don thanh cong va don da huy.
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import ThePhong from '../../components/rooms/ThePhong';
 import useKhoXacThuc from '../../store/khoXacThuc';
 import {
@@ -15,9 +16,10 @@ import {
 } from '../../utils/lichSuDatPhong';
 import { dinhDangNgay, dinhDangTien } from '../../utils/dinhDang';
 import { resolveMediaUrl } from '../../utils/media';
-import { xoaPhongDaXem, docPhongYeuThich, docPhongDaXem } from '../../utils/lichSuXemPhong';
+import { xoaPhongDaXem, docPhongDaXem } from '../../utils/lichSuXemPhong';
 import { useDatPhongCuaToi } from '../../hooks/useDatPhongCuaToi';
 import { taoYeuCauHoanTienApi, taoDanhGiaDatPhongApi } from '../../services/datPhongApi';
+import { layDanhSachYeuThichApi } from '../../services/phongApi';
 
 const TAB_LICH_SU = [
   { key: 'viewed', label: 'Phòng đã xem' },
@@ -213,6 +215,8 @@ function BangTrong({ title, description }) {
 
 function LichSu() {
   const user = useKhoXacThuc((state) => state.user);
+  const token = useKhoXacThuc((state) => state.token);
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('viewed');
   const [reviewByBooking, setReviewByBooking] = useState({});
   const [refundOpenByBooking, setRefundOpenByBooking] = useState({});
@@ -220,7 +224,13 @@ function LichSu() {
   const [notice, setNotice] = useState('');
   const { bookings, refresh: refreshBookings } = useDatPhongCuaToi(user);
   const viewedRooms = docPhongDaXem();
-  const favoriteRooms = docPhongYeuThich();
+
+  const { data: favoriteRooms = [], isLoading: isLoadingFavorites } = useQuery({
+    queryKey: ['favorite-rooms', token],
+    queryFn: layDanhSachYeuThichApi,
+    enabled: !!token,
+    staleTime: 2 * 60 * 1000,
+  });
   const paidBookings = bookings.filter((booking) =>
     [TRANG_THAI_DAT_PHONG.CONFIRMED, TRANG_THAI_DAT_PHONG.CHECKED_IN].includes(booking.bookingStatus),
   );
@@ -285,9 +295,27 @@ function LichSu() {
 
   const renderContent = () => {
     if (activeTab === 'favorites') {
+      if (isLoadingFavorites) {
+        return (
+          <div className="mt-8 flex justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+          </div>
+        );
+      }
       return favoriteRooms.length ? (
-        <div className="mt-5 grid gap-5 lg:grid-cols-2 xl:grid-cols-3" onClick={refresh}>
-          {favoriteRooms.map((room) => <ThePhong key={`favorite-${room.id}`} room={room} layout="vertical" />)}
+        <div className="mt-5 grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+          {favoriteRooms.map((room) => (
+            <ThePhong
+              key={`favorite-${room.id}`}
+              room={room}
+              layout="vertical"
+              isFavoriteView={true}
+              onFavoriteToggle={() => {
+                queryClient.invalidateQueries({ queryKey: ['favorite-rooms'] });
+                queryClient.invalidateQueries({ queryKey: ['favorites'] });
+              }}
+            />
+          ))}
         </div>
       ) : <BangTrong title="Chưa có phòng đã lưu" description="Nhấn nút yêu thích ở trang chi tiết hoặc thẻ khách sạn để lưu lại." />;
     }

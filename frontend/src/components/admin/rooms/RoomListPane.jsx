@@ -2,8 +2,22 @@
 // Khối danh sách phòng: thống kê, bộ lọc và 2 chế độ hiển thị.
 import { dinhDangTien } from '../../../utils/dinhDang';
 import { layThongTinTinhTrangPhong } from '../../../utils/tinhTrangPhong';
+import { Link } from 'react-router-dom';
 import { ROOM_TYPES } from './roomConstants';
 import { getInventory, nhanLoaiPhong, taoThongKePhong } from './roomHelpers';
+
+function EyeIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="M2.6 10s2.5-4.5 7.4-4.5S17.4 10 17.4 10s-2.5 4.5-7.4 4.5S2.6 10 2.6 10Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 12.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4Z" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function roomDetailPath(roomId) {
+  return `/admin/rooms/${roomId}`;
+}
 
 function RoomStats({ rooms }) {
   const stats = taoThongKePhong(rooms);
@@ -48,7 +62,7 @@ function RoomTable({ rooms }) {
   return (
     <section className="overflow-hidden rounded-lg border border-slate-200 bg-white">
       <div className="overflow-x-auto">
-        <table className="min-w-[980px] w-full text-left">
+        <table className="min-w-[1060px] w-full text-left">
           <thead className="bg-slate-50 text-xs font-black uppercase tracking-[0.12em] text-slate-500">
             <tr>
               <th className="px-5 py-3">Phòng</th>
@@ -57,6 +71,7 @@ function RoomTable({ rooms }) {
               <th className="px-5 py-3">Giá</th>
               <th className="px-5 py-3">Kho</th>
               <th className="px-5 py-3">Trạng thái</th>
+              <th className="w-20 px-4 py-3 text-center">Xem</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -78,10 +93,22 @@ function RoomTable({ rooms }) {
                   <td className="px-5 py-4">
                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${statusInfo.lopHuyHieu}`}>{statusInfo.label}</span>
                   </td>
+                  <td className="w-20 px-4 py-4">
+                    <div className="flex justify-center">
+                      <Link
+                        to={roomDetailPath(room.id)}
+                        aria-label={`Xem chi tiết và ảnh phòng ${room.room_name}`}
+                        title="Xem chi tiết và ảnh phòng"
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
+                      >
+                        <EyeIcon />
+                      </Link>
+                    </div>
+                  </td>
                 </tr>
               );
             })}
-            {!rooms.length ? <tr><td colSpan={6} className="px-5 py-8 text-center text-sm font-bold text-slate-500">Không có phòng phù hợp.</td></tr> : null}
+            {!rooms.length ? <tr><td colSpan={7} className="px-5 py-8 text-center text-sm font-bold text-slate-500">Không có phòng phù hợp.</td></tr> : null}
           </tbody>
         </table>
       </div>
@@ -108,6 +135,13 @@ function RoomGrid({ rooms }) {
               <div className="rounded-lg bg-slate-50 p-3"><p className="text-[11px] font-black uppercase text-slate-500">Loại</p><p className="mt-1 font-black text-slate-950">{nhanLoaiPhong(room.room_type)}</p></div>
               <div className="rounded-lg bg-slate-50 p-3"><p className="text-[11px] font-black uppercase text-slate-500">Giá</p><p className="mt-1 font-black text-brand-700">{dinhDangTien(room.price_per_night)}</p></div>
             </div>
+            <Link
+              to={roomDetailPath(room.id)}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            >
+              <EyeIcon />
+              Xem chi tiết và ảnh
+            </Link>
           </article>
         );
       })}

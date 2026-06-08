@@ -3,17 +3,19 @@
 // File này khai báo route, gắn layout khách hàng/admin và đồng bộ phiên đăng nhập.
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import TuyenDuongBaoVe from '../components/auth/TuyenDuongBaoVe';
-import AdminLayout from '../components/admin/AdminLayout';
 import ChatbotNoi from '../components/chatbot/ChatbotNoi';
 import ChanTrang from '../components/layout/ChanTrang';
 import DauTrang from '../components/layout/DauTrang';
 import BoThongBaoToanCuc from '../components/layout/BoThongBaoToanCuc';
+import { PopupMoiDangNhap } from '../components/public/home/HomeDialogs';
 import { layNguoiDungHienTai } from '../services/xacThucApi';
+import { layDanhSachYeuThichApi } from '../services/phongApi';
 import useKhoXacThuc from '../store/khoXacThuc';
 import { laQuanTriVien } from '../utils/phanQuyen';
 const TrangChu = lazy(() => import('../pages/public/TrangChu'));
+const AdminLayout = lazy(() => import('../components/admin/AdminLayout'));
 const DanhSachPhong = lazy(() => import('../pages/rooms/DanhSachPhong'));
 const ChiTietPhong = lazy(() => import('../pages/rooms/ChiTietPhong'));
 const LichSu = lazy(() => import('../pages/account/LichSu'));
@@ -52,8 +54,8 @@ function CuonLenDauTrang() {
 
 function DangTaiTrang() {
   return (
-    <main className="flex min-h-[55vh] flex-1 items-center justify-center bg-slate-50 px-4">
-      <div className="rounded-xl border border-sky-100 bg-white px-5 py-4 text-sm font-bold text-slate-600 shadow-sm">
+    <main className="flex min-h-[55vh] flex-1 items-center justify-center px-4">
+      <div className="surface-card px-5 py-4 text-sm font-bold text-slate-600">
         Đang tải...
       </div>
     </main>
@@ -146,7 +148,7 @@ function NutCuonTrangNoi() {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
       onPointerCancel={handlePointerUp}
-      className="fixed bottom-[116px] right-6 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-sky-100 bg-white/95 text-[#0f5d82] shadow-md shadow-slate-900/10 backdrop-blur transition hover:border-sky-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100"
+      className="fixed bottom-[116px] right-6 z-50 flex h-11 w-11 items-center justify-center rounded-full border border-brand-100 bg-white/95 text-brand-700 shadow-[0_18px_45px_-28px_rgba(146,23,77,0.55)] backdrop-blur transition hover:-translate-y-0.5 hover:border-brand-300 hover:bg-brand-50 focus:outline-none focus:ring-4 focus:ring-brand-100"
     >
       {icon}
     </button>
@@ -161,6 +163,9 @@ function UngDung() {
   const clearSession = useKhoXacThuc((state) => state.clearSession);
   const markReady = useKhoXacThuc((state) => state.markReady);
   const markPending = useKhoXacThuc((state) => state.markPending);
+  const showLoginOffer = useKhoXacThuc((state) => state.showLoginOffer);
+  const setShowLoginOffer = useKhoXacThuc((state) => state.setShowLoginOffer);
+  const navigate = useNavigate();
 
   const authQuery = useQuery({
     queryKey: ['auth', 'me', token],
@@ -169,6 +174,21 @@ function UngDung() {
     retry: false,
     staleTime: 5 * 60 * 1000,
   });
+
+  const setFavoriteRooms = useKhoXacThuc((state) => state.setFavoriteRooms);
+
+  const { data: favData } = useQuery({
+    queryKey: ['favorites', token],
+    queryFn: layDanhSachYeuThichApi,
+    enabled: Boolean(token),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (favData) {
+      setFavoriteRooms(favData.map((r) => r.id));
+    }
+  }, [favData, setFavoriteRooms]);
 
   useEffect(() => {
     if (token) {
@@ -203,9 +223,17 @@ function UngDung() {
   const customerPage = (element) => (isAdminUser ? <Navigate to="/admin/overview" replace /> : element);
 
   return (
-    <div className="flex min-h-screen flex-col text-slate-900">
+    <div className="flex min-h-[100dvh] flex-col text-slate-900">
       <CuonLenDauTrang />
       <BoThongBaoToanCuc />
+      <PopupMoiDangNhap
+        open={showLoginOffer && !token}
+        onClose={() => setShowLoginOffer(false)}
+        onAuth={() => {
+          setShowLoginOffer(false);
+          navigate(`/auth?mode=login&redirect=${encodeURIComponent(location.pathname + location.search)}`);
+        }}
+      />
       {!isAdminExperience ? <DauTrang /> : null}
       <Suspense fallback={<DangTaiTrang />}>
         <Routes>
@@ -229,6 +257,7 @@ function UngDung() {
               <Route path="overview" element={<AdminDashboard />} />
               <Route path="bookings" element={<QuanLyDatPhong />} />
               <Route path="rooms" element={<AdminRooms />} />
+              <Route path="rooms/:roomId" element={<ChiTietPhong />} />
               <Route path="operations" element={<AdminOperations />} />
               <Route path="customers" element={<AdminCustomers />} />
               <Route path="revenue" element={<AdminRevenue />} />

@@ -17,6 +17,16 @@ export async function layPhongTheoId(roomId) {
   return response.data.data;
 }
 
+export const layDanhSachYeuThichApi = async () => {
+  const response = await ketNoiApi.get('/me/favorites');
+  return response.data.data;
+};
+
+export const toggleYeuThichApi = async (roomId) => {
+  const response = await ketNoiApi.post('/me/favorites', { roomId });
+  return response.data.data;
+};
+
 export async function taoPhongAdminApi(payload) {
   const response = await ketNoiApi.post('/admin/rooms', payload);
   return response.data.data;

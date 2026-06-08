@@ -115,19 +115,18 @@ function AdminLayout() {
   const greeting = hour < 12 ? 'Chào buổi sáng' : hour < 18 ? 'Chào buổi chiều' : 'Chào buổi tối';
 
   return (
-    <main className="min-h-screen bg-[#f0f2f5] text-slate-950">
-      <div className="grid min-h-screen lg:grid-cols-[260px_minmax(0,1fr)]">
+    <main className="min-h-[100dvh] bg-[#f7f3f1] text-slate-950">
+      <div className="grid min-h-[100dvh] lg:grid-cols-[272px_minmax(0,1fr)]">
 
         {/* SIDEBAR */}
-        <aside className="border-r border-slate-200/80 bg-white shadow-sm">
-          <div className="sticky top-0 flex min-h-screen flex-col">
+        <aside className="border-r border-[#eadfe2] bg-white/92 shadow-[18px_0_60px_-54px_rgba(36,31,33,0.5)]">
+          <div className="sticky top-0 flex min-h-[100dvh] flex-col">
 
             {/* Brand block */}
-            <div className="border-b border-slate-100 px-4 py-4">
-              <Link to="/admin/overview" className="flex items-center gap-3 rounded-xl px-2 py-2.5 transition hover:bg-slate-50">
+            <div className="border-b border-[#eadfe2] px-4 py-4">
+              <Link to="/admin/overview" className="flex items-center gap-3 rounded-2xl px-2 py-2.5 transition hover:bg-brand-50/55">
                 <span
-                  className="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-sm font-black text-white"
-                  style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%)' }}
+                  className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-brand-600 text-sm font-black text-white shadow-[0_16px_34px_-22px_rgba(255,56,92,0.9)]"
                 >
                   DB
                 </span>
@@ -154,8 +153,8 @@ function AdminLayout() {
                           className={({ isActive }) =>
                             `group flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-150 ${
                               isActive
-                                ? 'bg-slate-950 text-white shadow-sm'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-950'
+                                ? 'bg-[#241f21] text-white shadow-[0_16px_38px_-26px_rgba(36,31,33,0.6)]'
+                                : 'text-slate-500 hover:bg-brand-50/70 hover:text-slate-950'
                             }`
                           }
                         >
@@ -182,8 +181,8 @@ function AdminLayout() {
             </nav>
 
             {/* User block */}
-            <div className="border-t border-slate-100 p-4">
-              <div className="rounded-xl bg-slate-50 p-3">
+            <div className="border-t border-[#eadfe2] p-4">
+              <div className="rounded-2xl border border-[#eadfe2] bg-[#fffaf8] p-3">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">{greeting}</p>
                 <p className="mt-1.5 truncate text-sm font-black text-slate-950">
                   {user?.full_name || user?.username || 'Admin'}
@@ -194,7 +193,7 @@ function AdminLayout() {
                 <button
                   type="button"
                   onClick={logout}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 active:scale-95"
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50 active:scale-95"
                 >
                   <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
                     <path fillRule="evenodd" d="M3 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h7a1 1 0 1 0 0-2H4V5h6a1 1 0 1 0 0-2H3zm11.707 4.293a1 1 0 0 1 0 1.414L13.414 10l1.293 1.293a1 1 0 0 1-1.414 1.414l-2-2a1 1 0 0 1 0-1.414l2-2a1 1 0 0 1 1.414 0z" clipRule="evenodd" />

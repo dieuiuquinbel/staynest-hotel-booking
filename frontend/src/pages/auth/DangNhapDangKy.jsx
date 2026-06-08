@@ -3,6 +3,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { dangNhapTaiKhoan, dangKyTaiKhoan, guiLaiOtpEmail, xacMinhOtpEmail } from '../../services/xacThucApi';
 import useKhoXacThuc from '../../store/khoXacThuc';
 import useKhoThongBao from '../../store/khoThongBao';
@@ -30,6 +31,33 @@ const XAC_MINH_BAN_DAU = {
   otp: '',
 };
 
+// --- Animations Variants ---
+const flipVariants = {
+  initial: { rotateY: 90, opacity: 0, scale: 0.95 },
+  animate: {
+    rotateY: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 0.5,
+      ease: [0.23, 1, 0.32, 1], // easeOutQuint
+      staggerChildren: 0.08,
+      delayChildren: 0.15,
+    },
+  },
+  exit: {
+    rotateY: -90,
+    opacity: 0,
+    scale: 0.95,
+    transition: { duration: 0.3, ease: 'easeIn' },
+  },
+};
+
+const itemVariants = {
+  initial: { y: 20, opacity: 0 },
+  animate: { y: 0, opacity: 1, transition: { duration: 0.4, ease: 'easeOut' } },
+};
+
 function docThongBaoLoi(error, defaultMessage) {
   if (!error?.response) {
     return 'Không kết nối được backend. Hãy chạy backend bằng `npm run dev` trong thư mục backend rồi thử lại.';
@@ -44,7 +72,7 @@ function TruongBieuMau({ label, className = '', ...inputProps }) {
       <span className="text-sm font-bold text-slate-700">{label}</span>
       <input
         {...inputProps}
-        className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400"
+        className="field-shell px-4 py-4 text-sm font-semibold text-slate-950 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
       />
     </label>
   );
@@ -94,6 +122,7 @@ function DangNhapDangKy() {
     next.set('mode', nextMode);
     setSearchParams(next, { replace: true });
     setVerification(XAC_MINH_BAN_DAU);
+    // Smooth scroll if needed, but the animation makes it look nice already
     window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
   };
 
@@ -180,9 +209,14 @@ function DangNhapDangKy() {
   return (
     <main className="auth-page-bg flex-1">
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
-        <div className="surface-card grid min-h-[620px] overflow-hidden lg:grid-cols-[0.92fr_1.08fr]">
-          <aside className="relative min-h-[420px] bg-slate-950 text-white lg:min-h-[620px]">
-            <img src={ANH_XAC_THUC} alt="Không gian nghỉ dưỡng" className="absolute inset-0 h-full w-full object-cover opacity-85" />
+        <div className="surface-card grid min-h-[620px] overflow-hidden lg:grid-cols-[0.92fr_1.08fr] shadow-2xl shadow-brand-900/5">
+          <aside className="relative min-h-[420px] bg-slate-950 text-white lg:min-h-[620px] overflow-hidden group">
+            {/* Parallax Image Effect */}
+            <Motion.img 
+              src={ANH_XAC_THUC} 
+              alt="Không gian nghỉ dưỡng" 
+              className="absolute inset-0 h-full w-full object-cover opacity-85 transition-transform duration-[10s] group-hover:scale-110" 
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-slate-950/10" />
             <div className="relative flex h-full flex-col justify-between p-6 sm:p-8">
               <Link
@@ -191,39 +225,78 @@ function DangNhapDangKy() {
               >
                 Về trang chủ
               </Link>
-              <div>
+              <Motion.div 
+                initial={{ y: 30, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+              >
                 <p className="text-sm font-bold text-sky-100">StayNest account</p>
-                <h1 className="mt-4 max-w-md text-4xl font-black leading-tight tracking-tight">{heroTitle}</h1>
+                <Motion.h1 
+                  key={heroTitle}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 max-w-md text-4xl font-black leading-tight tracking-tight"
+                >
+                  {heroTitle}
+                </Motion.h1>
                 <p className="mt-4 max-w-md text-sm leading-7 text-sky-50">
                   Tài khoản đã xác minh email sẽ nhận được OTP, thông báo đặt phòng và hóa đơn từ StayNest.
                 </p>
-              </div>
+              </Motion.div>
             </div>
           </aside>
 
-          <section className="overflow-hidden p-6 sm:p-8 lg:p-10">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div>
+          <section className="overflow-hidden p-6 sm:p-8 lg:p-10 flex flex-col perspective-[1200px]">
+            <Motion.div layout className="flex flex-wrap items-center justify-between gap-4 z-10">
+              <Motion.div layout>
                 <span className="eyebrow">Tài khoản</span>
-                <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950">
-                  {isVerifying ? 'Xác minh email' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
-                </h2>
-                <p className="mt-2 text-sm leading-7 text-slate-500">
-                  {isVerifying
-                    ? `Mã OTP đã được gửi tới ${verification.email}.`
-                    : mode === 'login'
-                      ? 'Có thể đăng nhập bằng email hoặc tên tài khoản.'
-                      : 'Sau khi tạo tài khoản, bạn cần nhập OTP để xác minh email.'}
-                </p>
-              </div>
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <Motion.h2 
+                    key={isVerifying ? 'verify' : mode}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 20 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-3 text-3xl font-extrabold tracking-tight text-slate-950"
+                  >
+                    {isVerifying ? 'Xác minh email' : mode === 'login' ? 'Đăng nhập' : 'Đăng ký'}
+                  </Motion.h2>
+                </AnimatePresence>
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <Motion.p 
+                    key={`desc-${isVerifying ? 'verify' : mode}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mt-2 text-sm leading-7 text-slate-500"
+                  >
+                    {isVerifying
+                      ? `Mã OTP đã được gửi tới ${verification.email}.`
+                      : mode === 'login'
+                        ? 'Có thể đăng nhập bằng email hoặc tên tài khoản.'
+                        : 'Sau khi tạo tài khoản, bạn cần nhập OTP để xác minh email.'}
+                  </Motion.p>
+                </AnimatePresence>
+              </Motion.div>
 
               {!isVerifying ? (
-                <div className="grid grid-cols-2 rounded-full border border-sky-100 bg-sky-50 p-1 text-sm font-bold">
+                <Motion.div layout className="grid grid-cols-2 rounded-full border border-sky-100 bg-sky-50 p-1 text-sm font-bold relative">
+                  {/* Sliding pill indicator */}
+                  <Motion.div 
+                    layoutId="authTabIndicator"
+                    className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-white shadow-sm"
+                    initial={false}
+                    animate={{ 
+                      left: mode === 'login' ? '4px' : 'calc(50%)' 
+                    }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  />
                   <button
                     type="button"
                     onClick={() => switchMode('login')}
-                    className={`rounded-full px-4 py-2 transition ${
-                      mode === 'login' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'
+                    className={`relative z-10 rounded-full px-4 py-2 transition-colors ${
+                      mode === 'login' ? 'text-brand-700' : 'text-slate-500 hover:text-brand-700'
                     }`}
                   >
                     Đăng nhập
@@ -231,145 +304,195 @@ function DangNhapDangKy() {
                   <button
                     type="button"
                     onClick={() => switchMode('register')}
-                    className={`rounded-full px-4 py-2 transition ${
-                      mode === 'register' ? 'bg-white text-brand-700 shadow-sm' : 'text-slate-500 hover:text-brand-700'
+                    className={`relative z-10 rounded-full px-4 py-2 transition-colors ${
+                      mode === 'register' ? 'text-brand-700' : 'text-slate-500 hover:text-brand-700'
                     }`}
                   >
                     Đăng ký
                   </button>
-                </div>
+                </Motion.div>
               ) : null}
-            </div>
+            </Motion.div>
 
-            <div className="auth-form-stage">
-              {isVerifying ? (
-                <form onSubmit={handleVerifySubmit} className="auth-form-panel mt-8 grid gap-5">
-                  <ThongBao tone="info">OTP có hiệu lực trong 10 phút. Kiểm tra cả hộp thư spam nếu chưa thấy email.</ThongBao>
-                  <TruongBieuMau
-                    label="Mã OTP"
-                    type="text"
-                    inputMode="numeric"
-                    value={verification.otp}
-                    onChange={(event) => setVerification((current) => ({ ...current, otp: event.target.value }))}
-                    required
-                    placeholder="Nhập 6 số"
-                  />
-
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      type="submit"
-                      disabled={verifyMutation.isPending}
-                      className="rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                    >
-                      {verifyMutation.isPending ? 'Đang xác minh...' : 'Xác minh và đăng nhập'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleResendOtp}
-                      disabled={resendMutation.isPending}
-                      className="rounded-xl border border-sky-200 bg-white px-5 py-4 text-sm font-bold text-brand-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:text-slate-400"
-                    >
-                      {resendMutation.isPending ? 'Đang gửi...' : 'Gửi lại mã'}
-                    </button>
-                  </div>
-                </form>
-              ) : mode === 'login' ? (
-                <form onSubmit={handleLoginSubmit} className="auth-form-panel mt-8 grid gap-5">
-                  <TruongBieuMau
-                    label="Email hoặc tên tài khoản"
-                    type="text"
-                    name="identifier"
-                    value={loginForm.identifier}
-                    onChange={(event) => updateLoginForm('identifier', event.target.value)}
-                    required
-                    placeholder="ban@example.com hoặc nguyenvana"
-                  />
-                  <TruongBieuMau
-                    label="Mật khẩu"
-                    type="password"
-                    name="password"
-                    value={loginForm.password}
-                    onChange={(event) => updateLoginForm('password', event.target.value)}
-                    required
-                    placeholder="Nhập mật khẩu"
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={loginMutation.isPending}
-                    className="rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            {/* 3D Flip Container with Auto Height */}
+            <Motion.div layout className="auth-form-stage mt-8 relative transform-style-3d">
+              <AnimatePresence mode="wait">
+                {isVerifying ? (
+                  <Motion.form 
+                    key="verifyForm"
+                    variants={flipVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    onSubmit={handleVerifySubmit} 
+                    className="auth-form-panel grid gap-5 origin-center"
                   >
-                    {loginMutation.isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleRegisterSubmit} className="auth-form-panel mt-8 grid gap-5 md:grid-cols-2">
-                  <TruongBieuMau
-                    label="Họ và tên"
-                    type="text"
-                    name="fullName"
-                    value={registerForm.fullName}
-                    onChange={(event) => updateRegisterForm('fullName', event.target.value)}
-                    required
-                    placeholder="Nguyễn Văn A"
-                    className="md:col-span-2"
-                  />
-                  <TruongBieuMau
-                    label="Tên tài khoản"
-                    type="text"
-                    name="username"
-                    value={registerForm.username}
-                    onChange={(event) => updateRegisterForm('username', event.target.value)}
-                    required
-                    placeholder="nguyenvana"
-                    className="md:col-span-2"
-                  />
-                  <TruongBieuMau
-                    label="Email"
-                    type="email"
-                    name="email"
-                    value={registerForm.email}
-                    onChange={(event) => updateRegisterForm('email', event.target.value)}
-                    required
-                    placeholder="ban@example.com"
-                  />
-                  <TruongBieuMau
-                    label="Số điện thoại"
-                    type="tel"
-                    name="phone"
-                    value={registerForm.phone}
-                    onChange={(event) => updateRegisterForm('phone', event.target.value)}
-                    placeholder="090..."
-                  />
-                  <TruongBieuMau
-                    label="Mật khẩu"
-                    type="password"
-                    name="password"
-                    value={registerForm.password}
-                    onChange={(event) => updateRegisterForm('password', event.target.value)}
-                    required
-                    placeholder="Ít nhất 6 ký tự"
-                  />
-                  <TruongBieuMau
-                    label="Xác nhận mật khẩu"
-                    type="password"
-                    name="confirmPassword"
-                    value={registerForm.confirmPassword}
-                    onChange={(event) => updateRegisterForm('confirmPassword', event.target.value)}
-                    required
-                    placeholder="Nhập lại mật khẩu"
-                  />
+                    <Motion.div variants={itemVariants}>
+                      <ThongBao tone="info">OTP có hiệu lực trong 10 phút. Kiểm tra cả hộp thư spam nếu chưa thấy email.</ThongBao>
+                    </Motion.div>
+                    
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Mã OTP"
+                        type="text"
+                        inputMode="numeric"
+                        value={verification.otp}
+                        onChange={(event) => setVerification((current) => ({ ...current, otp: event.target.value }))}
+                        required
+                        placeholder="Nhập 6 số"
+                      />
+                    </Motion.div>
 
-                  <button
-                    type="submit"
-                    disabled={registerMutation.isPending}
-                    className="rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 md:col-span-2"
+                    <Motion.div variants={itemVariants} className="flex flex-wrap gap-3">
+                      <button
+                        type="submit"
+                        disabled={verifyMutation.isPending}
+                        className="rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        {verifyMutation.isPending ? 'Đang xác minh...' : 'Xác minh và đăng nhập'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleResendOtp}
+                        disabled={resendMutation.isPending}
+                        className="rounded-xl border border-sky-200 bg-white px-5 py-4 text-sm font-bold text-brand-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:text-slate-400"
+                      >
+                        {resendMutation.isPending ? 'Đang gửi...' : 'Gửi lại mã'}
+                      </button>
+                    </Motion.div>
+                  </Motion.form>
+                ) : mode === 'login' ? (
+                  <Motion.form 
+                    key="loginForm"
+                    variants={flipVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    onSubmit={handleLoginSubmit} 
+                    className="auth-form-panel grid gap-5 origin-center"
                   >
-                    {registerMutation.isPending ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
-                  </button>
-                </form>
-              )}
-            </div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Email hoặc tên tài khoản"
+                        type="text"
+                        name="identifier"
+                        value={loginForm.identifier}
+                        onChange={(event) => updateLoginForm('identifier', event.target.value)}
+                        required
+                        placeholder="ban@example.com hoặc nguyenvana"
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Mật khẩu"
+                        type="password"
+                        name="password"
+                        value={loginForm.password}
+                        onChange={(event) => updateLoginForm('password', event.target.value)}
+                        required
+                        placeholder="Nhập mật khẩu"
+                      />
+                    </Motion.div>
+
+                    <Motion.div variants={itemVariants}>
+                      <button
+                        type="submit"
+                        disabled={loginMutation.isPending}
+                        className="w-full rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        {loginMutation.isPending ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                      </button>
+                    </Motion.div>
+                  </Motion.form>
+                ) : (
+                  <Motion.form 
+                    key="registerForm"
+                    variants={flipVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    onSubmit={handleRegisterSubmit} 
+                    className="auth-form-panel grid gap-5 md:grid-cols-2 origin-center"
+                  >
+                    <Motion.div variants={itemVariants} className="md:col-span-2">
+                      <TruongBieuMau
+                        label="Họ và tên"
+                        type="text"
+                        name="fullName"
+                        value={registerForm.fullName}
+                        onChange={(event) => updateRegisterForm('fullName', event.target.value)}
+                        required
+                        placeholder="Nguyễn Văn A"
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants} className="md:col-span-2">
+                      <TruongBieuMau
+                        label="Tên tài khoản"
+                        type="text"
+                        name="username"
+                        value={registerForm.username}
+                        onChange={(event) => updateRegisterForm('username', event.target.value)}
+                        required
+                        placeholder="nguyenvana"
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Email"
+                        type="email"
+                        name="email"
+                        value={registerForm.email}
+                        onChange={(event) => updateRegisterForm('email', event.target.value)}
+                        required
+                        placeholder="ban@example.com"
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Số điện thoại"
+                        type="tel"
+                        name="phone"
+                        value={registerForm.phone}
+                        onChange={(event) => updateRegisterForm('phone', event.target.value)}
+                        placeholder="090..."
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Mật khẩu"
+                        type="password"
+                        name="password"
+                        value={registerForm.password}
+                        onChange={(event) => updateRegisterForm('password', event.target.value)}
+                        required
+                        placeholder="Ít nhất 6 ký tự"
+                      />
+                    </Motion.div>
+                    <Motion.div variants={itemVariants}>
+                      <TruongBieuMau
+                        label="Xác nhận mật khẩu"
+                        type="password"
+                        name="confirmPassword"
+                        value={registerForm.confirmPassword}
+                        onChange={(event) => updateRegisterForm('confirmPassword', event.target.value)}
+                        required
+                        placeholder="Nhập lại mật khẩu"
+                      />
+                    </Motion.div>
+
+                    <Motion.div variants={itemVariants} className="md:col-span-2">
+                      <button
+                        type="submit"
+                        disabled={registerMutation.isPending}
+                        className="w-full rounded-xl bg-brand-600 px-5 py-4 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                      >
+                        {registerMutation.isPending ? 'Đang tạo tài khoản...' : 'Tạo tài khoản'}
+                      </button>
+                    </Motion.div>
+                  </Motion.form>
+                )}
+              </AnimatePresence>
+            </Motion.div>
           </section>
         </div>
       </section>

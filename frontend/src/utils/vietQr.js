@@ -13,7 +13,8 @@ function chuanHoaNoiDungChuyenKhoan(value) {
     .replace(/[^a-zA-Z0-9 ]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 50);
+    .toUpperCase()
+    .slice(0, 25);
 }
 
 export function daCauHinhVietQr() {
@@ -39,11 +40,13 @@ export function taoAnhVietQr({ amount, bookingId, paymentMethod, paymentCode }) 
   if (!daCauHinhVietQr()) return '';
 
   const transferInfo = chuanHoaNoiDungChuyenKhoan(paymentCode || `DIEUBEL ${bookingId} ${paymentMethod}`);
-  const params = new URLSearchParams({
-    amount: String(Math.max(Math.round(Number(amount || 0)), 0)),
-    addInfo: transferInfo,
-    accountName: CAU_HINH_VIETQR.accountName,
-  });
+  const numAmount = Math.max(Math.round(Number(amount || 0)), 0);
 
-  return `https://img.vietqr.io/image/${CAU_HINH_VIETQR.bankId}-${CAU_HINH_VIETQR.accountNo}-${CAU_HINH_VIETQR.template}.png?${params.toString()}`;
+  const base = `https://img.vietqr.io/image/${CAU_HINH_VIETQR.bankId}-${CAU_HINH_VIETQR.accountNo}-${CAU_HINH_VIETQR.template}.png`;
+  const parts = [];
+  if (numAmount > 0) parts.push(`amount=${numAmount}`);
+  if (transferInfo) parts.push(`addInfo=${encodeURIComponent(transferInfo)}`);
+  parts.push(`accountName=${encodeURIComponent(CAU_HINH_VIETQR.accountName)}`);
+
+  return `${base}?${parts.join('&')}`;
 }

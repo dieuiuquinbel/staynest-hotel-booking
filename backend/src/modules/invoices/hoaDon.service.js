@@ -8,7 +8,7 @@ function giaiThuMucHoaDon() {
   const configuredDir = String(process.env.INVOICE_DIR || "").trim();
 
   if (!configuredDir) {
-    return path.resolve(__dirname, "../../storage/invoices");
+    return path.resolve(__dirname, "../../../storage/invoices");
   }
 
   if (path.isAbsolute(configuredDir)) {
@@ -325,5 +325,6 @@ module.exports = {
   THU_MUC_HOA_DON,
   damBaoHoaDonTrongThuMucAdmin,
   taoFileHoaDon,
+  taoHtmlHoaDon,
   dinhDangTien,
 };

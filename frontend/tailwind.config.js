@@ -1,3 +1,4 @@
+// Chức năng: Cấu hình Tailwind CSS, vùng quét class và theme mở rộng của giao diện.
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],

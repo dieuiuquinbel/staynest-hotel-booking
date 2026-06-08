@@ -1,11 +1,12 @@
 // Chức năng: Hiển thị một dòng đơn trong hàng đợi quản lý đặt phòng.
 // Thẻ đại diện cho một đơn trong hàng đợi công việc của quản lý — phiên bản nâng cấp.
+import { memo } from 'react';
 import { dinhDangNgay, dinhDangTien } from '../../../utils/dinhDang';
 import { MAU_TRANG_THAI_DAT_PHONG, MAU_TRANG_THAI_THANH_TOAN } from './bookingConstants';
 import { nhanDatPhong, nhanThanhToan, tomTatHanhDong, laDonNhanPhongHomNay, tinhSoNgayChoDuyet } from './bookingHelpers';
 import { BadgeDatPhong } from './BookingShared';
 
-export default function BookingQueueItem({ booking, selected, isSelected, onSelect, onClick }) {
+function BookingQueueItem({ booking, selected, isSelected, onSelect, onClick }) {
   const selectedState = selected ?? isSelected;
   const handleSelect = onSelect || onClick;
   const summary = tomTatHanhDong(booking);
@@ -25,7 +26,6 @@ export default function BookingQueueItem({ booking, selected, isSelected, onSele
             : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/40'
       }`}
     >
-      {/* Top row: booking code + badges */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -49,7 +49,6 @@ export default function BookingQueueItem({ booking, selected, isSelected, onSele
         </div>
       </div>
 
-      {/* Bottom row: action needed + dates + money */}
       <div className="mt-4 grid gap-3 rounded-xl bg-slate-50 p-4 sm:grid-cols-3 border border-slate-100">
         <div className="border-r border-slate-200/70 pr-2 last:border-0 sm:block flex justify-between items-center">
           <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Nghiệp vụ lễ tân</p>
@@ -84,3 +83,5 @@ export default function BookingQueueItem({ booking, selected, isSelected, onSele
     </button>
   );
 }
+
+export default memo(BookingQueueItem);

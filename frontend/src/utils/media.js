@@ -12,7 +12,7 @@ export function resolveMediaUrl(path) {
     }
 
     if (typeof window !== 'undefined') {
-      return `${window.location.protocol}//${window.location.hostname}:5000${path}`;
+      return path;
     }
   }
 

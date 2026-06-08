@@ -9,7 +9,7 @@ function BangMoiThanhVien({ className = '' }) {
 
   return (
     <div
-      className={`rounded-2xl border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-amber-50 p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-6 ${className}`}
+      className={`rounded-[24px] border border-[#eadfe2] bg-gradient-to-r from-brand-50 via-white to-[#fff7e8] p-5 shadow-[0_20px_70px_-54px_rgba(146,23,77,0.44)] sm:flex sm:items-center sm:justify-between sm:gap-6 ${className}`}
     >
       <div>
         <p className="text-sm font-extrabold text-brand-700">Thành viên DieuBel</p>
@@ -18,15 +18,15 @@ function BangMoiThanhVien({ className = '' }) {
           Lưu lịch sử xem phòng, quản lý đặt chỗ và nhận gợi ý ưu đãi phù hợp với chuyến đi của bạn.
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
-          <Link to="/auth?mode=login" className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-brand-700">
+          <Link to="/auth?mode=login" className="btn-primary px-4 py-3">
             Đăng nhập
           </Link>
-          <Link to="/auth?mode=register" className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-bold text-brand-700 transition hover:bg-sky-50">
+          <Link to="/auth?mode=register" className="btn-secondary px-4 py-3">
             Đăng ký
           </Link>
         </div>
       </div>
-      <div className="mt-5 rounded-2xl border border-white bg-white/80 p-5 text-center shadow-sm sm:mt-0 sm:w-52">
+      <div className="mt-5 rounded-2xl border border-white bg-white/90 p-5 text-center shadow-[0_16px_48px_-40px_rgba(36,31,33,0.5)] sm:mt-0 sm:w-52">
         <p className="text-4xl font-black text-brand-600">DB</p>
         <p className="mt-2 text-sm font-bold text-slate-600">Ưu đãi riêng cho thành viên</p>
       </div>

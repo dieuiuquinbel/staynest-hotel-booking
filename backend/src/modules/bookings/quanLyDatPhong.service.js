@@ -2,87 +2,15 @@
 //Quản lý trạng thái, hoàn tiền, doanh thu, thanh toán
 const ketNoiDb = require("../../config/coSoDuLieu");
 const { damBaoCauTrucVanHanh } = require("../system/cauTrucVanHanh.service");
-const nodemailer = require("nodemailer");
+const {
+  TRANG_THAI_DAT_PHONG,
+  TRANG_THAI_THANH_TOAN,
+  PHUONG_THUC_THANH_TOAN,
+  TRANG_THAI_GIAI_PHONG,
+  TY_LE_PHI_HUY_HOAN_TIEN,
+} = require("./hangSoDatPhong");
 
-const smtpTransporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || "smtp.gmail.com",
-  port: Number(process.env.SMTP_PORT || 587),
-  secure: process.env.SMTP_SECURE === "true",
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
 
-async function guiEmailPhanHoiKhieuNai({ toEmail, guestName, ticketTitle, ticketContent, adminReply }) {
-  try {
-    await smtpTransporter.sendMail({
-      from: process.env.MAIL_FROM || `"Khách Sạn DieuBel" <${process.env.SMTP_USER}>`,
-      to: toEmail,
-      subject: `[DieuBel] Phản hồi khiếu nại của bạn`,
-      html: `
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f8fafc; padding: 32px 24px;">
-          <div style="background: #0f172a; border-radius: 12px 12px 0 0; padding: 24px; text-align: center;">
-            <h1 style="color: #ffffff; font-size: 20px; margin: 0; font-weight: 700; letter-spacing: 0.05em;">DIEUBEL HOTEL</h1>
-            <p style="color: #94a3b8; font-size: 13px; margin: 8px 0 0;">Phản hồi từ quản lý</p>
-          </div>
-          <div style="background: #ffffff; border-radius: 0 0 12px 12px; padding: 28px 24px; border: 1px solid #e2e8f0; border-top: none;">
-            <p style="color: #475569; font-size: 15px; margin: 0 0 16px;">Kính gửi <strong style="color: #0f172a;">${guestName}</strong>,</p>
-            <p style="color: #475569; font-size: 14px; margin: 0 0 24px;">Cảm ơn quý khách đã liên hệ với chúng tôi. Dưới đây là phản hồi của đội ngũ quản lý:</p>
-            
-            <div style="background: #f1f5f9; border-radius: 8px; padding: 16px 18px; margin-bottom: 20px; border-left: 3px solid #94a3b8;">
-              <p style="color: #64748b; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px;">Nội dung khiếu nại của bạn</p>
-              <p style="color: #475569; font-size: 14px; margin: 0; line-height: 1.6;">${ticketContent}</p>
-            </div>
-
-            <div style="background: #ecfdf5; border-radius: 8px; padding: 16px 18px; border-left: 3px solid #10b981;">
-              <p style="color: #065f46; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 8px;">Đội ngũ quản lý phản hồi</p>
-              <p style="color: #1e3a2a; font-size: 14px; margin: 0; line-height: 1.6;">${adminReply}</p>
-            </div>
-
-            <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
-            <p style="color: #94a3b8; font-size: 12px; margin: 0; text-align: center;">Nếu cần hỗ trợ thêm, vui lòng liên hệ lại qua email này.<br/>Trân trọng, Đội ngũ DieuBel Hotel.</p>
-          </div>
-        </div>
-      `,
-    });
-  } catch (emailErr) {
-    // Không dừng process nếu gửụi email lỗi, chỉ log cảnh báo
-    console.warn("[SMTP] Gời email phản hồi khiếu nại thất bại:", emailErr.message);
-  }
-}
-
-const TRANG_THAI_DAT_PHONG = {
-  HOLDING: "holding",
-  PENDING: "pending",
-  CONFIRMED: "confirmed",
-  CANCEL_REQUESTED: "cancel_requested",
-  CHECKED_IN: "checked_in",
-  CHECKED_OUT: "checked_out",
-  CANCELLED: "cancelled",
-  EXPIRED: "expired",
-  NO_SHOW: "no_show",
-};
-
-const TRANG_THAI_THANH_TOAN = {
-  UNPAID: "unpaid",
-  DEPOSIT_PAID: "deposit_paid",
-  PAID: "paid",
-};
-
-const PHUONG_THUC_THANH_TOAN = {
-  ONLINE_FULL: "online_full",
-  COUNTER_DEPOSIT: "counter_deposit",
-};
-
-const TRANG_THAI_GIAI_PHONG = new Set([
-  TRANG_THAI_DAT_PHONG.CHECKED_OUT,
-  TRANG_THAI_DAT_PHONG.CANCELLED,
-  TRANG_THAI_DAT_PHONG.EXPIRED,
-  TRANG_THAI_DAT_PHONG.NO_SHOW,
-]);
-
-const TY_LE_PHI_HUY_HOAN_TIEN = 0.2;
 
 function taoLoi(status, message) {
   const error = new Error(message);
@@ -110,9 +38,7 @@ function taoMaGiaoDich(bookingCode) {
   return `PAY-${String(bookingCode).replace(/[^a-zA-Z0-9]/g, "")}-${String(Date.now()).slice(-6)}`;
 }
 
-function taoMaYeuCau(prefix) {
-  return `${prefix}-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${String(Date.now()).slice(-6)}`;
-}
+
 
 function layNgayHomNayYmd() {
   const now = new Date();
@@ -135,16 +61,7 @@ function daDenNgayNhanPhong(checkInDate) {
   return Boolean(checkInYmd && checkInYmd <= layNgayHomNayYmd());
 }
 
-function tinhChinhSachHoanTien(paidAmount) {
-  const safePaidAmount = Math.max(0, Number(paidAmount || 0));
-  const cancelFeeAmount = Math.round(safePaidAmount * TY_LE_PHI_HUY_HOAN_TIEN);
 
-  return {
-    paidAmount: safePaidAmount,
-    cancelFeeAmount,
-    refundAmount: Math.max(0, safePaidAmount - cancelFeeAmount),
-  };
-}
 
 async function traPhongVeKhoNeuCan(connection, booking, nextStatus) {
   if (
@@ -814,581 +731,7 @@ async function capNhatTrangThaiDatPhong({
   }
 }
 
-async function taoYeuCauHoanTien({ user, bookingCode, payload }) {
-  await damBaoCauTrucVanHanh();
-
-  const connection = await ketNoiDb.getConnection();
-
-  try {
-    await connection.beginTransaction();
-    const [bookings] = await connection.query(
-      `SELECT *
-       FROM bookings
-       WHERE (booking_code = ? OR id = ?) AND user_id = ?
-       LIMIT 1
-       FOR UPDATE`,
-      [bookingCode, Number(bookingCode) || 0, user.id],
-    );
-
-    if (!bookings.length)
-      throw taoLoi(404, "Khong tim thay don dat phong cua ban.");
-
-    const booking = bookings[0];
-    if (
-      [
-        TRANG_THAI_DAT_PHONG.CANCELLED,
-        TRANG_THAI_DAT_PHONG.CHECKED_OUT,
-        TRANG_THAI_DAT_PHONG.NO_SHOW,
-      ].includes(booking.booking_status)
-    ) {
-      throw taoLoi(
-        400,
-        "Don nay da ket thuc, khong the tao yeu cau hoan tien.",
-      );
-    }
-
-    if (booking.booking_status === TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED) {
-      throw taoLoi(
-        400,
-        "Don nay dang co yeu cau huy/hoan tien cho admin xu ly.",
-      );
-    }
-
-    if (
-      booking.payment_status === TRANG_THAI_THANH_TOAN.UNPAID ||
-      Number(booking.paid_amount || 0) <= 0
-    ) {
-      throw taoLoi(
-        400,
-        "Don chua thanh toan co the huy giu cho truc tiep, khong can yeu cau hoan tien.",
-      );
-    }
-
-    const [existing] = await connection.query(
-      "SELECT id FROM refund_requests WHERE booking_id = ? LIMIT 1",
-      [booking.id],
-    );
-
-    if (existing.length) throw taoLoi(400, "Don nay da co yeu cau hoan tien.");
-
-    const { paidAmount, cancelFeeAmount, refundAmount } = tinhChinhSachHoanTien(
-      booking.paid_amount,
-    );
-    const refundCode = taoMaYeuCau("RF");
-
-    await connection.query(
-      `INSERT INTO refund_requests (
-        refund_code,
-        booking_id,
-        user_id,
-        paid_amount,
-        cancel_fee_amount,
-        refund_amount,
-        bank_name,
-        bank_account_name,
-        bank_account_number,
-        phone,
-        email,
-        reason
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        refundCode,
-        booking.id,
-        user.id,
-        paidAmount,
-        cancelFeeAmount,
-        refundAmount,
-        String(payload.bankName || "").trim(),
-        String(payload.bankAccountName || "").trim(),
-        String(payload.bankAccountNumber || "").trim(),
-        String(payload.phone || "").trim(),
-        String(payload.email || user.email || "").trim(),
-        String(payload.reason || "").trim(),
-      ],
-    );
-
-    await connection.query(
-      `UPDATE bookings
-       SET booking_status = ?,
-           cancel_reason = ?
-       WHERE id = ?`,
-      [
-        TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED,
-        String(payload.reason || "Khach yeu cau huy/hoan tien").trim(),
-        booking.id,
-      ],
-    );
-
-    await connection.query(
-      `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
-       VALUES (?, ?, ?, ?, ?)`,
-      [
-        booking.id,
-        booking.booking_status,
-        TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED,
-        "Khach tao yeu cau huy/hoan tien",
-        user.id,
-      ],
-    );
-
-    await connection.commit();
-    return layYeuCauHoanTienCuaToi(user.id);
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
-}
-
-function mapYeuCauHoanTien(row) {
-  return {
-    id: row.id,
-    code: row.refund_code,
-    bookingId: row.booking_code,
-    hotelName: row.hotel_name,
-    roomName: row.room_name,
-    guestName: row.full_name,
-    guestEmail: row.user_email,
-    paidAmount: Number(row.paid_amount || 0),
-    cancelFeeAmount: Number(row.cancel_fee_amount || 0),
-    refundAmount: Number(row.refund_amount || 0),
-    bankName: row.bank_name,
-    bankAccountName: row.bank_account_name,
-    bankAccountNumber: row.bank_account_number,
-    phone: row.phone,
-    email: row.email,
-    reason: row.reason,
-    status: row.status,
-    adminNote: row.admin_note,
-    requestedAt: row.requested_at,
-    approvedAt: row.approved_at,
-    completedAt: row.completed_at,
-    checkIn: row.check_in_date,
-    checkOut: row.check_out_date,
-  };
-}
-
-async function layYeuCauHoanTienCuaToi(userId) {
-  await damBaoCauTrucVanHanh();
-
-  const [rows] = await ketNoiDb.query(
-    `SELECT
-       rr.*,
-       b.booking_code,
-       DATE_FORMAT(b.check_in_date, '%Y-%m-%d') AS check_in_date,
-       DATE_FORMAT(b.check_out_date, '%Y-%m-%d') AS check_out_date,
-       r.hotel_name,
-       r.room_name,
-       u.full_name,
-       u.email AS user_email
-     FROM refund_requests rr
-     JOIN bookings b ON b.id = rr.booking_id
-     JOIN rooms r ON r.id = b.room_id
-     JOIN users u ON u.id = rr.user_id
-     WHERE rr.user_id = ?
-     ORDER BY rr.requested_at DESC`,
-    [userId],
-  );
-
-  return rows.map(mapYeuCauHoanTien);
-}
-
-async function layTatCaYeuCauHoanTien() {
-  await damBaoCauTrucVanHanh();
-
-  const [rows] = await ketNoiDb.query(
-    `SELECT
-       rr.*,
-       b.booking_code,
-       DATE_FORMAT(b.check_in_date, '%Y-%m-%d') AS check_in_date,
-       DATE_FORMAT(b.check_out_date, '%Y-%m-%d') AS check_out_date,
-       r.hotel_name,
-       r.room_name,
-       u.full_name,
-       u.email AS user_email
-     FROM refund_requests rr
-     JOIN bookings b ON b.id = rr.booking_id
-     JOIN rooms r ON r.id = b.room_id
-     JOIN users u ON u.id = rr.user_id
-     ORDER BY rr.requested_at DESC`,
-  );
-
-  return rows.map(mapYeuCauHoanTien);
-}
-
-async function capNhatYeuCauHoanTien({
-  refundId,
-  status,
-  adminId,
-  note = null,
-}) {
-  await damBaoCauTrucVanHanh();
-
-  const connection = await ketNoiDb.getConnection();
-
-  try {
-    await connection.beginTransaction();
-    const [rows] = await connection.query(
-      `SELECT rr.*, b.booking_status, b.payment_status, b.rooms_count, b.room_id, b.id AS booking_id
-       FROM refund_requests rr
-       JOIN bookings b ON b.id = rr.booking_id
-       WHERE rr.id = ?
-       LIMIT 1
-       FOR UPDATE`,
-      [refundId],
-    );
-
-    if (!rows.length) throw taoLoi(404, "Khong tim thay yeu cau hoan tien.");
-    const refund = rows[0];
-
-    if (status === "rejected") {
-      await connection.query(
-        `UPDATE refund_requests
-         SET status = 'rejected', admin_note = ?, processed_by = ?
-         WHERE id = ?`,
-        [note, adminId, refund.id],
-      );
-      await connection.query(
-        `UPDATE bookings
-         SET booking_status = 'confirmed'
-         WHERE id = ? AND booking_status = ?`,
-        [refund.booking_id, TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED],
-      );
-      await connection.query(
-        `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'confirmed', ?, ?)`,
-        [
-          refund.booking_id,
-          TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED,
-          note || "Admin tu choi yeu cau hoan tien",
-          adminId,
-        ],
-      );
-    } else if (["approved", "completed"].includes(status)) {
-      const nextRefundStatus = status;
-      await connection.query(
-        `UPDATE refund_requests
-         SET status = ?,
-             admin_note = ?,
-             processed_by = ?,
-             approved_at = COALESCE(approved_at, NOW()),
-             completed_at = CASE WHEN ? = 'completed' THEN NOW() ELSE completed_at END
-         WHERE id = ?`,
-        [nextRefundStatus, note, adminId, nextRefundStatus, refund.id],
-      );
-
-      if (!TRANG_THAI_GIAI_PHONG.has(refund.booking_status)) {
-        await connection.query(
-          `UPDATE rooms
-           SET inventory_count = inventory_count + ?
-           WHERE id = ?`,
-          [Number(refund.rooms_count || 1), refund.room_id],
-        );
-      }
-
-      await connection.query(
-        `UPDATE bookings
-         SET booking_status = 'cancelled',
-             payment_status = 'refunded',
-             remaining_amount = 0,
-             cancelled_at = COALESCE(cancelled_at, NOW()),
-             cancel_reason = COALESCE(cancel_reason, 'Admin duyet huy/hoan tien')
-         WHERE id = ?`,
-        [refund.booking_id],
-      );
-      await connection.query(
-        `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
-         VALUES (?, ?, 'cancelled', ?, ?)`,
-        [
-          refund.booking_id,
-          refund.booking_status,
-          note || "Admin duyet huy/hoan tien",
-          adminId,
-        ],
-      );
-    } else {
-      throw taoLoi(400, "Trang thai yeu cau hoan tien khong hop le.");
-    }
-
-    await connection.commit();
-    return layTatCaYeuCauHoanTien();
-  } catch (error) {
-    await connection.rollback();
-    throw error;
-  } finally {
-    connection.release();
-  }
-}
-
-function mapHoTro(row) {
-  return {
-    id: row.id,
-    code: row.ticket_code,
-    bookingId: row.booking_code,
-    userId: row.user_id,
-    guestName: row.full_name,
-    guestEmail: row.email,
-    category: row.category,
-    title: row.title,
-    content: row.content,
-    status: row.status,
-    adminReply: row.admin_reply,
-    createdAt: row.created_at,
-    repliedAt: row.replied_at,
-  };
-}
-
-async function guiYeuCauHoTro({ user, payload }) {
-  await damBaoCauTrucVanHanh();
-
-  const title = String(payload.title || "").trim();
-  const content = String(payload.content || "").trim();
-  if (!title || !content)
-    throw taoLoi(400, "Vui long nhap tieu de va noi dung ho tro.");
-
-  let bookingId = null;
-  if (payload.bookingCode) {
-    const [bookings] = await ketNoiDb.query(
-      "SELECT id FROM bookings WHERE (booking_code = ? OR id = ?) AND user_id = ? LIMIT 1",
-      [payload.bookingCode, Number(payload.bookingCode) || 0, user.id],
-    );
-    bookingId = bookings[0]?.id || null;
-  }
-
-  await ketNoiDb.query(
-    `INSERT INTO support_tickets (ticket_code, user_id, booking_id, category, title, content)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      taoMaYeuCau("SP"),
-      user.id,
-      bookingId,
-      payload.category || "other",
-      title,
-      content,
-    ],
-  );
-
-  return layYeuCauHoTroCuaToi(user.id);
-}
-
-async function layYeuCauHoTroCuaToi(userId) {
-  await damBaoCauTrucVanHanh();
-
-  const [rows] = await ketNoiDb.query(
-    `SELECT st.*, b.booking_code, u.full_name, u.email
-     FROM support_tickets st
-     JOIN users u ON u.id = st.user_id
-     LEFT JOIN bookings b ON b.id = st.booking_id
-     WHERE st.user_id = ?
-     ORDER BY st.created_at DESC`,
-    [userId],
-  );
-
-  return rows.map(mapHoTro);
-}
-
-async function layTatCaYeuCauHoTro() {
-  await damBaoCauTrucVanHanh();
-
-  const [rows] = await ketNoiDb.query(
-    `SELECT st.*, b.booking_code, u.full_name, u.email
-     FROM support_tickets st
-     JOIN users u ON u.id = st.user_id
-     LEFT JOIN bookings b ON b.id = st.booking_id
-     ORDER BY st.created_at DESC`,
-  );
-
-  return rows.map(mapHoTro);
-}
-
-async function capNhatYeuCauHoTro({ ticketId, status, reply, adminId }) {
-  await damBaoCauTrucVanHanh();
-
-  // Lấy thông tin ticket trước để gửi email
-  const [ticketRows] = await ketNoiDb.query(
-    `SELECT st.*, u.full_name, u.email
-     FROM support_tickets st
-     JOIN users u ON u.id = st.user_id
-     WHERE st.id = ? LIMIT 1`,
-    [ticketId],
-  );
-
-  const ticket = ticketRows[0] || null;
-
-  const [result] = await ketNoiDb.query(
-    `UPDATE support_tickets
-     SET status = COALESCE(?, status),
-         admin_reply = COALESCE(?, admin_reply),
-         replied_by = ?,
-         replied_at = NOW()
-     WHERE id = ?`,
-    [status || null, reply || null, adminId, ticketId],
-  );
-
-  if (!result.affectedRows) throw taoLoi(404, "Khong tim thay yeu cau ho tro.");
-
-  // Gửụi email SMTP nếu có nội dung trả lời
-  if (reply && ticket?.email) {
-    await guiEmailPhanHoiKhieuNai({
-      toEmail: ticket.email,
-      guestName: ticket.full_name || "Quý khách",
-      ticketTitle: ticket.title || "",
-      ticketContent: ticket.content || "",
-      adminReply: reply,
-    });
-  }
-
-  return layTatCaYeuCauHoTro();
-}
-
-function chuanHoaNgayBaoCao(value, fallback) {
-  if (!value) return fallback;
-  const text = String(value).trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return fallback;
-  return text;
-}
-
-async function layBaoCaoDoanhThu({ dateFrom, dateTo } = {}) {
-  await damBaoCauTrucVanHanh();
-
-  const today = new Date().toISOString().slice(0, 10);
-  const safeDateFrom = chuanHoaNgayBaoCao(dateFrom, today);
-  const safeDateTo = chuanHoaNgayBaoCao(dateTo, today);
-  const rangeStart = safeDateFrom <= safeDateTo ? safeDateFrom : safeDateTo;
-  const rangeEnd = safeDateFrom <= safeDateTo ? safeDateTo : safeDateFrom;
-
-  const [[periodBookingStats]] = await ketNoiDb.query(
-    `SELECT
-       COUNT(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) THEN 1 END) AS total_bookings,
-       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) AND booking_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_bookings,
-       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) AND booking_status = 'no_show' THEN 1 ELSE 0 END) AS no_show_bookings,
-       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) AND payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(original_total_price, total_price, 0) ELSE 0 END) AS gross_revenue,
-       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) AND payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(discount_amount, 0) ELSE 0 END) AS voucher_discount,
-       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) AND payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(paid_amount, 0) ELSE 0 END) AS customer_paid_amount,
-       SUM(CASE WHEN paid_at >= ? AND paid_at < DATE_ADD(?, INTERVAL 1 DAY) AND payment_status IN ('paid', 'deposit_paid') THEN COALESCE(paid_amount, 0) ELSE 0 END) AS paid_revenue,
-       SUM(CASE WHEN booked_at >= ? AND booked_at < DATE_ADD(?, INTERVAL 1 DAY) AND booking_status NOT IN ('cancelled', 'expired', 'no_show') THEN COALESCE(remaining_amount, 0) ELSE 0 END) AS receivable_amount
-     FROM bookings`,
-    [
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-    ],
-  );
-
-  const [[bookingStats]] = await ketNoiDb.query(
-    `SELECT
-       COUNT(*) AS total_bookings,
-       SUM(CASE WHEN booking_status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_bookings,
-       SUM(CASE WHEN booking_status = 'no_show' THEN 1 ELSE 0 END) AS no_show_bookings,
-       SUM(CASE WHEN payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(original_total_price, total_price, 0) ELSE 0 END) AS gross_revenue,
-       SUM(CASE WHEN payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(discount_amount, 0) ELSE 0 END) AS voucher_discount,
-       SUM(CASE WHEN payment_status IN ('paid', 'deposit_paid', 'refunded') THEN COALESCE(paid_amount, 0) ELSE 0 END) AS customer_paid_amount,
-       SUM(CASE WHEN payment_status IN ('paid', 'deposit_paid') THEN COALESCE(paid_amount, 0) ELSE 0 END) AS paid_revenue,
-       SUM(CASE WHEN booking_status NOT IN ('cancelled', 'expired', 'no_show') THEN COALESCE(remaining_amount, 0) ELSE 0 END) AS receivable_amount
-     FROM bookings`,
-  );
-  const [[refundStats]] = await ketNoiDb.query(
-    `SELECT
-       COUNT(*) AS refund_requests,
-       SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS pending_refunds,
-       COALESCE(SUM(CASE WHEN status = 'pending' THEN refund_amount ELSE 0 END), 0) AS pending_refund_amount,
-       SUM(CASE WHEN status IN ('approved', 'completed') THEN COALESCE(cancel_fee_amount, 0) ELSE 0 END) AS cancel_fee_revenue,
-       SUM(CASE WHEN status IN ('approved', 'completed') THEN COALESCE(refund_amount, 0) ELSE 0 END) AS refund_amount
-     FROM refund_requests`,
-  );
-  const [[roomStats]] = await ketNoiDb.query(
-    `SELECT
-       SUM(inventory_count) AS available_rooms,
-       COUNT(*) AS room_types
-     FROM rooms
-     WHERE is_active = TRUE`,
-  );
-
-  const [[periodRefundStats]] = await ketNoiDb.query(
-    `SELECT
-       COUNT(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) THEN 1 END) AS refund_requests,
-       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) AND status = 'pending' THEN 1 ELSE 0 END) AS pending_refunds,
-       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) AND status = 'pending' THEN COALESCE(refund_amount, 0) ELSE 0 END) AS pending_refund_amount,
-       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) AND status IN ('approved', 'completed') THEN COALESCE(cancel_fee_amount, 0) ELSE 0 END) AS cancel_fee_revenue,
-       SUM(CASE WHEN requested_at >= ? AND requested_at < DATE_ADD(?, INTERVAL 1 DAY) AND status IN ('approved', 'completed') THEN COALESCE(refund_amount, 0) ELSE 0 END) AS refund_amount
-     FROM refund_requests`,
-    [
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-      rangeStart,
-      rangeEnd,
-    ],
-  );
-
-  const periodCustomerPaid = Number(
-    periodBookingStats.customer_paid_amount || 0,
-  );
-  const lifetimeCustomerPaid = Number(bookingStats.customer_paid_amount || 0);
-  const periodRefundAmount = Number(periodRefundStats.refund_amount || 0);
-  const lifetimeRefundAmount = Number(refundStats.refund_amount || 0);
-
-  return {
-    period: {
-      dateFrom: rangeStart,
-      dateTo: rangeEnd,
-      totalBookings: Number(periodBookingStats.total_bookings || 0),
-      cancelledBookings: Number(periodBookingStats.cancelled_bookings || 0),
-      noShowBookings: Number(periodBookingStats.no_show_bookings || 0),
-      grossRevenue: Number(periodBookingStats.gross_revenue || 0),
-      voucherDiscount: Number(periodBookingStats.voucher_discount || 0),
-      paidRevenue: Number(periodBookingStats.paid_revenue || 0),
-      customerPaidAmount: periodCustomerPaid,
-      netRevenue: periodCustomerPaid - periodRefundAmount,
-      receivableAmount: Number(periodBookingStats.receivable_amount || 0),
-      refundRequests: Number(periodRefundStats.refund_requests || 0),
-      pendingRefunds: Number(periodRefundStats.pending_refunds || 0),
-      pendingRefundAmount: Number(periodRefundStats.pending_refund_amount || 0),
-      cancelFeeRevenue: Number(periodRefundStats.cancel_fee_revenue || 0),
-      refundAmount: periodRefundAmount,
-    },
-    lifetime: {
-      totalBookings: Number(bookingStats.total_bookings || 0),
-      cancelledBookings: Number(bookingStats.cancelled_bookings || 0),
-      noShowBookings: Number(bookingStats.no_show_bookings || 0),
-      grossRevenue: Number(bookingStats.gross_revenue || 0),
-      voucherDiscount: Number(bookingStats.voucher_discount || 0),
-      paidRevenue: Number(bookingStats.paid_revenue || 0),
-      customerPaidAmount: lifetimeCustomerPaid,
-      netRevenue: lifetimeCustomerPaid - lifetimeRefundAmount,
-      receivableAmount: Number(bookingStats.receivable_amount || 0),
-      refundRequests: Number(refundStats.refund_requests || 0),
-      pendingRefunds: Number(refundStats.pending_refunds || 0),
-      pendingRefundAmount: Number(refundStats.pending_refund_amount || 0),
-      cancelFeeRevenue: Number(refundStats.cancel_fee_revenue || 0),
-      refundAmount: lifetimeRefundAmount,
-    },
-    inventory: {
-      availableRooms: Number(roomStats.available_rooms || 0),
-      roomTypes: Number(roomStats.room_types || 0),
-    },
-  };
-}
-
+// ─── Hoàn tiền, Hỗ trợ, Báo cáo: đã tách sang hoanTien.service.js, hoTro.service.js, baoCao.service.js ───
 async function xacNhanThanhToan({
   bookingCode,
   method,
@@ -1397,6 +740,7 @@ async function xacNhanThanhToan({
   voucherCode = null,
 }) {
   await damBaoCauTrucVanHanh();
+  await dongBoTrangThaiDatPhongTheoThoiGian();
 
   if (
     ![
@@ -1404,7 +748,7 @@ async function xacNhanThanhToan({
       PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT,
     ].includes(method)
   ) {
-    throw taoLoi(400, "Phuong thuc thanh toan khong hop le.");
+    throw taoLoi(400, "Phương thức thanh toán không hợp lệ.");
   }
 
   const connection = await ketNoiDb.getConnection();
@@ -1413,13 +757,20 @@ async function xacNhanThanhToan({
     await connection.beginTransaction();
     const booking = await timDatPhongTheoMa(connection, bookingCode, userId);
 
-    if (
-      booking.booking_status !== TRANG_THAI_DAT_PHONG.HOLDING ||
-      booking.payment_status !== TRANG_THAI_THANH_TOAN.UNPAID
-    ) {
+    const thanhToanLanDau =
+      booking.booking_status === TRANG_THAI_DAT_PHONG.HOLDING &&
+      booking.payment_status === TRANG_THAI_THANH_TOAN.UNPAID;
+    const thanhToanPhanConLai =
+      method === PHUONG_THUC_THANH_TOAN.ONLINE_FULL &&
+      booking.payment_status === TRANG_THAI_THANH_TOAN.DEPOSIT_PAID &&
+      [TRANG_THAI_DAT_PHONG.CONFIRMED, TRANG_THAI_DAT_PHONG.CHECKED_IN].includes(
+        booking.booking_status,
+      );
+
+    if (!thanhToanLanDau && !thanhToanPhanConLai) {
       throw taoLoi(
         409,
-        "Don nay khong con o trang thai cho khach thanh toan QR.",
+        "Đơn này không còn ở trạng thái chờ khách thanh toán QR.",
       );
     }
 
@@ -1428,7 +779,7 @@ async function xacNhanThanhToan({
     let discountAmount = Number(booking.discount_amount || 0);
     let nextVoucherCode = booking.voucher_code || null;
 
-    if (voucherCode && !booking.voucher_code) {
+    if (voucherCode && !booking.voucher_code && thanhToanLanDau) {
       const [vouchers] = await connection.query(
         `SELECT * FROM vouchers
          WHERE code = ? AND is_active = TRUE AND (end_at IS NULL OR end_at > NOW())
@@ -1437,7 +788,7 @@ async function xacNhanThanhToan({
       );
 
       if (!vouchers.length) {
-        throw taoLoi(400, "Ma giam gia khong hop le hoac da het han.");
+        throw taoLoi(400, "Mã giảm giá không hợp lệ hoặc đã hết hạn.");
       }
 
       if (
@@ -1446,7 +797,7 @@ async function xacNhanThanhToan({
       ) {
         throw taoLoi(
           400,
-          `Don can toi thieu ${Number(vouchers[0].min_order_amount || 0).toLocaleString("vi-VN")} d de dung ma nay.`,
+          `Đơn cần tối thiểu ${Number(vouchers[0].min_order_amount || 0).toLocaleString("vi-VN")} đ để dùng mã này.`,
         );
       }
 
@@ -1475,21 +826,27 @@ async function xacNhanThanhToan({
       );
     }
 
-    const depositAmount = Math.ceil(totalPrice * 0.1);
+    const depositAmount = Number(booking.deposit_amount || 0) || Math.ceil(totalPrice * 0.1);
     const paidAmount = isDeposit ? depositAmount : totalPrice;
+    const transactionAmount = thanhToanPhanConLai
+      ? Math.max(0, Number(booking.remaining_amount || totalPrice - Number(booking.paid_amount || 0)))
+      : paidAmount;
     const paymentStatus = isDeposit
       ? TRANG_THAI_THANH_TOAN.DEPOSIT_PAID
       : TRANG_THAI_THANH_TOAN.PAID;
-    const nextPaymentCode =
-      paymentCode ||
-      booking.payment_code ||
-      taoMaGiaoDich(booking.booking_code);
+    const nextPaymentCode = thanhToanPhanConLai
+      ? (
+          paymentCode && paymentCode !== booking.payment_code
+            ? paymentCode
+            : taoMaGiaoDich(booking.booking_code)
+        )
+      : paymentCode || booking.payment_code || taoMaGiaoDich(booking.booking_code);
     const nextQrToken =
       booking.checkin_qr_token || taoMaQr(booking.booking_code);
 
     await connection.query(
       `UPDATE bookings
-       SET booking_status = 'confirmed',
+       SET booking_status = CASE WHEN booking_status = 'holding' THEN 'confirmed' ELSE booking_status END,
            payment_status = ?,
            payment_method = ?,
            payment_code = ?,
@@ -1500,7 +857,7 @@ async function xacNhanThanhToan({
            total_price = ?,
            deposit_amount = ?,
            paid_amount = ?,
-           remaining_amount = GREATEST(total_price - ?, 0),
+           remaining_amount = GREATEST(? - ?, 0),
            checkin_qr_token = ?,
            confirmed_at = COALESCE(confirmed_at, NOW()),
            paid_at = NOW()
@@ -1515,10 +872,18 @@ async function xacNhanThanhToan({
         totalPrice,
         depositAmount,
         paidAmount,
+        totalPrice,
         paidAmount,
         nextQrToken,
         booking.id,
       ],
+    );
+
+    await connection.query(
+      `UPDATE invoices
+       SET total_amount = ?
+       WHERE booking_id = ?`,
+      [totalPrice, booking.id],
     );
 
     if (nextVoucherCode) {
@@ -1539,7 +904,7 @@ async function xacNhanThanhToan({
       [
         booking.id,
         nextPaymentCode,
-        paidAmount,
+        transactionAmount,
         method,
         nextPaymentCode,
       ],
@@ -1547,11 +912,12 @@ async function xacNhanThanhToan({
 
     await connection.query(
       `INSERT INTO booking_status_logs (booking_id, old_status, new_status, note, changed_by)
-       VALUES (?, ?, 'confirmed', ?, ?)`,
+       VALUES (?, ?, ?, ?, ?)`,
       [
         booking.id,
         booking.booking_status,
-        `Xac nhan thanh toan ${paymentStatus}`,
+        thanhToanLanDau ? TRANG_THAI_DAT_PHONG.CONFIRMED : booking.booking_status,
+        `Xác nhận thanh toán ${paymentStatus}`,
         userId,
       ],
     );
@@ -1583,34 +949,7 @@ async function luuGhiChuAdmin({ bookingCode, note, adminId }) {
   return layTatCaDatPhong();
 }
 
-async function guiPhanHoiKhachHang({ user, bookingCode, payload }) {
-  const [bookings] = await ketNoiDb.query(
-    "SELECT * FROM bookings WHERE (booking_code = ? OR id = ?) AND user_id = ? LIMIT 1",
-    [bookingCode, Number(bookingCode) || 0, user.id],
-  );
 
-  if (!bookings.length)
-    throw taoLoi(404, "Khong tim thay don dat phong cua ban.");
-
-  const content = String(payload.content || "").trim();
-  if (!content) throw taoLoi(400, "Vui long nhap noi dung phan hoi.");
-
-  const feedbackCode = `FB-${Date.now()}`;
-  await ketNoiDb.query(
-    `INSERT INTO customer_feedbacks (feedback_code, booking_id, user_id, feedback_type, title, content)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      feedbackCode,
-      bookings[0].id,
-      user.id,
-      payload.type || "feedback",
-      payload.title || null,
-      content,
-    ],
-  );
-
-  return layDatPhongCuaNguoiDung(user.id);
-}
 
 module.exports = {
   TRANG_THAI_DAT_PHONG,
@@ -1623,14 +962,4 @@ module.exports = {
   xacNhanThanhToan,
   xacMinhCheckInCongKhai,
   luuGhiChuAdmin,
-  guiPhanHoiKhachHang,
-  taoYeuCauHoanTien,
-  layYeuCauHoanTienCuaToi,
-  layTatCaYeuCauHoanTien,
-  capNhatYeuCauHoanTien,
-  guiYeuCauHoTro,
-  layYeuCauHoTroCuaToi,
-  layTatCaYeuCauHoTro,
-  capNhatYeuCauHoTro,
-  layBaoCaoDoanhThu,
 };

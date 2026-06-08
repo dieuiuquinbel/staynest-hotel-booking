@@ -23,6 +23,17 @@ import {
 } from '../../components/admin/bookings/bookingHelpers';
 import { TRANG_THAI_DAT_PHONG, TRANG_THAI_THANH_TOAN } from '../../utils/lichSuDatPhong';
 
+function useDebouncedValue(value, delay = 220) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebouncedValue(value), delay);
+    return () => window.clearTimeout(timer);
+  }, [delay, value]);
+
+  return debouncedValue;
+}
+
 export default function QuanLyDatPhong() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [bookings, setBookings] = useState([]);
@@ -32,11 +43,12 @@ export default function QuanLyDatPhong() {
   const [query, setQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [note, setNote] = useState('');
   const [refundDecisionNote, setRefundDecisionNote] = useState('');
+  const debouncedQuery = useDebouncedValue(query);
 
   const filteredBookings = useMemo(
     () => bookings
@@ -55,10 +67,10 @@ export default function QuanLyDatPhong() {
         }
         return true;
       })
-      .filter((booking) => khopTimKiemDatPhong(booking, query))
+      .filter((booking) => khopTimKiemDatPhong(booking, debouncedQuery))
       .filter((booking) => khopNgayDatPhong(booking, dateFilter))
       .filter((booking) => !statusFilter || booking.bookingStatus === statusFilter),
-    [bookings, dateFilter, query, tab, historySubTab, statusFilter],
+    [bookings, dateFilter, debouncedQuery, tab, historySubTab, statusFilter],
   );
 
   const selectedBooking = filteredBookings.find((booking) => booking.id === selectedId) || filteredBookings[0] || null;
@@ -93,7 +105,7 @@ export default function QuanLyDatPhong() {
 
   useEffect(() => {
     setSelectedId(null);
-  }, [tab, query, dateFilter, statusFilter, historySubTab]);
+  }, [tab, debouncedQuery, dateFilter, statusFilter, historySubTab]);
 
   useEffect(() => {
     setNote(selectedBooking?.adminNote || '');
@@ -144,7 +156,6 @@ export default function QuanLyDatPhong() {
   return (
     <div className="grid gap-5">
 
-      {/* Header */}
       <section className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Vận hành</p>
@@ -154,7 +165,6 @@ export default function QuanLyDatPhong() {
 
 
 
-      {/* Tabs */}
       <section className="rounded-full border-2 border-slate-200 bg-white p-2 shadow-md flex items-center gap-1.5 overflow-x-auto">
         {TABS_DAT_PHONG.map((item) => {
           const count = demDonTheoTab(bookings, item.key);
@@ -185,10 +195,8 @@ export default function QuanLyDatPhong() {
         })}
       </section>
 
-      {/* Search & Custom Multi-Criteria Filters */}
       <section className="rounded-3xl border-2 border-slate-200 bg-white p-5 shadow-md">
         <div className="grid gap-3.5 xl:grid-cols-[1fr_200px_250px_60px] items-center mb-3.5">
-          {/* Ô tìm kiếm thông minh */}
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
               <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5 text-slate-400 group-focus-within:text-sky-500 transition-colors">
@@ -212,7 +220,6 @@ export default function QuanLyDatPhong() {
             )}
           </div>
 
-          {/* Chọn ngày nhận/trả cao cấp */}
           <div className="relative group">
             <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
               <svg viewBox="0 0 20 20" fill="currentColor" className="h-4.5 w-4.5 text-slate-400 group-focus-within:text-sky-500 transition-colors">
@@ -236,7 +243,6 @@ export default function QuanLyDatPhong() {
             )}
           </div>
 
-          {/* Dropdown Trạng thái đặt phòng */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -250,7 +256,6 @@ export default function QuanLyDatPhong() {
             <option value={TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED}>Yêu cầu hủy (Cancel Requested)</option>
           </select>
 
-          {/* Nút Reset bộ lọc (Luôn có màu xanh Emerald) */}
           <button
             type="button"
             disabled={!query && !dateFilter && !statusFilter}
@@ -273,7 +278,6 @@ export default function QuanLyDatPhong() {
 
       </section>
 
-      {/* Notices */}
       {notice ? (
         <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-emerald-600">
@@ -291,17 +295,14 @@ export default function QuanLyDatPhong() {
         </div>
       ) : null}
 
-      {/* Khi tab = action: render panel chuyên biệt Hoàn tiền / Khiếu nại */}
       {tab === 'action' ? (
         <CanXuLyPanel onGlobalRefresh={refresh} />
       ) : (
         /* Queue + Detail — 2 panel cuộn độc lập */
         <section className="grid gap-5 xl:grid-cols-2 items-start">
 
-          {/* ===== Panel Trái: Hàng đợi công việc (cuộn độc lập) ===== */}
           <div className="rounded-xl border border-slate-200 bg-white flex flex-col" style={{ height: 'calc(100vh - 260px)', minHeight: '480px' }}>
 
-            {/* Header cố định — không cuộn */}
             <div className="flex-none px-4 pt-4 pb-3 border-b border-slate-100">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -313,7 +314,6 @@ export default function QuanLyDatPhong() {
                 </span>
               </div>
 
-              {/* Sub-tabs cho tab Lịch sử */}
               {tab === 'history' && (
                 <div className="mt-3 flex gap-1 rounded-xl bg-slate-100 p-1">
                   <button
@@ -342,7 +342,6 @@ export default function QuanLyDatPhong() {
               )}
             </div>
 
-            {/* Danh sách cuộn chứa các đơn đặt phòng */}
             <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {filteredBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-slate-400">
@@ -362,7 +361,6 @@ export default function QuanLyDatPhong() {
             </div>
           </div>
 
-          {/* ===== Panel Phải: Chi tiết đơn đang chọn ===== */}
           <BookingDetail
             booking={selectedBooking}
             activeTab={tab}

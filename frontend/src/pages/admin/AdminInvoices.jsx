@@ -1,36 +1,22 @@
-// Trang hóa đơn admin: tra cứu hóa đơn, xem thư mục lưu và tải file HTML — phiên bản nâng cấp.
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import ketNoiApi from '../../services/ketNoiApi';
 import { dinhDangTien } from '../../utils/dinhDang';
+import useKhoThongBao from '../../store/khoThongBao';
 
 async function layHoaDonAdminApi() {
   const response = await ketNoiApi.get('/admin/invoices');
   return response.data.data;
 }
 
-async function taiHoaDonAdmin(invoice) {
-  const response = await ketNoiApi.get(`/admin/invoices/${invoice.id}/download`, {
-    responseType: 'blob',
-  });
-
-  const duongDanLuu = response.headers['x-invoice-admin-path'] || '';
-  const url = URL.createObjectURL(response.data);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `${invoice.invoice_code}.html`;
-  link.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-  return duongDanLuu;
-}
-
 function AdminInvoices() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [duongDanVuaLuu, setDuongDanVuaLuu] = useState('');
-  const [dangTaiId, setDangTaiId] = useState(null);
+  const [dangXemId, setDangXemId] = useState(null);
+  const [htmlContent, setHtmlContent] = useState(null);
   const debounceRef = useRef(null);
+  const hienThongBao = useKhoThongBao((state) => state.hienThongBao);
 
   // Debounce search 300ms
   const handleSearchChange = useCallback((value) => {
@@ -52,8 +38,8 @@ function AdminInvoices() {
   });
 
   const invoices = useMemo(() => data?.invoices || [], [data?.invoices]);
-  const thuMucHoaDon = data?.directory || '';
-
+  const thuMucHoaDon = '';
+  const duongDanVuaLuu = '';
   const filteredInvoices = useMemo(() => {
     const keyword = debouncedSearch.trim().toLowerCase();
     if (!keyword) return invoices;
@@ -65,13 +51,19 @@ function AdminInvoices() {
     );
   }, [debouncedSearch, invoices]);
 
-  const handleDownload = async (invoice) => {
+  const handleView = async (invoice) => {
     try {
-      setDangTaiId(invoice.id);
-      const savedPath = await taiHoaDonAdmin(invoice);
-      setDuongDanVuaLuu(savedPath || thuMucHoaDon);
+      setDangXemId(invoice.id);
+      const response = await ketNoiApi.get(`/admin/invoices/${invoice.id}/preview`, {
+        responseType: 'text',
+      });
+      
+      setHtmlContent(response.data);
+      
+    } catch (error) {
+      hienThongBao(error?.response?.data?.message || 'Không thể xem hóa đơn.', 'error');
     } finally {
-      setDangTaiId(null);
+      setDangXemId(null);
     }
   };
 
@@ -98,7 +90,7 @@ function AdminInvoices() {
             ) : null}
             {duongDanVuaLuu ? (
               <p className="mt-2 text-xs font-semibold text-slate-500">
-                File vừa lưu tại: <span className="font-black text-slate-900">{duongDanVuaLuu}</span>
+                File hóa đơn: <span className="font-black text-slate-900">{duongDanVuaLuu}</span>
               </p>
             ) : null}
           </div>
@@ -186,28 +178,30 @@ function AdminInvoices() {
                   <p className="mt-0.5 text-xs font-semibold text-slate-400">{invoice.email}</p>
                 </div>
                 <p className="text-sm font-black text-emerald-700">{dinhDangTien(invoice.total_amount)}</p>
-                <button
+                <Motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.9 }}
                   type="button"
-                  onClick={() => handleDownload(invoice)}
-                  disabled={dangTaiId === invoice.id}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:border-sky-400 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50 active:scale-[.98]"
+                  onClick={() => handleView(invoice)}
+                  disabled={dangXemId === invoice.id}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:border-sky-400 hover:text-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {dangTaiId === invoice.id ? (
+                  {dangXemId === invoice.id ? (
                     <>
                       <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5 animate-spin">
                         <path fillRule="evenodd" d="M4 2a1 1 0 0 1 1 1v2.101a7.002 7.002 0 0 1 11.601 2.566 1 1 0 1 1-1.885.666A5.002 5.002 0 0 0 5.999 7H9a1 1 0 0 1 0 2H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z" clipRule="evenodd" />
                       </svg>
-                      Đang lưu
+                      Đang mở
                     </>
                   ) : (
                     <>
                       <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                        <path fillRule="evenodd" d="M3 17a1 1 0 0 1 1-1h12a1 1 0 1 1 0 2H4a1 1 0 0 1-1-1zm3.293-7.707a1 1 0 0 1 1.414 0L9 10.586V3a1 1 0 1 1 2 0v7.586l1.293-1.293a1 1 0 1 1 1.414 1.414l-3 3a1 1 0 0 1-1.414 0l-3-3a1 1 0 0 1 0-1.414z" clipRule="evenodd" />
+                        <path d="M10 4.5c-4.25 0-7.15 3.55-8.05 4.82a1.16 1.16 0 0 0 0 1.36C2.85 11.95 5.75 15.5 10 15.5s7.15-3.55 8.05-4.82a1.16 1.16 0 0 0 0-1.36C17.15 8.05 14.25 4.5 10 4.5Zm0 8.25a2.75 2.75 0 1 1 0-5.5 2.75 2.75 0 0 1 0 5.5Z" />
                       </svg>
-                      Tải
+                      Xem
                     </>
                   )}
-                </button>
+                </Motion.button>
               </article>
             ))}
 
@@ -222,6 +216,46 @@ function AdminInvoices() {
           </div>
         ) : null}
       </section>
+
+      {/* Invoice Modal */}
+      <AnimatePresence>
+        {htmlContent && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <Motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              onClick={() => setHtmlContent(null)}
+            />
+            <Motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative flex h-full max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-5 py-3">
+                <h3 className="font-black text-slate-800">Chi tiết hóa đơn</h3>
+                <button
+                  onClick={() => setHtmlContent(null)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                >
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-hidden bg-slate-100/50 p-4">
+                <iframe
+                  title="Invoice Preview"
+                  srcDoc={htmlContent}
+                  className="h-full w-full rounded-xl border border-slate-200 bg-white shadow-sm"
+                />
+              </div>
+            </Motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

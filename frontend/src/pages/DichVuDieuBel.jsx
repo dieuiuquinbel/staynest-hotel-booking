@@ -1,3 +1,4 @@
+// Chức năng: Component hiển thị trang thông tin giới thiệu về các loại hình dịch vụ lưu trú của DieuBel.
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 

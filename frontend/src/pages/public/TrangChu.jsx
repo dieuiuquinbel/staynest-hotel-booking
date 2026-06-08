@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import BangMoiThanhVien from '../../components/layout/BangMoiThanhVien';
-import { HopThoaiVoucher, PopupMoiDangNhap } from '../../components/public/home/HomeDialogs';
+import { HopThoaiVoucher } from '../../components/public/home/HomeDialogs';
 import {
   BoSuuTapSection,
   DanhGiaTinCaySection,
@@ -28,18 +28,15 @@ import { ganThamSoTimKiem } from '../../components/public/home/trangChuHelpers';
 import useTimKiemGanDay from '../../hooks/useTimKiemGanDay';
 import { layPhongNoiBat } from '../../services/phongApi';
 import { layDanhSachVoucherApi, luuVoucherApi } from '../../services/voucherApi';
-import useKhoXacThuc from '../../store/khoXacThuc';
 import { VOUCHER_KHUYEN_MAI, docQuaDaDoi, luuVoucherKhuyenMai } from '../../utils/diemThuong';
 
 export default function TrangChu() {
   const navigate = useNavigate();
-  const token = useKhoXacThuc((state) => state.token);
   const voucherMessageTimerRef = useRef(null);
   const { searches, addSearch, clearAll } = useTimKiemGanDay();
 
   const [activeHero, setActiveHero] = useState(0);
   const [isHeroPaused, setIsHeroPaused] = useState(false);
-  const [showLoginOffer, setShowLoginOffer] = useState(false);
   const [showHopThoaiVoucher, setShowHopThoaiVoucher] = useState(false);
   const [savedCodes, setSavedCodes] = useState(() => docQuaDaDoi().map((reward) => reward.code));
   const [vouchers, setVouchers] = useState(VOUCHER_KHUYEN_MAI);
@@ -58,14 +55,14 @@ export default function TrangChu() {
   };
 
   useEffect(() => {
-    if (isHeroPaused || showLoginOffer || showHopThoaiVoucher) return undefined;
+    if (isHeroPaused || showHopThoaiVoucher) return undefined;
 
     const timer = window.setInterval(() => {
       setActiveHero((current) => (current + 1) % SLIDE_HERO.length);
     }, 7500);
 
     return () => window.clearInterval(timer);
-  }, [isHeroPaused, showLoginOffer, showHopThoaiVoucher]);
+  }, [isHeroPaused, showHopThoaiVoucher]);
 
   useEffect(() => {
     setVisibleReviewCount(1);
@@ -88,14 +85,7 @@ export default function TrangChu() {
     };
   }, [reviewGroup]);
 
-  useEffect(() => {
-    if (token || window.sessionStorage.getItem('dieubel_login_offer_closed') === 'true') {
-      return;
-    }
 
-    const popupTimer = window.setTimeout(() => setShowLoginOffer(true), 450);
-    return () => window.clearTimeout(popupTimer);
-  }, [token]);
 
   useEffect(() => {
     let cancelled = false;
@@ -132,7 +122,7 @@ export default function TrangChu() {
   }, []);
 
   useEffect(() => {
-    const overlayOpen = showHopThoaiVoucher || (showLoginOffer && !token);
+    const overlayOpen = showHopThoaiVoucher;
     if (!overlayOpen) return undefined;
 
     const previousOverflow = document.body.style.overflow;
@@ -142,10 +132,7 @@ export default function TrangChu() {
       if (event.key !== 'Escape') return;
       if (showHopThoaiVoucher) {
         setShowHopThoaiVoucher(false);
-        return;
       }
-      window.sessionStorage.setItem('dieubel_login_offer_closed', 'true');
-      setShowLoginOffer(false);
     };
 
     document.addEventListener('keydown', handleKeyDown);
@@ -153,7 +140,7 @@ export default function TrangChu() {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [showLoginOffer, showHopThoaiVoucher, token]);
+  }, [showHopThoaiVoucher]);
 
   useEffect(() => {
     return () => {
@@ -174,15 +161,6 @@ export default function TrangChu() {
     navigate(`/rooms?${params.toString()}`);
   };
 
-  const closeLoginOffer = () => {
-    window.sessionStorage.setItem('dieubel_login_offer_closed', 'true');
-    setShowLoginOffer(false);
-  };
-
-  const goToAuthOffer = () => {
-    window.sessionStorage.setItem('dieubel_login_offer_closed', 'true');
-    navigate('/auth?mode=login&redirect=/');
-  };
 
   const openHopThoaiVoucher = () => {
     setSavedCodes(docQuaDaDoi().map((reward) => reward.code));
@@ -207,7 +185,6 @@ export default function TrangChu() {
 
   return (
     <main>
-      <PopupMoiDangNhap open={showLoginOffer && !token} onClose={closeLoginOffer} onAuth={goToAuthOffer} />
       <HopThoaiVoucher
         open={showHopThoaiVoucher}
         vouchers={vouchers}
@@ -220,8 +197,6 @@ export default function TrangChu() {
         activeHero={activeHero}
         isHeroPaused={isHeroPaused}
         setIsHeroPaused={setIsHeroPaused}
-        showLoginOffer={showLoginOffer}
-        showHopThoaiVoucher={showHopThoaiVoucher}
         goToHero={goToHero}
         handleSearch={handleSearch}
       />

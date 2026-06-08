@@ -189,14 +189,14 @@ function DanhSachPhong() {
 
   return (
     <main className="search-page-bg flex-1">
-      <section className="sticky top-0 z-30 border-b border-sky-100 bg-white/95 backdrop-blur shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 py-9 sm:px-6">
+      <section className="sticky top-0 z-30 border-b border-[#eadfe2] bg-white/92 backdrop-blur-xl shadow-[0_18px_60px_-54px_rgba(36,31,33,0.42)]">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-6">
             <span className="eyebrow">Tìm kiếm khách sạn</span>
             <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-950">
               {totalItems} chỗ ở phù hợp{filters.city ? ` tại ${filters.city}` : ''}
             </h1>
-            <p className="mt-2 max-w-3xl text-sm leading-7 text-slate-600">
+            <p className="mt-2 max-w-3xl text-sm font-medium leading-7 text-slate-600">
               Chọn nhanh điểm đến, ngày lưu trú và số khách ở hàng đầu. Bấm cập nhật để mở bộ lọc nâng cao, sau đó tìm kiếm khi đã chọn xong tiêu chí.
             </p>
           </div>
@@ -230,7 +230,7 @@ function DanhSachPhong() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <div className="grid items-start gap-8 lg:grid-cols-[280px_1fr]">
           {/* Sidebar */}
           <aside className="hidden lg:block sticky top-32 h-[calc(100vh-140px)] overflow-y-auto custom-scrollbar pr-2">
@@ -251,7 +251,7 @@ function DanhSachPhong() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <label className="rounded-xl border border-sky-100 bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-sm">
+            <label className="rounded-2xl border border-[#eadfe2] bg-white px-4 py-3 text-sm font-bold text-slate-600 shadow-[0_14px_45px_-40px_rgba(36,31,33,0.45)]">
               <span className="mr-3 text-slate-500">Sắp xếp</span>
               <select
                 value={filters.sort}
@@ -265,12 +265,12 @@ function DanhSachPhong() {
                 <option value="newest">Mới nhất</option>
               </select>
             </label>
-            <div className="grid grid-cols-2 rounded-xl border border-sky-100 bg-white p-1 text-sm font-bold shadow-sm">
+            <div className="grid grid-cols-2 rounded-2xl border border-[#eadfe2] bg-white p-1 text-sm font-bold shadow-[0_14px_45px_-40px_rgba(36,31,33,0.45)]">
               <button
                 type="button"
                 onClick={() => setViewMode('horizontal')}
                 className={`rounded-lg px-3 py-2 transition ${
-                  viewMode === 'horizontal' ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20' : 'text-slate-600 hover:bg-sky-50 hover:text-brand-700'
+                  viewMode === 'horizontal' ? 'bg-brand-600 text-white shadow-[0_12px_28px_-22px_rgba(255,56,92,0.75)]' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
                 }`}
               >
                 Xem ngang
@@ -279,7 +279,7 @@ function DanhSachPhong() {
                 type="button"
                 onClick={() => setViewMode('vertical')}
                 className={`rounded-lg px-3 py-2 transition ${
-                  viewMode === 'vertical' ? 'bg-brand-600 text-white shadow-sm shadow-brand-500/20' : 'text-slate-600 hover:bg-sky-50 hover:text-brand-700'
+                  viewMode === 'vertical' ? 'bg-brand-600 text-white shadow-[0_12px_28px_-22px_rgba(255,56,92,0.75)]' : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
                 }`}
               >
                 Xem dọc

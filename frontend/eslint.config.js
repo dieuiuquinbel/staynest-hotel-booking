@@ -1,3 +1,4 @@
+// Chức năng: Cấu hình ESLint cho mã JavaScript/React của frontend.
 import js from '@eslint/js'
 import globals from 'globals'
 import reactHooks from 'eslint-plugin-react-hooks'

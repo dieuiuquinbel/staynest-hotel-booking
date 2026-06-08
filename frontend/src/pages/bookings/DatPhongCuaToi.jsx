@@ -1,6 +1,6 @@
-﻿// Chá»©c nÄƒng: Trang khÃ¡ch hÃ ng theo dÃµi, thanh toÃ¡n vÃ  quáº£n lÃ½ Ä‘Æ¡n.
-// Trang Ä‘áº·t chá»— cá»§a tÃ´i.
-// File nÃ y cho phÃ©p khÃ¡ch theo dÃµi Ä‘Æ¡n, táº¡o QR thanh toÃ¡n, gá»­i yÃªu cáº§u há»§y/hoÃ n tiá»n vÃ  xem hÃ³a Ä‘Æ¡n.
+// Chức năng: Trang khách hàng theo dõi, thanh toán và quản lý đơn.
+// Trang đặt chỗ của tôi.
+// File này cho phép khách theo dõi đơn, tạo QR thanh toán, gửi yêu cầu hủy/hoàn tiền và xem hóa đơn.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MyBookingsQrMock from '../../components/bookings/my-bookings/MyBookingsQrMock';
@@ -20,6 +20,7 @@ import {
 } from '../../components/bookings/my-bookings/myBookingsHelpers';
 import {
   capNhatTrangThaiDatPhongApi,
+  taoYeuCauHoanTienApi,
   xacNhanThanhToanDatPhongApi,
 } from '../../services/datPhongApi';
 import useKhoXacThuc from '../../store/khoXacThuc';
@@ -36,6 +37,7 @@ import {
   laDonDatPhongTuongLai,
   moTaHieuLucNhanPhong,
   taoHtmlHoaDon,
+  tinhChinhSachHoanTien,
   tinhGiamGiaVoucher,
 } from '../../utils/lichSuDatPhong';
 import { dinhDangNgay, dinhDangTien } from '../../utils/dinhDang';
@@ -61,10 +63,32 @@ function lopTrangThaiDatPhong(bookingStatus) {
 
 function noiDungHanThanhToan(deadline) {
   const diff = new Date(deadline || 0).getTime() - Date.now();
-  if (!Number.isFinite(diff) || diff <= 0) return 'ÄÃ£ quÃ¡ háº¡n';
+  if (!Number.isFinite(diff) || diff <= 0) return 'Đã quá hạn';
   const minutes = Math.floor(diff / 60000);
   const seconds = Math.floor((diff % 60000) / 1000);
-  return `CÃ²n ${minutes}:${String(seconds).padStart(2, '0')} Ä‘á»ƒ thanh toÃ¡n`;
+  return `Còn ${minutes}:${String(seconds).padStart(2, '0')} để thanh toán`;
+}
+
+function taoFormHoanTienMacDinh(user) {
+  return {
+    bankName: '',
+    bankAccountName: user?.full_name || '',
+    bankAccountNumber: '',
+    phone: '',
+    email: user?.email || '',
+    reason: '',
+  };
+}
+
+function coTheGuiYeuCauHuyHoanTien(booking) {
+  if (!booking) return false;
+  if (booking.refundRequest) return false;
+  if (booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID) return false;
+
+  const daMoNhanPhongChuaXacMinh =
+    booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && !booking.frontdeskVerifiedAt;
+
+  return booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED || daMoNhanPhongChuaXacMinh;
 }
 
 
@@ -80,6 +104,9 @@ function DatPhongCuaToi() {
   const [voucherByBooking, setVoucherByBooking] = useState({});
   const [voucherInputByBooking, setVoucherInputByBooking] = useState({});
   const [voucherAutoOffByBooking, setVoucherAutoOffByBooking] = useState({});
+  const [refundDraftBooking, setRefundDraftBooking] = useState(null);
+  const [refundForm, setRefundForm] = useState(() => taoFormHoanTienMacDinh(user));
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
   const { bookings, error: bookingsError, isLoading: bookingsLoading, refresh, setRemoteBookings } = useDatPhongCuaToi(user);
   const [redeemedRewards] = useKhoVoucherCuaToi(user);
   const availableRewards = useMemo(
@@ -132,13 +159,13 @@ function DatPhongCuaToi() {
       setVoucherByBooking((current) => ({ ...current, [booking.id]: '' }));
       setVoucherAutoOffByBooking((current) => ({ ...current, [booking.id]: true }));
       setPaymentDraft(null);
-      hienThongBao('ÄÃ£ bá» mÃ£ giáº£m giÃ¡ khá»i Ä‘Æ¡n nÃ y.', 'info');
+      hienThongBao('Đã bỏ mã giảm giá khỏi đơn này.', 'info');
       return;
     }
 
     const voucher = findVoucherByCode(code);
     if (!voucher) {
-      hienThongBao('KhÃ´ng tÃ¬m tháº¥y mÃ£ giáº£m giÃ¡ nÃ y hoáº·c mÃ£ Ä‘Ã£ háº¿t háº¡n.', 'error');
+      hienThongBao('Không tìm thấy mã giảm giá này hoặc mã đã hết hạn.', 'error');
       return;
     }
 
@@ -155,8 +182,8 @@ function DatPhongCuaToi() {
     const bestVoucher = timVoucherTotNhat(booking.totalPrice, voucherOptions);
     hienThongBao(
       bestVoucher?.code === voucher.code
-        ? `ÄÃ£ Ã¡p Æ°u Ä‘Ã£i tá»‘t nháº¥t ${voucher.code}.`
-        : `ÄÃ£ Ã¡p mÃ£ giáº£m giÃ¡ ${voucher.code}.`,
+        ? `Đã áp ưu đãi tốt nhất ${voucher.code}.`
+        : `Đã áp mã giảm giá ${voucher.code}.`,
       'success'
     );
   };
@@ -219,7 +246,7 @@ function DatPhongCuaToi() {
         danhDauQuaDaDung(selectedVoucher.code);
       }
     } catch (error) {
-      const message = error?.response?.data?.message || 'KhÃ´ng cáº­p nháº­t Ä‘Æ°á»£c Ä‘Æ¡n sau khi quÃ©t QR. Vui lÃ²ng kiá»ƒm tra backend/database.';
+      const message = error?.response?.data?.message || 'Không cập nhật được đơn sau khi quét QR. Vui lòng kiểm tra backend/database.';
       setPaymentUpdateError(message);
       setConfirmingPaymentId(null);
       hienThongBao(message, 'error');
@@ -229,22 +256,58 @@ function DatPhongCuaToi() {
     setPaymentDraft(null);
     setConfirmingPaymentId(null);
     await refresh();
-    hienThongBao(`ÄÃ£ xÃ¡c nháº­n thanh toÃ¡n thÃ nh cÃ´ng cho Ä‘Æ¡n ${confirmedBooking.booking_code || paymentCode}!`, 'success');
+    hienThongBao(`Đã xác nhận thanh toán thành công cho đơn ${confirmedBooking.booking_code || paymentCode}!`, 'success');
   }, [bookings, findVoucherByCode, hienThongBao, paymentDraft, refresh, setRemoteBookings]);
 
-  useEffect(() => {
-    if (!paymentDraft?.bookingId || confirmingPaymentId || paymentUpdateError) return undefined;
-
-    const timerId = window.setTimeout(() => {
-      confirmPayment(paymentDraft.bookingId, paymentDraft.method);
-    }, 900);
-
-    return () => window.clearTimeout(timerId);
-  }, [confirmPayment, paymentDraft?.bookingId, paymentDraft?.method, paymentDraft?.paymentCode, confirmingPaymentId, paymentUpdateError]);
+  // Da xoa auto timer goi confirmPayment
 
   const openInvoice = (booking) => {
     moHtmlTrongTabMoi(taoHtmlHoaDon(booking));
   };
+
+  const openRefundDraft = (booking) => {
+    setRefundDraftBooking(booking);
+    setRefundForm({
+      ...taoFormHoanTienMacDinh(user),
+      email: user?.email || booking.guestEmail || '',
+      bankAccountName: user?.full_name || booking.guestName || '',
+    });
+  };
+
+  const submitRefundRequest = async () => {
+    if (!refundDraftBooking || refundSubmitting) return;
+
+    const payload = {
+      bankName: refundForm.bankName.trim(),
+      bankAccountName: refundForm.bankAccountName.trim(),
+      bankAccountNumber: refundForm.bankAccountNumber.trim(),
+      phone: refundForm.phone.trim(),
+      email: refundForm.email.trim(),
+      reason: refundForm.reason.trim(),
+    };
+
+    if (!payload.bankName || !payload.bankAccountName || !payload.bankAccountNumber || !payload.reason) {
+      hienThongBao('Vui lòng nhập ngân hàng, chủ tài khoản, số tài khoản và lý do hủy.', 'error');
+      return;
+    }
+
+    setRefundSubmitting(true);
+    try {
+      await taoYeuCauHoanTienApi(refundDraftBooking.id, payload);
+      setRefundDraftBooking(null);
+      setRefundForm(taoFormHoanTienMacDinh(user));
+      hienThongBao('Đã gửi yêu cầu hủy/hoàn tiền. Admin sẽ kiểm tra và phản hồi trong mục Hoàn tiền.', 'success');
+      await refresh();
+    } catch (error) {
+      hienThongBao(error?.response?.data?.message || 'Không gửi được yêu cầu hủy/hoàn tiền.', 'error');
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
+
+  const refundPolicyPreview = refundDraftBooking
+    ? tinhChinhSachHoanTien(refundDraftBooking.paidAmount)
+    : null;
 
   return (
     <main className="history-page-bg flex-1">
@@ -263,6 +326,8 @@ function DatPhongCuaToi() {
                 paymentDraft?.amount || (paymentDraft?.method === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT ? booking.depositAmount : booking.totalPrice);
               const isConfirmingCurrentPayment = confirmingPaymentId === booking.id;
               const canPay = booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID && booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING;
+              const canCancelHold = booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING && booking.paymentStatus === TRANG_THAI_THANH_TOAN.UNPAID;
+              const canRequestRefund = coTheGuiYeuCauHuyHoanTien(booking);
               const hasCheckInQr = Boolean(booking.qrToken) && [TRANG_THAI_DAT_PHONG.CONFIRMED, TRANG_THAI_DAT_PHONG.CHECKED_IN].includes(booking.bookingStatus);
               const isFutureBooking = laDonDatPhongTuongLai(booking);
               const isCheckInDayArrived = daDenNgayNhanPhong(booking.checkIn);
@@ -272,7 +337,7 @@ function DatPhongCuaToi() {
                 && booking.paymentStatus !== TRANG_THAI_THANH_TOAN.UNPAID
                 && isCheckInDayArrived
                 && isFrontdeskVerified;
-              const disabledCheckoutLabel = isAutoOpenedCheckIn ? 'Chá» xÃ¡c minh QR LAN' : 'Chá» nháº­n phÃ²ng';
+              const disabledCheckoutLabel = isAutoOpenedCheckIn ? 'Chờ xác minh QR LAN' : 'Chờ nhận phòng';
               const appliedVoucherCode = voucherByBooking[booking.id] || '';
               const voucherInputCode = voucherInputByBooking[booking.id] ?? appliedVoucherCode;
               const selectedVoucher = findVoucherByCode(appliedVoucherCode);
@@ -325,28 +390,47 @@ function DatPhongCuaToi() {
 
                       <MyBookingsProgress booking={booking} />
 
+                      {booking.refundRequest ? (
+                        <div className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-black text-rose-900">Yêu cầu hủy/hoàn tiền đang được xử lý</p>
+                              <p className="mt-1 text-xs font-semibold leading-5 text-rose-700">
+                                Mã yêu cầu {booking.refundRequest.code}. Số tiền dự kiến hoàn {dinhDangTien(booking.refundRequest.refundAmount)} sau phí hủy.
+                              </p>
+                            </div>
+                            <Link
+                              to="/me?section=refunds"
+                              className="rounded-lg bg-white px-3 py-2 text-xs font-black text-rose-700 shadow-sm transition hover:bg-rose-100"
+                            >
+                              Theo dõi
+                            </Link>
+                          </div>
+                        </div>
+                      ) : null}
+
                       <div className="mt-5 grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
-                          <p className="text-xs font-bold text-slate-500">HÃ¬nh thá»©c</p>
-                          <p className="mt-1 text-sm font-black text-slate-950">{NHAN_KIEU_DAT_PHONG[booking.bookingType] || 'Qua Ä‘Ãªm'}</p>
+                          <p className="text-xs font-bold text-slate-500">Hình thức</p>
+                          <p className="mt-1 text-sm font-black text-slate-950">{NHAN_KIEU_DAT_PHONG[booking.bookingType] || 'Qua đêm'}</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
-                          <p className="text-xs font-bold text-slate-500">Thá»i gian</p>
-                          <p className="mt-1 text-sm font-black text-slate-950">{dinhDangNgay(booking.checkIn) || 'ChÆ°a chá»n'}</p>
+                          <p className="text-xs font-bold text-slate-500">Thời gian</p>
+                          <p className="mt-1 text-sm font-black text-slate-950">{dinhDangNgay(booking.checkIn) || 'Chưa chọn'}</p>
                           {booking.bookingType === KIEU_DAT_PHONG.DAY_USE ? (
-                            <p className="mt-1 text-xs font-bold text-slate-500">{booking.timeSlot?.label} Â· {booking.timeSlot?.time}</p>
+                            <p className="mt-1 text-xs font-bold text-slate-500">{booking.timeSlot?.label} · {booking.timeSlot?.time}</p>
                           ) : null}
                         </div>
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
-                          <p className="text-xs font-bold text-slate-500">Tráº£ phÃ²ng</p>
-                          <p className="mt-1 text-sm font-black text-slate-950">{dinhDangNgay(booking.checkOut) || 'ChÆ°a chá»n'}</p>
+                          <p className="text-xs font-bold text-slate-500">Trả phòng</p>
+                          <p className="mt-1 text-sm font-black text-slate-950">{dinhDangNgay(booking.checkOut) || 'Chưa chọn'}</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
-                          <p className="text-xs font-bold text-slate-500">ÄÃ£ thanh toÃ¡n</p>
+                          <p className="text-xs font-bold text-slate-500">Đã thanh toán</p>
                           <p className="mt-1 text-sm font-black text-slate-950">{dinhDangTien(booking.paidAmount)}</p>
                         </div>
                         <div className="rounded-xl bg-slate-50 px-4 py-3">
-                          <p className="text-xs font-bold text-slate-500">CÃ²n láº¡i</p>
+                          <p className="text-xs font-bold text-slate-500">Còn lại</p>
                           <p className="mt-1 text-sm font-black text-brand-700">{dinhDangTien(booking.remainingAmount)}</p>
                         </div>
                       </div>
@@ -395,14 +479,14 @@ function DatPhongCuaToi() {
                         <div className="mt-5 rounded-[14px] border border-slate-200 bg-slate-50 p-4">
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div>
-                              <p className="text-sm font-black text-slate-950">MÃ£ giáº£m giÃ¡</p>
+                              <p className="text-sm font-black text-slate-950">Mã giảm giá</p>
                               <p className="mt-1 text-sm leading-6 text-slate-500">
-                                Ãp mÃ£ trÆ°á»›c khi táº¡o QR Ä‘á»ƒ sá»‘ tiá»n thanh toÃ¡n Ä‘Æ°á»£c tÃ­nh láº¡i.
+                                Áp mã trước khi tạo QR để số tiền thanh toán được tính lại.
                               </p>
                             </div>
                             {selectedVoucher && selectedVoucherHopLe ? (
                               <span className={`rounded-full px-3 py-1 text-xs font-black ${isBestVoucherSelected ? 'bg-rose-50 text-rose-700' : 'bg-emerald-50 text-emerald-700'}`}>
-                                {isBestVoucherSelected ? 'Æ¯u Ä‘Ã£i tá»‘t nháº¥t' : selectedVoucher.code}
+                                {isBestVoucherSelected ? 'Ưu đãi tốt nhất' : selectedVoucher.code}
                               </span>
                             ) : null}
                           </div>
@@ -413,7 +497,7 @@ function DatPhongCuaToi() {
                                 const nextCode = chuanHoaMaVoucher(event.target.value);
                                 setVoucherInputByBooking((current) => ({ ...current, [booking.id]: nextCode }));
                               }}
-                              placeholder="Nháº­p mÃ£, vÃ­ dá»¥ DIEUBEL10"
+                              placeholder="Nhập mã, ví dụ DIEUBEL10"
                               className="field-shell min-h-11 w-full px-3 py-2 text-sm font-bold uppercase outline-none"
                             />
                             {voucherOptions.length ? (
@@ -428,14 +512,14 @@ function DatPhongCuaToi() {
                                 }}
                                 className="field-shell min-h-11 w-full px-3 py-2 text-sm font-bold outline-none"
                               >
-                                <option value="">KhÃ´ng Ã¡p dá»¥ng</option>
+                                <option value="">Không áp dụng</option>
                                 {voucherOptions.map((reward) => (
                                   <option
                                     key={reward.code}
                                     value={reward.code}
                                     disabled={!kiemTraDieuKienVoucher(reward, booking.totalPrice).hopLe}
                                   >
-                                  {reward.code} - {reward.title}{bestVoucher?.code === reward.code ? ' - Æ¯u Ä‘Ã£i tá»‘t nháº¥t' : ''}{moTaDieuKienVoucher(reward) ? ` - ${moTaDieuKienVoucher(reward)}` : ''}
+                                  {reward.code} - {reward.title}{bestVoucher?.code === reward.code ? ' - Ưu đãi tốt nhất' : ''}{moTaDieuKienVoucher(reward) ? ` - ${moTaDieuKienVoucher(reward)}` : ''}
                                 </option>
                               ))}
                             </select>
@@ -447,7 +531,7 @@ function DatPhongCuaToi() {
                               onClick={() => applyVoucher(booking)}
                               className="min-h-10 rounded-lg bg-slate-950 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-800"
                             >
-                              Ãp mÃ£
+                              Áp mã
                             </button>
                             <button
                               type="button"
@@ -456,22 +540,22 @@ function DatPhongCuaToi() {
                                 setVoucherInputByBooking((current) => ({ ...current, [booking.id]: '' }));
                                 setVoucherAutoOffByBooking((current) => ({ ...current, [booking.id]: true }));
                                 setPaymentDraft(null);
-                                hienThongBao('ÄÃ£ bá» mÃ£ giáº£m giÃ¡ khá»i Ä‘Æ¡n nÃ y.', 'info');
+                                hienThongBao('Đã bỏ mã giảm giá khỏi đơn này.', 'info');
                               }}
                               className="min-h-10 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-black text-slate-700 transition hover:border-slate-900"
                             >
-                              Bá» mÃ£
+                              Bỏ mã
                             </button>
                             {selectedVoucher && !selectedVoucherHopLe ? (
                               <span className="flex items-center text-xs font-bold text-rose-600">{selectedVoucherCheck.lyDo}</span>
                             ) : null}
                             {selectedVoucher && selectedVoucherHopLe && selectedVoucher.discountType !== 'service' ? (
                               <span className="flex items-center text-xs font-bold text-emerald-700">
-                                Dá»± kiáº¿n giáº£m {dinhDangTien(previewDiscount)}, tá»•ng cÃ²n {dinhDangTien(previewTotalPrice)}.
+                                Dự kiến giảm {dinhDangTien(previewDiscount)}, tổng còn {dinhDangTien(previewTotalPrice)}.
                               </span>
                             ) : null}
                             {selectedVoucher && selectedVoucherHopLe && selectedVoucher.discountType === 'service' ? (
-                              <span className="flex items-center text-xs font-bold text-emerald-700">Voucher nÃ y táº·ng dá»‹ch vá»¥, khÃ´ng trá»« trá»±c tiáº¿p vÃ o tiá»n phÃ²ng.</span>
+                              <span className="flex items-center text-xs font-bold text-emerald-700">Voucher này tặng dịch vụ, không trừ trực tiếp vào tiền phòng.</span>
                             ) : null}
                           </div>
                         </div>
@@ -482,10 +566,10 @@ function DatPhongCuaToi() {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <p className="text-sm font-black text-slate-950">
-                              {paymentDraft.method === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT ? 'VietQR cá»c giá»¯ phÃ²ng 10%' : 'VietQR thanh toÃ¡n toÃ n bá»™'}
+                              {paymentDraft.method === PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT ? 'VietQR cọc giữ phòng 10%' : 'VietQR thanh toán toàn bộ'}
                             </p>
                             <p className="mt-1 text-sm text-slate-600">
-                              QuÃ©t mÃ£ QR, há»‡ thá»‘ng sáº½ tá»± dÃ¹ng voucher vÃ  cáº­p nháº­t Ä‘Æ¡n trong vÃ i giÃ¢y.
+                              Quét mã QR, hệ thống sẽ tự dùng voucher và cập nhật đơn trong vài giây.
                             </p>
                           </div>
                           <p className="text-xl font-black text-brand-700">{dinhDangTien(payNowAmount)}</p>
@@ -501,7 +585,7 @@ function DatPhongCuaToi() {
                           </div>
                           <div className="grid content-start gap-3">
                             <div className="rounded-xl bg-slate-50 px-4 py-3 text-sm">
-                              <p className="font-black text-slate-950">Ná»™i dung CK</p>
+                              <p className="font-black text-slate-950">Nội dung CK</p>
                               <p className="mt-1 break-all font-black text-brand-700">{paymentDraft.paymentCode}</p>
                             </div>
                             <div className="grid gap-2">
@@ -515,19 +599,18 @@ function DatPhongCuaToi() {
                                 {paymentUpdateError
                                   ? paymentUpdateError
                                   : isConfirmingCurrentPayment
-                                    ? 'Äang cáº­p nháº­t Ä‘Æ¡n sau khi quÃ©t QR...'
-                                    : 'Äang chá» quÃ©t QR. Admin khÃ´ng cáº§n duyá»‡t thanh toÃ¡n.'}
+                                    ? 'Đang cập nhật đơn sau khi quét QR...'
+                                    : 'Đang chờ quét QR. Admin không cần duyệt thanh toán.'}
                               </div>
                               <div className="grid gap-2 sm:grid-cols-2">
-                                {paymentUpdateError ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => confirmPayment(booking.id, paymentDraft.method)}
-                                    className="min-h-12 rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-700"
-                                  >
-                                    Cáº­p nháº­t láº¡i Ä‘Æ¡n
-                                  </button>
-                                ) : null}
+                                <button
+                                  type="button"
+                                  onClick={() => confirmPayment(booking.id, paymentDraft.method)}
+                                  disabled={isConfirmingCurrentPayment}
+                                  className="min-h-12 rounded-lg bg-brand-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-brand-700 disabled:bg-brand-400"
+                                >
+                                  {isConfirmingCurrentPayment ? 'Đang xử lý...' : paymentUpdateError ? 'Thử lại' : 'Tôi đã thanh toán'}
+                                </button>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -536,7 +619,7 @@ function DatPhongCuaToi() {
                                   }}
                                   className="min-h-12 rounded-lg border border-[#222222] bg-white px-4 py-3 text-sm font-medium text-[#222222] transition hover:bg-[#f7f7f7]"
                                 >
-                                  Äá»ƒ sau
+                                  Để sau
                                 </button>
                               </div>
                             </div>
@@ -548,39 +631,39 @@ function DatPhongCuaToi() {
                     {detailBookingId === booking.id ? (
                       <div className="mt-5 rounded-2xl border border-slate-200 bg-white p-4">
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="text-sm font-black text-slate-950">Chi tiáº¿t Ä‘Æ¡n vÃ  hÃ³a Ä‘Æ¡n</p>
+                          <p className="text-sm font-black text-slate-950">Chi tiết đơn và hóa đơn</p>
                           <button type="button" onClick={() => setDetailBookingId(null)} className="text-sm font-bold text-slate-500 hover:text-brand-700">
-                            ÄÃ³ng
+                            Đóng
                           </button>
                         </div>
                         <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-                          <p><strong>MÃ£ Ä‘Æ¡n:</strong> {booking.id}</p>
-                          <p><strong>MÃ£ HD:</strong> {booking.paymentCode || 'ChÆ°a thanh toÃ¡n'}</p>
-                          <p><strong>KhÃ¡ch:</strong> {booking.guestName}</p>
+                          <p><strong>Mã đơn:</strong> {booking.id}</p>
+                          <p><strong>Mã HD:</strong> {booking.paymentCode || 'Chưa thanh toán'}</p>
+                          <p><strong>Khách:</strong> {booking.guestName}</p>
                           <p><strong>Email:</strong> {booking.guestEmail}</p>
-                          <p><strong>Dá»‹ch vá»¥:</strong> {(booking.services || []).map((item) => item.title).join(', ') || 'KhÃ´ng cÃ³'}</p>
-                          <p><strong>Voucher:</strong> {activeVoucher ? `${activeVoucher.voucherTitle || activeVoucher.title} (${activeVoucher.voucherCode || activeVoucher.code})` : 'ChÆ°a Ã¡p dá»¥ng'}</p>
-                          <p><strong>GiÃ¡ gá»‘c:</strong> {dinhDangTien(baseTotalPrice)}</p>
-                          <p><strong>Giáº£m voucher:</strong> {dinhDangTien(previewDiscount)}</p>
-                          <p><strong>Tá»•ng cuá»‘i cÃ¹ng:</strong> {dinhDangTien(previewTotalPrice)}</p>
+                          <p><strong>Dịch vụ:</strong> {(booking.services || []).map((item) => item.title).join(', ') || 'Không có'}</p>
+                          <p><strong>Voucher:</strong> {activeVoucher ? `${activeVoucher.voucherTitle || activeVoucher.title} (${activeVoucher.voucherCode || activeVoucher.code})` : 'Chưa áp dụng'}</p>
+                          <p><strong>Giá gốc:</strong> {dinhDangTien(baseTotalPrice)}</p>
+                          <p><strong>Giảm voucher:</strong> {dinhDangTien(previewDiscount)}</p>
+                          <p><strong>Tổng cuối cùng:</strong> {dinhDangTien(previewTotalPrice)}</p>
                         </div>
                         <button
                           type="button"
                           onClick={() => openInvoice(booking)}
                           className="mt-4 rounded-xl bg-brand-600 px-4 py-3 text-sm font-black text-white transition hover:bg-brand-700"
                         >
-                          Xem hÃ³a Ä‘Æ¡n
+                          Xem hóa đơn
                         </button>
                       </div>
                     ) : null}
 
-                    {/* Footer cá»§a Tháº» (Gá»™p Tá»”NG CUá»I CÃ™NG vÃ  NÃšT Báº¤M) */}
+                    {/* Footer của Thẻ (Gộp TỔNG CUỐI CÙNG và NÚT BẤM) */}
                     <div className="mt-5 rounded-2xl bg-slate-50 p-4 border border-slate-100 flex flex-col lg:flex-row lg:items-end justify-between gap-5">
                       <div className="min-w-[200px]">
-                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Tá»•ng cuá»‘i cÃ¹ng</p>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-700">Tổng cuối cùng</p>
                         <div className="mt-3 grid gap-2 text-sm">
                           <div className="flex items-center justify-between gap-3 text-slate-600">
-                            <span>GiÃ¡ gá»‘c</span>
+                            <span>Giá gốc</span>
                             <span className="font-bold text-slate-900">{dinhDangTien(baseTotalPrice)}</span>
                           </div>
                           {hasVoucherPreview ? (
@@ -588,7 +671,7 @@ function DatPhongCuaToi() {
                               <span>Voucher</span>
                               <span className="grid justify-items-end gap-1 text-right">
                                 {isBestVoucherSelected ? (
-                                  <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-black uppercase text-rose-700">Æ¯u Ä‘Ã£i tá»‘t nháº¥t</span>
+                                  <span className="rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-black uppercase text-rose-700">Ưu đãi tốt nhất</span>
                                 ) : null}
                                 <span className="max-w-[150px] font-bold text-slate-900">
                                   {activeVoucher.voucherTitle || activeVoucher.title || activeVoucher.voucherCode || activeVoucher.code}
@@ -598,21 +681,21 @@ function DatPhongCuaToi() {
                           ) : null}
                           {hasVoucherPreview ? (
                             <div className="flex items-center justify-between gap-3 text-emerald-700">
-                              <span>{hasMoneyDiscount ? 'ÄÃ£ giáº£m' : 'Æ¯u Ä‘Ã£i dá»‹ch vá»¥'}</span>
+                              <span>{hasMoneyDiscount ? 'Đã giảm' : 'Ưu đãi dịch vụ'}</span>
                               <span className="font-black">
-                                {hasMoneyDiscount ? `-${dinhDangTien(previewDiscount)}` : 'ÄÃ£ Ã¡p dá»¥ng'}
+                                {hasMoneyDiscount ? `-${dinhDangTien(previewDiscount)}` : 'Đã áp dụng'}
                               </span>
                             </div>
                           ) : null}
                         </div>
                         <p className="mt-3 text-2xl font-black text-slate-950">{dinhDangTien(previewTotalPrice)}</p>
                         <p className="mt-1 text-xs font-semibold text-slate-500">
-                          Cá»c tá»‘i thiá»ƒu: <span className="font-bold text-slate-700">{dinhDangTien(previewDepositAmount)}</span>
+                          Cọc tối thiểu: <span className="font-bold text-slate-700">{dinhDangTien(previewDepositAmount)}</span>
                         </p>
                       </div>
 
                       <div className="flex flex-1 flex-col justify-end gap-2 lg:max-w-[400px]">
-                        {/* NhÃ³m 1: Thanh toÃ¡n (Náº¿u cÃ³ thá»ƒ thanh toÃ¡n) */}
+                        {/* Nhóm 1: Thanh toán (Nếu có thể thanh toán) */}
                         {canPay ? (
                           <div className="grid grid-cols-2 gap-2 mb-2">
                             <button
@@ -620,38 +703,38 @@ function DatPhongCuaToi() {
                               onClick={() => openPayment(booking, PHUONG_THUC_THANH_TOAN.ONLINE_FULL)}
                               className="flex min-h-12 items-center justify-center rounded-xl bg-brand-600 px-3 py-3.5 text-center text-xs font-black text-white shadow-sm transition hover:bg-brand-700 active:scale-[0.98]"
                             >
-                              Táº¡o QR toÃ n bá»™
+                              Tạo QR toàn bộ
                             </button>
                             <button
                               type="button"
                               onClick={() => openPayment(booking, PHUONG_THUC_THANH_TOAN.COUNTER_DEPOSIT)}
                               className="flex min-h-12 items-center justify-center rounded-xl bg-brand-50 px-3 py-3.5 text-center text-xs font-black text-brand-700 transition hover:bg-brand-100 active:scale-[0.98]"
                             >
-                              Táº¡o QR cá»c 10%
+                              Tạo QR cọc 10%
                             </button>
                           </div>
                         ) : null}
 
-                        {/* NhÃ³m 2: Thao tÃ¡c chung (Action hierarchy) */}
+                        {/* Nhóm 2: Thao tác chung (Action hierarchy) */}
                         <div className="grid grid-cols-2 gap-2">
                           <Link
                             to={`/rooms/${booking.roomId}`}
                             className="flex min-h-11 items-center justify-center rounded-xl border border-transparent bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
                           >
-                            Xem phÃ²ng
+                            Xem phòng
                           </Link>
                           <button
                             type="button"
                             onClick={() => setDetailBookingId(booking.id)}
                             className="flex min-h-11 items-center justify-center rounded-xl border border-transparent bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
                           >
-                            Chi tiáº¿t / HÄ
+                            Chi tiết / HĐ
                           </button>
                           <Link
                             to={`/me?supportBooking=${booking.id}`}
                             className="flex min-h-11 items-center justify-center rounded-xl border border-transparent bg-white px-3 py-2 text-center text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-100"
                           >
-                            Há»— trá»£
+                            Hỗ trợ
                           </Link>
                           {canCustomerConfirmCheckout ? (
                             <button
@@ -660,15 +743,15 @@ function DatPhongCuaToi() {
                                 try {
                                   const nextBookings = await capNhatTrangThaiDatPhongApi(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_OUT);
                                   setRemoteBookings(nextBookings);
-                                  hienThongBao('ÄÃ£ Ä‘Ã¡nh dáº¥u tráº£ phÃ²ng thÃ nh cÃ´ng!', 'success');
+                                  hienThongBao('Đã đánh dấu trả phòng thành công!', 'success');
                                 } catch (error) {
-                                  hienThongBao(error?.response?.data?.message || 'KhÃ´ng cáº­p nháº­t Ä‘Æ°á»£c tráº£ phÃ²ng.', 'error');
+                                  hienThongBao(error?.response?.data?.message || 'Không cập nhật được trả phòng.', 'error');
                                 }
                                 await refresh();
                               }}
                               className="flex min-h-11 items-center justify-center rounded-xl bg-slate-950 px-3 py-2 text-center text-xs font-black text-white shadow-sm transition hover:bg-slate-800"
                             >
-                              Tráº£ phÃ²ng
+                              Trả phòng
                             </button>
                           ) : (
                             <button
@@ -681,31 +764,45 @@ function DatPhongCuaToi() {
                           )}
                         </div>
 
-                        {/* HÃ nh Ä‘á»™ng há»§y */}
-                        {booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING ? (
+                        {/* Hành động hủy */}
+                        {canCancelHold ? (
                           <button
                             type="button"
                             onClick={async () => {
                               try {
-                                const nextBookings = await capNhatTrangThaiDatPhongApi(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'KhÃ¡ch há»§y giá»¯ chá»—');
+                                const nextBookings = await capNhatTrangThaiDatPhongApi(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'Khách hủy giữ chỗ');
                                 setRemoteBookings(nextBookings);
-                                hienThongBao('ÄÃ£ há»§y giá»¯ chá»— thÃ nh cÃ´ng.', 'success');
+                                hienThongBao('Đã hủy giữ chỗ thành công.', 'success');
                               } catch (error) {
-                                hienThongBao(error?.response?.data?.message || 'KhÃ´ng há»§y Ä‘Æ°á»£c Ä‘Æ¡n hÃ ng.', 'error');
+                                hienThongBao(error?.response?.data?.message || 'Không hủy được đơn hàng.', 'error');
                               }
                               await refresh();
                             }}
                             className="flex min-h-11 w-full mt-2 items-center justify-center rounded-xl bg-transparent border border-rose-200 px-4 py-2 text-center text-xs font-bold text-rose-600 transition hover:bg-rose-50"
                           >
-                            Há»§y giá»¯ chá»—
+                            Hủy giữ chỗ
                           </button>
+                        ) : null}
+                        {canRequestRefund ? (
+                          <button
+                            type="button"
+                            onClick={() => openRefundDraft(booking)}
+                            className="mt-2 flex min-h-11 w-full items-center justify-center rounded-xl border border-rose-200 bg-white px-4 py-2 text-center text-xs font-black text-rose-700 transition hover:bg-rose-50 active:scale-[0.98]"
+                          >
+                            Hủy phòng / yêu cầu hoàn tiền
+                          </button>
+                        ) : null}
+                        {booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && isFrontdeskVerified ? (
+                          <p className="mt-1 rounded-xl bg-slate-100 px-3 py-2 text-center text-[11px] font-bold leading-5 text-slate-500">
+                            Đơn đã xác minh nhận phòng, vui lòng liên hệ hỗ trợ nếu cần thay đổi lưu trú.
+                          </p>
                         ) : null}
                       </div>
                     </div>
 
                     {booking.latestCustomerFeedback ? (
                       <div className="mt-4 rounded-xl bg-sky-50/50 p-4 text-sm">
-                        <p className="font-black text-slate-950">Pháº£n há»“i gáº§n nháº¥t</p>
+                        <p className="font-black text-slate-950">Phản hồi gần nhất</p>
                         <p className="mt-1 line-clamp-2 leading-6 text-slate-600">{booking.latestCustomerFeedback.content}</p>
                       </div>
                     ) : null}
@@ -720,7 +817,131 @@ function DatPhongCuaToi() {
         )}
       </div>
 
-      {/* Modal QR Code Nháº­n phÃ²ng */}
+      {refundDraftBooking ? (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/70 px-4 backdrop-blur-sm"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget && !refundSubmitting) setRefundDraftBooking(null);
+          }}
+        >
+          <section className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="border-b border-rose-100 bg-rose-50 px-6 py-5">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-rose-600">Hủy phòng có hoàn tiền</p>
+                  <h3 className="mt-2 text-xl font-black text-slate-950">{refundDraftBooking.hotel_name}</h3>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    Đơn {refundDraftBooking.id} · {refundDraftBooking.room_name}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRefundDraftBooking(null)}
+                  disabled={refundSubmitting}
+                  className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-500 shadow-sm transition hover:text-rose-700 disabled:opacity-50"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-5 p-6">
+              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-3">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Đã thanh toán</p>
+                  <p className="mt-1 text-sm font-black text-slate-950">{dinhDangTien(refundPolicyPreview?.paidAmount)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Phí hủy 20%</p>
+                  <p className="mt-1 text-sm font-black text-rose-700">{dinhDangTien(refundPolicyPreview?.cancelFeeAmount)}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400">Dự kiến hoàn</p>
+                  <p className="mt-1 text-sm font-black text-emerald-700">{dinhDangTien(refundPolicyPreview?.refundAmount)}</p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Ngân hàng</span>
+                  <input
+                    value={refundForm.bankName}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, bankName: event.target.value }))}
+                    placeholder="VD: Vietcombank"
+                    className="field-shell px-4 py-3.5 text-sm font-semibold text-slate-950 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Chủ tài khoản</span>
+                  <input
+                    value={refundForm.bankAccountName}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, bankAccountName: event.target.value }))}
+                    className="field-shell px-4 py-3.5 text-sm font-semibold text-slate-950 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Số tài khoản</span>
+                  <input
+                    value={refundForm.bankAccountNumber}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, bankAccountNumber: event.target.value }))}
+                    inputMode="numeric"
+                    className="field-shell px-4 py-3.5 text-sm font-semibold text-slate-950 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-black text-slate-700">Số điện thoại</span>
+                  <input
+                    value={refundForm.phone}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, phone: event.target.value }))}
+                    inputMode="tel"
+                    className="field-shell px-4 py-3.5 text-sm font-semibold text-slate-950 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2 sm:col-span-2">
+                  <span className="text-sm font-black text-slate-700">Email nhận phản hồi</span>
+                  <input
+                    value={refundForm.email}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, email: event.target.value }))}
+                    type="email"
+                    className="field-shell px-4 py-3.5 text-sm font-semibold text-slate-950 outline-none"
+                  />
+                </label>
+                <label className="grid gap-2 sm:col-span-2">
+                  <span className="text-sm font-black text-slate-700">Lý do hủy</span>
+                  <textarea
+                    value={refundForm.reason}
+                    onChange={(event) => setRefundForm((current) => ({ ...current, reason: event.target.value }))}
+                    rows={3}
+                    placeholder="Mô tả ngắn để admin kiểm tra và duyệt hoàn tiền."
+                    className="field-shell resize-none px-4 py-3.5 text-sm font-semibold leading-6 text-slate-950 outline-none"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setRefundDraftBooking(null)}
+                  disabled={refundSubmitting}
+                  className="min-h-12 rounded-xl border border-slate-300 bg-white px-5 text-sm font-black text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Để sau
+                </button>
+                <button
+                  type="button"
+                  onClick={submitRefundRequest}
+                  disabled={refundSubmitting}
+                  className="min-h-12 rounded-xl bg-rose-600 px-6 text-sm font-black text-white shadow-sm shadow-rose-500/20 transition hover:bg-rose-700 active:scale-[0.98] disabled:bg-rose-300"
+                >
+                  {refundSubmitting ? 'Đang gửi...' : 'Gửi yêu cầu hủy/hoàn tiền'}
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {/* Modal QR Code Nhận phòng */}
       {activeQrBooking ? (
         <div
           className="fixed inset-0 z-[100] grid place-items-center bg-slate-950/80 px-4 backdrop-blur-sm transition-opacity"

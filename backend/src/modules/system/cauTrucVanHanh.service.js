@@ -4,6 +4,10 @@ const ketNoiDb = require('../../config/coSoDuLieu');
 
 let khoiTaoCauTrucVanHanhPromise = null;
 
+function coChoPhepTuDongCapNhatCauTruc() {
+  return process.env.AUTO_MIGRATE !== 'false';
+}
+
 async function themCotNeuThieu(tableName, columnName, definition) {
   const [columns] = await ketNoiDb.query(
     `SHOW COLUMNS FROM \`${tableName}\` LIKE ?`,
@@ -18,6 +22,10 @@ async function themCotNeuThieu(tableName, columnName, definition) {
 }
 
 async function damBaoCauTrucVanHanh() {
+  if (!coChoPhepTuDongCapNhatCauTruc()) {
+    return null;
+  }
+
   if (!khoiTaoCauTrucVanHanhPromise) {
     khoiTaoCauTrucVanHanhPromise = (async () => {
       await ketNoiDb.query(

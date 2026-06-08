@@ -1,3 +1,4 @@
+// Chức năng: Component hiển thị bộ lọc tìm kiếm nâng cao (giá, loại phòng, tiện nghi...) ở giao diện danh sách phòng.
 import { useMemo } from 'react';
 import {
   KHOANG_GIA,
@@ -9,7 +10,7 @@ import {
 
 function SidebarSection({ title, children }) {
   return (
-    <div className="border-b border-slate-200 py-5 last:border-0">
+    <div className="border-b border-[#eadfe2] py-5 last:border-0">
       <h3 className="mb-4 text-sm font-bold text-slate-950">{title}</h3>
       {children}
     </div>
@@ -43,7 +44,7 @@ function BoLocBenTrai({ filters, onChange }) {
   };
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-[22px] border border-[#eadfe2] bg-white p-5 shadow-[0_18px_60px_-50px_rgba(36,31,33,0.42)]">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-lg font-black text-slate-950">Bộ lọc nâng cao</h2>
       </div>

@@ -2,7 +2,7 @@
 // Trang chi tiet phong: hien thi gallery, tien nghi, danh gia va nut dat phong.
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { layPhongTheoId, layDanhGiaPhongApi } from "../../services/phongApi";
 import useKhoXacThuc from "../../store/khoXacThuc";
 import { dinhDangTien } from "../../utils/dinhDang";
@@ -10,10 +10,9 @@ import { taoDuongDanDatPhong, taoDuongDanDangNhapChuyenHuong } from "../../utils
 import { layThongTinTinhTrangPhong } from "../../utils/tinhTrangPhong";
 import { resolveMediaUrl } from "../../utils/media";
 import {
-  docPhongYeuThich,
   luuPhongDaXem,
-  daoTrangThaiPhongYeuThich,
 } from "../../utils/lichSuXemPhong";
+import { toggleYeuThichApi } from "../../services/phongApi";
 
 const NHAN_LOAI_PHONG = {
   standard: "Tiêu chuẩn",
@@ -61,10 +60,13 @@ function dinhDangNgayDanhGia(dateStr) {
 
 function ChiTietPhong() {
   const { roomId } = useParams();
+  const location = useLocation();
   const token = useKhoXacThuc((state) => state.token);
-  const [favoriteRoomIds, setFavoriteRoomIds] = useState(() =>
-    new Set(docPhongYeuThich().map((item) => String(item.id))),
-  );
+  const setShowLoginOffer = useKhoXacThuc((state) => state.setShowLoginOffer);
+  const favoriteRooms = useKhoXacThuc((state) => state.favoriteRooms);
+  const addFavoriteRoom = useKhoXacThuc((state) => state.addFavoriteRoom);
+  const removeFavoriteRoom = useKhoXacThuc((state) => state.removeFavoriteRoom);
+  const [isTogglingFav, setIsTogglingFav] = useState(false);
   const [defaultSearchDates] = useState(() => {
     const today = new Date();
     const tomorrow = new Date(today);
@@ -75,7 +77,7 @@ function ChiTietPhong() {
       checkOut: tomorrow.toISOString().split('T')[0],
     };
   });
-  const favorite = favoriteRoomIds.has(String(roomId));
+  
   const {
     data: room,
     isLoading,
@@ -138,6 +140,8 @@ function ChiTietPhong() {
     ? taoDuongDanDatPhong(room.id)
     : taoDuongDanDangNhapChuyenHuong(taoDuongDanDatPhong(room.id));
   const canBook = Number(room.inventory_count) > 0;
+  const favorite = room ? favoriteRooms.includes(room.id) : false;
+  const isAdminRoomPreview = location.pathname.startsWith("/admin/rooms/");
   
   const formattedRealReviews = (dbReviews || []).map((rv) => ({
     id: rv.id,
@@ -195,26 +199,12 @@ function ChiTietPhong() {
                     <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-bold text-amber-700">
                       {NHAN_LOAI_PHONG[room.room_type] || room.room_type}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextFavorites = daoTrangThaiPhongYeuThich(room);
-                        setFavoriteRoomIds(
-                          new Set(nextFavorites.map((item) => String(item.id))),
-                        );
-                      }}
-                      className={`rounded-full border px-3 py-1 text-xs font-extrabold transition ${
-                        favorite
-                          ? "border-rose-200 bg-rose-50 text-rose-600"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-rose-200 hover:text-rose-600"
-                      }`}
-                    >
-                      {favorite ? "Bỏ yêu thích" : "Yêu thích"}
-                    </button>
                   </div>
-                  <h1 className="mt-4 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
-                    {room.hotel_name}
-                  </h1>
+                  <div className="mt-4 flex flex-wrap items-center gap-4">
+                    <h1 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                      {room.hotel_name}
+                    </h1>
+                  </div>
                   <p className="mt-2 text-lg font-bold text-slate-600">
                     {room.room_name}
                   </p>
@@ -259,9 +249,10 @@ function ChiTietPhong() {
                 Thông tin chỗ ở
               </h2>
               <p className="mt-5 text-sm leading-8 text-slate-600">
-                {room.description} Chỗ ở phù hợp cho khách muốn di chuyển thuận
-                tiện, không gian nghỉ ngơi riêng tư và dịch vụ rõ ràng trước khi
-                đặt.
+                {(room.description || "")
+                  .replace("Villa rieng co ho boi, phu hop ky nghi gia dinh va cap doi.", "Villa riêng có hồ bơi, phù hợp kỳ nghỉ gia đình và cặp đôi.")
+                  .replace("Villa rieng co ho boi, phu hop ky nghi gia dinh va cap doi", "Villa riêng có hồ bơi, phù hợp kỳ nghỉ gia đình và cặp đôi")}
+                {" "}Chỗ ở lý tưởng được trang bị đầy đủ tiện nghi hiện đại, mang lại không gian nghỉ dưỡng riêng tư thoải mái và dịch vụ chuyên nghiệp suốt kỳ lưu trú của bạn.
               </p>
 
               <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -298,11 +289,16 @@ function ChiTietPhong() {
             </article>
 
             <article className="mt-6 border-t border-slate-200 pt-8 pb-12">
-              <div className="flex items-center gap-2 mb-6">
-                <svg className="h-6 w-6 text-slate-900" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
-                <h2 className="text-2xl font-black tracking-tight text-slate-950">
-                  {Number(room.rating_avg || 0).toFixed(1)} · {room.total_reviews || 0} đánh giá
-                </h2>
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <svg className="h-6 w-6 text-slate-900" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                  <h2 className="text-2xl font-black tracking-tight text-slate-950">
+                    Điểm {Number(room.rating_avg || 0).toFixed(1)}
+                  </h2>
+                </div>
+                <span className="text-base font-bold text-slate-500">
+                  {room.total_reviews || 0} đánh giá
+                </span>
               </div>
               
               <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-8">
@@ -344,15 +340,21 @@ function ChiTietPhong() {
 
           <aside className="surface-card p-5 lg:sticky lg:top-24 lg:self-start">
             <p className="text-sm font-bold uppercase tracking-[0.16em] text-brand-700">
-              Tóm tắt đặt chỗ
+              {isAdminRoomPreview ? "Chế độ quản trị" : "Tóm tắt đặt chỗ"}
             </p>
             <h2 className="mt-3 text-2xl font-black tracking-tight text-slate-950">
-              {canBook ? "Sẵn sàng đặt phòng này" : "Tạm hết phòng"}
+              {isAdminRoomPreview
+                ? "Xem nội dung và ảnh phòng"
+                : canBook
+                  ? "Sẵn sàng đặt phòng này"
+                  : "Tạm hết phòng"}
             </h2>
             <p className="mt-3 text-sm leading-7 text-slate-500">
-              {canBook
-                ? "Nếu chưa đăng nhập, hệ thống sẽ đưa bạn sang form đăng nhập rồi quay lại đúng bước đặt phòng."
-                : "Bạn vẫn có thể xem thông tin, nhưng chưa thể tạo booking cho chỗ ở này."}
+              {isAdminRoomPreview
+                ? "Trang này dùng để kiểm tra nội dung, hình ảnh, giá và tiện nghi trước khi hiển thị cho khách."
+                : canBook
+                  ? ""
+                  : "Bạn vẫn có thể xem thông tin, nhưng chưa thể tạo booking cho chỗ ở này."}
             </p>
 
             <div className="mt-6 flex flex-col">
@@ -367,44 +369,91 @@ function ChiTietPhong() {
               </div>
             </div>
 
-            <div className="mt-6 rounded-xl border border-slate-400 overflow-hidden">
-              <div className="flex border-b border-slate-400">
-                <div className="flex-1 p-3 border-r border-slate-400">
-                  <label className="block text-[10px] font-bold uppercase text-slate-800">Nhận phòng</label>
-                  <input type="date" className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1" defaultValue={defaultSearchDates.checkIn} />
+            {!isAdminRoomPreview ? (
+              <>
+                <div className="mt-6 rounded-xl border border-slate-400 overflow-hidden">
+                  <div className="flex border-b border-slate-400">
+                    <div className="flex-1 p-3 border-r border-slate-400">
+                      <label className="block text-[10px] font-bold uppercase text-slate-800">Nhận phòng</label>
+                      <input type="date" className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1" defaultValue={defaultSearchDates.checkIn} />
+                    </div>
+                    <div className="flex-1 p-3">
+                      <label className="block text-[10px] font-bold uppercase text-slate-800">Trả phòng</label>
+                      <input type="date" className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1" defaultValue={defaultSearchDates.checkOut} />
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    <label className="block text-[10px] font-bold uppercase text-slate-800">Khách</label>
+                    <select className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1">
+                      <option>1 khách</option>
+                      <option>2 khách</option>
+                      <option>3 khách</option>
+                      <option>4 khách</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="flex-1 p-3">
-                  <label className="block text-[10px] font-bold uppercase text-slate-800">Trả phòng</label>
-                  <input type="date" className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1" defaultValue={defaultSearchDates.checkOut} />
-                </div>
-              </div>
-              <div className="p-3">
-                <label className="block text-[10px] font-bold uppercase text-slate-800">Khách</label>
-                <select className="w-full text-sm font-medium outline-none text-slate-600 bg-transparent mt-1">
-                  <option>1 khách</option>
-                  <option>2 khách</option>
-                  <option>3 khách</option>
-                  <option>4 khách</option>
-                </select>
-              </div>
-            </div>
 
-            <Link
-              to={canBook ? bookingPath : `/rooms/${room.id}`}
-              className={`mt-4 flex w-full items-center justify-center rounded-lg px-5 py-4 text-base font-bold text-white transition ${
-                canBook
-                  ? "bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-500/30"
-                  : "cursor-not-allowed bg-slate-300"
-              }`}
-            >
-              {canBook
-                ? token
-                  ? "Đặt phòng"
-                  : "Đăng nhập để đặt phòng"
-                : "Hết phòng"}
-            </Link>
-            
-            <p className="mt-3 text-center text-sm text-slate-500">Bạn vẫn chưa bị trừ tiền</p>
+                <Link
+                  to={canBook ? bookingPath : `/rooms/${room.id}`}
+                  className={`mt-4 flex w-full items-center justify-center rounded-lg px-5 py-4 text-base font-bold text-white transition ${
+                    canBook
+                      ? "bg-brand-600 hover:bg-brand-700 shadow-md shadow-brand-500/30"
+                      : "cursor-not-allowed bg-slate-300"
+                  }`}
+                >
+                  {canBook
+                    ? token
+                      ? "Đặt phòng"
+                      : "Đăng nhập để đặt phòng"
+                    : "Hết phòng"}
+                </Link>
+
+                <button
+                  type="button"
+                  disabled={isTogglingFav}
+                  onClick={async () => {
+                    if (!token) {
+                      setShowLoginOffer(true);
+                      return;
+                    }
+                    try {
+                      setIsTogglingFav(true);
+                      const { isFavorite } = await toggleYeuThichApi(room.id);
+                      if (isFavorite) {
+                        addFavoriteRoom(room.id);
+                      } else {
+                        removeFavoriteRoom(room.id);
+                      }
+                    } catch (error) {
+                      console.error("Lỗi cập nhật danh sách yêu thích", error);
+                    } finally {
+                      setIsTogglingFav(false);
+                    }
+                  }}
+                  className={`mt-3 flex w-full items-center justify-center rounded-lg border-2 px-5 py-3 text-sm font-bold transition-all active:scale-95 ${
+                    favorite
+                      ? "border-pink-400 bg-pink-50 text-pink-600 hover:bg-pink-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-pink-400 hover:text-pink-600 hover:bg-pink-50"
+                  }`}
+                >
+                  {favorite ? (
+                    <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd"></path></svg>
+                  ) : (
+                    <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                  )}
+                  {favorite ? "Đã lưu phòng này" : "Lưu vào yêu thích"}
+                </button>
+
+                <p className="mt-4 text-center text-sm text-slate-500">Bạn vẫn chưa bị trừ tiền</p>
+              </>
+            ) : (
+              <Link
+                to="/admin/rooms"
+                className="mt-6 flex w-full items-center justify-center rounded-lg bg-slate-950 px-5 py-4 text-base font-bold text-white transition hover:bg-slate-800"
+              >
+                Quay lại quản lý phòng
+              </Link>
+            )}
 
             <div className="mt-6 space-y-3">
               <div className="flex justify-between text-sm text-slate-600">

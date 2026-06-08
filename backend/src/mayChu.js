@@ -25,7 +25,11 @@ function xuLyLoiKhoiDong(error) {
 async function khoiDongMayChu() {
   try {
     const admin = await taoHoacCapNhatQuanTriMacDinh();
-    console.log(`Default admin ready: ${admin.username} / ${admin.email}`);
+    if (admin) {
+      console.log(`Default admin ready: ${admin.username} / ${admin.email}`);
+    } else {
+      console.log(`Default admin seed disabled.`);
+    }
   } catch (error) {
     console.warn(`Default admin seed skipped: ${error.message}`);
   }

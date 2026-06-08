@@ -1,9 +1,8 @@
 // Chức năng: Trang admin quản lý khách hàng.
 // Trang quản lý khách hàng của admin.
-// File này điều phối ba phần: tạo khách trực tiếp, danh sách khách và panel chi tiết.
+// File này điều phối hai phần: danh sách khách và panel chi tiết.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import CustomerCreateForm from '../../components/admin/customers/CustomerCreateForm';
 import CustomerDetailPanel from '../../components/admin/customers/CustomerDetailPanel';
 import CustomerList from '../../components/admin/customers/CustomerList';
 import {
@@ -11,9 +10,9 @@ import {
   capNhatTrangThaiKhachHangAdminApi,
   layChiTietKhachHangAdminApi,
   layDanhSachKhachHangAdminApi,
-  taoKhachHangAdminApi,
   xoaKhachHangAdminApi,
 } from '../../services/quanTriApi';
+import useKhoThongBao from '../../store/khoThongBao';
 
 const EMPTY_FORM = {
   full_name: '',
@@ -23,14 +22,7 @@ const EMPTY_FORM = {
   status: 'active',
 };
 
-const EMPTY_CREATE_FORM = {
-  full_name: '',
-  username: '',
-  password: '',
-  email: '',
-  phone: '',
-  status: 'active',
-};
+
 
 function docThongBaoLoi(...errors) {
   return (
@@ -41,14 +33,13 @@ function docThongBaoLoi(...errors) {
 
 function AdminCustomers() {
   const queryClient = useQueryClient();
+  const hienThongBao = useKhoThongBao((state) => state.hienThongBao);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [status, setStatus] = useState('all');
   const [selectedId, setSelectedId] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [createForm, setCreateForm] = useState(EMPTY_CREATE_FORM);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(null);
   const debounceTimerRef = useRef(null);
 
   // Debounce search 300ms
@@ -95,6 +86,9 @@ function AdminCustomers() {
       phone: activeCustomer.phone || '',
       status: activeCustomer.status || 'active',
     });
+    
+    // Clear inline notice when switching customers
+    setNotice(null);
   }, [activeCustomer]);
 
   const refreshCustomers = () => {
@@ -102,21 +96,10 @@ function AdminCustomers() {
     queryClient.invalidateQueries({ queryKey: ['admin', 'overview'] });
   };
 
-  const createMutation = useMutation({
-    mutationFn: () => taoKhachHangAdminApi(createForm),
-    onSuccess: (result) => {
-      setNotice('Đã tạo tài khoản khách hàng.');
-      setCreateForm(EMPTY_CREATE_FORM);
-      setShowCreateForm(false);
-      setSelectedId(result?.customer?.id || null);
-      refreshCustomers();
-    },
-  });
-
   const updateMutation = useMutation({
     mutationFn: () => capNhatKhachHangAdminApi(activeCustomer.id, form),
     onSuccess: () => {
-      setNotice('Đã cập nhật thông tin khách hàng.');
+      hienThongBao('Đã cập nhật thông tin khách hàng.', 'success');
       refreshCustomers();
     },
   });
@@ -124,7 +107,7 @@ function AdminCustomers() {
   const statusMutation = useMutation({
     mutationFn: (nextStatus) => capNhatTrangThaiKhachHangAdminApi(activeCustomer.id, nextStatus),
     onSuccess: (_, nextStatus) => {
-      setNotice(nextStatus === 'inactive' ? 'Đã khóa tài khoản khách hàng.' : 'Đã mở lại tài khoản khách hàng.');
+      hienThongBao(nextStatus === 'inactive' ? 'Đã khóa tài khoản khách hàng.' : 'Đã mở lại tài khoản khách hàng.', 'success');
       refreshCustomers();
     },
   });
@@ -132,8 +115,15 @@ function AdminCustomers() {
   const deleteMutation = useMutation({
     mutationFn: () => xoaKhachHangAdminApi(activeCustomer.id),
     onSuccess: (result) => {
-      setNotice(result.message || 'Đã xử lý tài khoản khách hàng.');
-      setSelectedId(null);
+      const isSoftDelete = result.message?.toLowerCase().includes('khóa');
+      if (isSoftDelete) {
+        setNotice({ text: result.message, type: 'warning' });
+        hienThongBao('Đã chuyển sang trạng thái khóa (Tài khoản có lịch sử giao dịch).', 'warning');
+      } else {
+        setNotice(null);
+        hienThongBao('Đã xóa vĩnh viễn tài khoản và toàn bộ dữ liệu.', 'success');
+        setSelectedId(null);
+      }
       refreshCustomers();
     },
   });
@@ -142,19 +132,10 @@ function AdminCustomers() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
-  const updateCreateForm = (field, value) => {
-    setCreateForm((current) => ({ ...current, [field]: value }));
-  };
-
   const handleUpdate = (event) => {
     event.preventDefault();
     if (!activeCustomer) return;
     updateMutation.mutate();
-  };
-
-  const handleCreate = (event) => {
-    event.preventDefault();
-    createMutation.mutate();
   };
 
   const handleDelete = () => {
@@ -166,7 +147,6 @@ function AdminCustomers() {
   };
 
   const actionError = docThongBaoLoi(
-    createMutation.error,
     updateMutation.error,
     statusMutation.error,
     deleteMutation.error,
@@ -183,14 +163,6 @@ function AdminCustomers() {
         </div>
       </section>
 
-      <CustomerCreateForm
-        open={showCreateForm}
-        form={createForm}
-        onToggle={() => setShowCreateForm((current) => !current)}
-        onChange={updateCreateForm}
-        onSubmit={handleCreate}
-        isSubmitting={createMutation.isPending}
-      />
 
       {/* Search + Filter */}
       <section className="rounded-xl border border-slate-200 bg-white p-4">
@@ -220,11 +192,21 @@ function AdminCustomers() {
 
       {/* Notices */}
       {notice ? (
-        <div className="flex items-center gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-emerald-600">
-            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          <p className="text-sm font-black text-emerald-700">{notice}</p>
+        <div className={`flex items-center gap-2.5 rounded-xl border px-4 py-3 ${
+          notice.type === 'warning' 
+            ? 'border-amber-200 bg-amber-50 text-amber-800'
+            : 'border-emerald-200 bg-emerald-50 text-emerald-800'
+        }`}>
+          {notice.type === 'warning' ? (
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-amber-600">
+               <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-emerald-600">
+              <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm3.707-9.293a1 1 0 0 0-1.414-1.414L9 10.586 7.707 9.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+          )}
+          <p className="text-sm font-black">{notice.text}</p>
         </div>
       ) : null}
 
@@ -237,7 +219,7 @@ function AdminCustomers() {
         </div>
       ) : null}
 
-      {(createMutation.error || updateMutation.error || statusMutation.error || deleteMutation.error) ? (
+      {(updateMutation.error || statusMutation.error || deleteMutation.error) ? (
         <div className="flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
           <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4 shrink-0 text-rose-600">
             <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0zm-7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0zm-1-9a1 1 0 0 0-1 1v4a1 1 0 0 0 2 0V6a1 1 0 0 0-1-1z" clipRule="evenodd" />

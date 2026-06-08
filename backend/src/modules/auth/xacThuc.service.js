@@ -5,19 +5,15 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const ketNoiDb = require("../../config/coSoDuLieu");
 const {
+  layCauHinhAdminMacDinh,
+  layJwtSecret,
+} = require("../../config/baoMat");
+const {
   daCauHinhGuiMail,
   guiMail,
 } = require("../notifications/thuDienTu.service");
 
-const KHOA_BI_MAT_JWT =
-  process.env.JWT_SECRET || "staynest_dev_secret_change_me";
 const THOI_HAN_JWT = process.env.JWT_EXPIRES_IN || "7d";
-const TAI_KHOAN_QUAN_TRI_MAC_DINH = {
-  fullName: "Quan tri DieuBel",
-  username: "admin",
-  email: "admin@dieubel.local",
-  password: "admin123",
-};
 const CHO_PHEP_GOI_Y_DEV_OTP = process.env.ALLOW_DEV_OTP_HINT === "true";
 
 function taoLoi(status, message) {
@@ -32,16 +28,6 @@ function chuanHoaEmail(email = "") {
 
 function chuanHoaTenDangNhap(username = "") {
   return String(username).trim().toLowerCase();
-}
-
-function coTheDungTaiKhoanQuanTriMacDinh(identifier, password) {
-  const normalizedIdentifier = String(identifier || "")
-    .trim()
-    .toLowerCase();
-  return (
-    String(password || "") === TAI_KHOAN_QUAN_TRI_MAC_DINH.password &&
-    normalizedIdentifier === TAI_KHOAN_QUAN_TRI_MAC_DINH.username
-  );
 }
 
 function taoTenDangNhapDuPhong(fullName = "", email = "") {
@@ -79,7 +65,7 @@ function kyToken(user) {
       role: user.role,
       email: user.email,
     },
-    KHOA_BI_MAT_JWT,
+    layJwtSecret(),
     {
       expiresIn: THOI_HAN_JWT,
     },
@@ -189,10 +175,13 @@ async function timNguoiDungTheoId(userId) {
 }
 
 async function taoHoacCapNhatQuanTriMacDinh() {
-  const passwordHash = await bcrypt.hash(
-    TAI_KHOAN_QUAN_TRI_MAC_DINH.password,
-    10,
-  );
+  const adminConfig = layCauHinhAdminMacDinh();
+
+  if (!adminConfig.enabled) {
+    return null;
+  }
+
+  const passwordHash = await bcrypt.hash(adminConfig.password, 10);
   const connection = await ketNoiDb.getConnection();
 
   try {
@@ -200,7 +189,7 @@ async function taoHoacCapNhatQuanTriMacDinh() {
 
     const [existingByUsername] = await connection.query(
       "SELECT id FROM users WHERE username = ? LIMIT 1 FOR UPDATE",
-      [TAI_KHOAN_QUAN_TRI_MAC_DINH.username],
+      [adminConfig.username],
     );
     const [existingAdmins] = await connection.query(
       "SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC FOR UPDATE",
@@ -209,30 +198,37 @@ async function taoHoacCapNhatQuanTriMacDinh() {
     let adminId = existingByUsername[0]?.id || existingAdmins[0]?.id || null;
 
     if (adminId) {
+      const passwordSql = adminConfig.forceResetPassword
+        ? ", password_hash = ?"
+        : "";
+      const values = [
+        adminConfig.fullName,
+        adminConfig.username,
+        adminConfig.email,
+      ];
+      if (adminConfig.forceResetPassword) values.push(passwordHash);
+      values.push(adminId);
+
       await connection.query(
         `UPDATE users
          SET full_name = ?,
              username = ?,
-             password_hash = ?,
+             email = ?,
              email_verified = TRUE,
              role = 'admin',
              status = 'active'
+             ${passwordSql}
          WHERE id = ?`,
-        [
-          TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
-          TAI_KHOAN_QUAN_TRI_MAC_DINH.username,
-          passwordHash,
-          adminId,
-        ],
+        values,
       );
     } else {
       const [result] = await connection.query(
         `INSERT INTO users (full_name, username, email, password_hash, phone, email_verified, role, status)
          VALUES (?, ?, ?, ?, NULL, TRUE, 'admin', 'active')`,
         [
-          TAI_KHOAN_QUAN_TRI_MAC_DINH.fullName,
-          TAI_KHOAN_QUAN_TRI_MAC_DINH.username,
-          TAI_KHOAN_QUAN_TRI_MAC_DINH.email,
+          adminConfig.fullName,
+          adminConfig.username,
+          adminConfig.email,
           passwordHash,
         ],
       );
@@ -454,15 +450,6 @@ async function dangNhapTaiKhoan({ email, identifier, password }) {
 
   if (!loginIdentifier || !password) {
     throw taoLoi(400, "Vui long nhap email/ten tai khoan va mat khau.");
-  }
-
-  if (coTheDungTaiKhoanQuanTriMacDinh(loginIdentifier, password)) {
-    const adminUser = await taoHoacCapNhatQuanTriMacDinh();
-
-    return {
-      token: kyToken(adminUser),
-      user: adminUser,
-    };
   }
 
   const user = await timNguoiDungTheoDinhDanh(loginIdentifier);

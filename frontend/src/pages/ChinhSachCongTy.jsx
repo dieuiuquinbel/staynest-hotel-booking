@@ -1,3 +1,4 @@
+// Chức năng: Component hiển thị trang thông tin về các chính sách của công ty (bảo mật, đặt phòng, hủy phòng...).
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 

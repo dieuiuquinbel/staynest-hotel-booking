@@ -1,3 +1,4 @@
+// Chức năng: Component hiển thị trang giới thiệu về công ty, tuyển dụng, hợp tác và góp ý.
 import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 

@@ -96,8 +96,8 @@ function LienKetChanTrang({ item }) {
 
 function ChanTrang() {
   return (
-    <footer className="border-t border-slate-200 bg-white">
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <footer className="border-t border-[#eadfe2] bg-[#fffaf8]">
+      <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950">Phổ biến với du khách Việt Nam</h2>
           <div className="mt-5 flex flex-wrap gap-2">
@@ -105,7 +105,7 @@ function ChanTrang() {
               <span
                 key={tab}
                 className={`rounded-full border px-4 py-2 text-sm font-bold ${
-                  index === 0 ? 'border-brand-600 bg-sky-50 text-brand-700' : 'border-slate-200 text-slate-600'
+                  index === 0 ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-[#eadfe2] bg-white text-slate-600'
                 }`}
               >
                 {tab}
@@ -122,11 +122,11 @@ function ChanTrang() {
         </div>
       </section>
 
-      <section className="border-y border-slate-200 bg-slate-50 py-8">
+      <section className="border-y border-[#eadfe2] bg-white py-8">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4">
           {DIEM_TIN_CAY.map((point) => (
-            <div key={point} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <div key={point} className="flex items-center gap-3 rounded-2xl border border-[#eadfe2] bg-[#fffaf8] p-4 shadow-[0_14px_45px_-40px_rgba(146,23,77,0.35)] transition hover:-translate-y-0.5 hover:border-brand-200">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
                 ✓
               </span>
               <span className="text-sm font-bold text-slate-700">{point}</span>
@@ -135,7 +135,7 @@ function ChanTrang() {
         </div>
       </section>
 
-      <section className="bg-white">
+      <section className="bg-[#fffaf8]">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 sm:px-6 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
           <div className="pr-0 lg:pr-8">
             <div className="flex items-center gap-3">
@@ -190,7 +190,7 @@ function ChanTrang() {
           ))}
         </div>
 
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 border-t border-slate-200 px-4 py-6 text-xs font-medium text-slate-500 sm:px-6 lg:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 border-t border-[#eadfe2] px-4 py-6 text-xs font-medium text-slate-500 sm:px-6 lg:flex-row">
           <div className="flex flex-wrap items-center justify-center gap-4 lg:justify-start">
             <img src={HUY_HIEU_XAC_THUC} alt="Đã thông báo Bộ Công Thương" className="h-10 w-auto opacity-80 mix-blend-multiply transition hover:opacity-100" />
             <p>© 2026 DieuBel. Website đặt phòng khách sạn demo.</p>

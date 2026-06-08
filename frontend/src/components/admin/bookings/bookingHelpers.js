@@ -1,6 +1,6 @@
-﻿// Chá»©c nÄƒng: Chá»©a hÃ m phá»¥ trá»£ xá»­ lÃ½ tráº¡ng thÃ¡i vÃ  nhÃ£n Ä‘áº·t phÃ²ng admin.
-// Helper nghiá»‡p vá»¥ cho mÃ n quáº£n lÃ½ Ä‘áº·t phÃ²ng.
-// CÃ¡c hÃ m á»Ÿ Ä‘Ã¢y giÃºp tÃ¡ch Ä‘iá»u kiá»‡n lá»c/nhÃ£n ra khá»i file trang Ä‘á»ƒ dá»… Ä‘á»c vÃ  dá»… test hÆ¡n.
+// Chức năng: Chứa hàm phụ trợ xử lý trạng thái và nhãn đặt phòng admin.
+// Helper nghiệp vụ cho màn quản lý đặt phòng.
+// Các hàm ở đây giúp tách điều kiện lọc/nhãn ra khỏi file trang để dễ đọc và dễ test hơn.
 import {
   NHAN_TRANG_THAI_DAT_PHONG,
   NHAN_TRANG_THAI_THANH_TOAN,
@@ -20,15 +20,15 @@ export function laTabHopLe(raw) {
 }
 
 export function nhanDatPhong(status) {
-  return NHAN_TRANG_THAI_DAT_PHONG[status] || status || 'ChÆ°a cÃ³';
+  return NHAN_TRANG_THAI_DAT_PHONG[status] || status || 'Chưa có';
 }
 
 export function nhanThanhToan(status) {
-  return NHAN_TRANG_THAI_THANH_TOAN[status] || status || 'ChÆ°a cÃ³';
+  return NHAN_TRANG_THAI_THANH_TOAN[status] || status || 'Chưa có';
 }
 
 export function nhanHoanTien(status) {
-  return NHAN_HOAN_TIEN[status] || status || 'ChÆ°a cÃ³';
+  return NHAN_HOAN_TIEN[status] || status || 'Chưa có';
 }
 
 export function daThanhToanDu(booking) {
@@ -77,7 +77,7 @@ export function khopTabDatPhong(booking, tab) {
     ].includes(booking.bookingStatus);
   }
   if (tab === 'all') {
-    // Hiá»ƒn thá»‹ táº¥t cáº£ Ä‘Æ¡n chÆ°a lÆ°u trá»¯ vÃ o lá»‹ch sá»­ (Äang lÆ°u trÃº, Chá» thanh toÃ¡n, ÄÃ£ xÃ¡c nháº­n...)
+    // Hiển thị tất cả đơn chưa lưu trữ vào lịch sử (Đang lưu trú, Chờ thanh toán, Đã xác nhận...)
     return ![
       TRANG_THAI_DAT_PHONG.CHECKED_OUT,
       TRANG_THAI_DAT_PHONG.CANCELLED,
@@ -114,91 +114,91 @@ export function demDonTheoTab(bookings, tab) {
   return bookings.filter((booking) => khopTabDatPhong(booking, tab)).length;
 }
 
-export function chonTabMacDinh(bookings) {
+export function chonTabMacDinh() {
   return 'all';
 }
 
 export function tomTatHanhDong(booking) {
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING) {
-    return { label: 'Chá» thanh toÃ¡n giá»¯ chá»—', tone: 'text-amber-700', hint: 'Há»‡ thá»‘ng Ä‘ang chá» giao dá»‹ch chuyá»ƒn khoáº£n QR Ä‘á»‘i soÃ¡t.' };
+    return { label: 'Chờ thanh toán giữ chỗ', tone: 'text-amber-700', hint: 'Hệ thống đang chờ giao dịch chuyển khoản QR đối soát.' };
   }
   if (laDonChoNgayNhanPhong(booking)) {
     return { label: 'Đã xác nhận - Chờ ngày nhận phòng', tone: 'text-emerald-700', hint: 'QR có thể kiểm tra trước, nhưng chỉ nhận phòng từ 00:00 ngày check-in.' };
   }
   if (laDonConPhaiThu(booking)) {
-    return { label: 'Thu tiá»n phÃ²ng (CÃ²n ná»£)', tone: 'text-amber-700', hint: 'Cáº§n truy thu pháº§n tiá»n cÃ²n láº¡i khi lÃ m thá»§ tá»¥c Check-in.' };
+    return { label: 'Thu tiền phòng (Còn nợ)', tone: 'text-amber-700', hint: 'Cần truy thu phần tiền còn lại khi làm thủ tục Check-in.' };
   }
   if (laDonNhanPhongHomNay(booking)) {
-    return { label: 'YÃªu cáº§u nháº­n phÃ²ng (Check-in)', tone: 'text-sky-700', hint: 'KhÃ¡ch Ä‘áº¿n hÃ´m nay, lÃ m thá»§ tá»¥c nháº­n phÃ²ng & giao khÃ³a.' };
+    return { label: 'Yêu cầu nhận phòng (Check-in)', tone: 'text-sky-700', hint: 'Khách đến hôm nay, làm thủ tục nhận phòng & giao khóa.' };
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN && !booking.frontdeskVerifiedAt) {
     return { label: 'Đã mở nhận phòng tự động', tone: 'text-brand-700', hint: 'Chờ lễ tân quét QR LAN để hoàn tất bước nhận phòng.' };
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN) {
-    return { label: 'KhÃ¡ch Ä‘ang lÆ°u trÃº', tone: 'text-sky-700', hint: 'GiÃ¡m sÃ¡t dá»‹ch vá»¥ phÃ²ng, chuáº©n bá»‹ Check-out.' };
+    return { label: 'Khách đang lưu trú', tone: 'text-sky-700', hint: 'Giám sát dịch vụ phòng, chuẩn bị Check-out.' };
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED || booking.refundRequest?.status === 'pending') {
-    return { label: 'PhÃª duyá»‡t há»§y Ä‘Æ¡n & HoÃ n tiá»n', tone: 'text-rose-600', hint: 'Quáº£n lÃ½ xem xÃ©t lÃ½ do vÃ  duyá»‡t sá»‘ tiá»n hoÃ n tráº£.' };
+    return { label: 'Phê duyệt hủy đơn & Hoàn tiền', tone: 'text-rose-600', hint: 'Quản lý xem xét lý do và duyệt số tiền hoàn trả.' };
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED) {
-    return { label: 'ÄÃ£ xÃ¡c nháº­n (Chá» Ä‘áº¿n)', tone: 'text-emerald-700', hint: 'Há»“ sÆ¡ Ä‘áº·t phÃ²ng há»£p lá»‡, chá» ngÃ y nháº­n phÃ²ng.' };
+    return { label: 'Đã xác nhận (Chờ đến)', tone: 'text-emerald-700', hint: 'Hồ sơ đặt phòng hợp lệ, chờ ngày nhận phòng.' };
   }
-  return { label: 'Lá»‹ch sá»­ lÆ°u trÃº', tone: 'text-slate-700', hint: 'Há»“ sÆ¡ Ä‘áº·t phÃ²ng Ä‘Ã£ hoÃ n táº¥t toÃ n bá»™ quy trÃ¬nh.' };
+  return { label: 'Lịch sử lưu trú', tone: 'text-slate-700', hint: 'Hồ sơ đặt phòng đã hoàn tất toàn bộ quy trình.' };
 }
 
 export function ghiChuHanhDong(booking) {
   if (!booking) return '';
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING) {
-    return 'Há»“ sÆ¡ Ä‘ang chá» giao dá»‹ch chuyá»ƒn khoáº£n QR Ä‘á»‘i soÃ¡t tá»± Ä‘á»™ng. KhÃ´ng cáº§n thao tÃ¡c thá»§ cÃ´ng, chá»‰ há»§y náº¿u quÃ¡ háº¡n hoáº·c khÃ¡ch yÃªu cáº§u.';
+    return 'Hồ sơ đang chờ giao dịch chuyển khoản QR đối soát tự động. Không cần thao tác thủ công, chỉ hủy nếu quá hạn hoặc khách yêu cầu.';
   }
   if (laDonConPhaiThu(booking)) {
-    return 'Há»“ sÆ¡ Ä‘Ã£ Ä‘áº·t cá»c 10%. Vui lÃ²ng thu há»“i pháº§n tiá»n phÃ²ng cÃ²n láº¡i khi lÃ m thá»§ tá»¥c Check-in cho khÃ¡ch.';
+    return 'Hồ sơ đã đặt cọc 10%. Vui lòng thu hồi phần tiền phòng còn lại khi làm thủ tục Check-in cho khách.';
   }
   if (laDonNhanPhongHomNay(booking)) {
-    return 'KhÃ¡ch Ä‘Ã£ thanh toÃ¡n Ä‘á»§ vÃ  nháº­n phÃ²ng hÃ´m nay. Vui lÃ²ng Ä‘á»‘i chiáº¿u giáº¥y tá» vÃ  lÃ m thá»§ tá»¥c nháº­n phÃ²ng (Check-in).';
+    return 'Khách đã thanh toán đủ và nhận phòng hôm nay. Vui lòng đối chiếu giấy tờ và làm thủ tục nhận phòng (Check-in).';
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CONFIRMED) {
-    return 'Äáº·t phÃ²ng há»£p lá»‡ vÃ  Ä‘Ã£ thanh toÃ¡n Ä‘á»§. Chá»‰ cáº§n theo dÃµi vÃ  ghi chÃº náº¿u khÃ¡ch cÃ³ yÃªu cáº§u dá»‹ch vá»¥ phÃ¡t sinh.';
+    return 'Đặt phòng hợp lệ và đã thanh toán đủ. Chỉ cần theo dõi và ghi chú nếu khách có yêu cầu dịch vụ phát sinh.';
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN) {
-    return 'KhÃ¡ch hÃ ng Ä‘ang lÆ°u trÃº táº¡i cÆ¡ sá»Ÿ. Thá»±c hiá»‡n thá»§ tá»¥c tráº£ phÃ²ng (Check-out) vÃ  kiá»ƒm tra phÃ²ng khi khÃ¡ch rá»i Ä‘i.';
+    return 'Khách hàng đang lưu trú tại cơ sở. Thực hiện thủ tục trả phòng (Check-out) và kiểm tra phòng khi khách rời đi.';
   }
   if (booking.bookingStatus === TRANG_THAI_DAT_PHONG.CANCEL_REQUESTED) {
-    return 'KhÃ¡ch gá»­i yÃªu cáº§u há»§y Ä‘Æ¡n. Vui lÃ²ng xem xÃ©t lÃ½ do, Ä‘á»‘i chiáº¿u chÃ­nh sÃ¡ch hoÃ n tiá»n 80% Ä‘á»ƒ phÃª duyá»‡t hoáº·c tá»« chá»‘i.';
+    return 'Khách gửi yêu cầu hủy đơn. Vui lòng xem xét lý do, đối chiếu chính sách hoàn tiền 80% để phê duyệt hoặc từ chối.';
   }
-  return 'Há»“ sÆ¡ Ä‘áº·t phÃ²ng Ä‘Ã£ káº¿t thÃºc quy trÃ¬nh lÆ°u trÃº. Khu vá»±c nÃ y chá»‰ dÃ¹ng Ä‘á»ƒ Ä‘á»‘i soÃ¡t lá»‹ch sá»­.';
+  return 'Hồ sơ đặt phòng đã kết thúc quy trình lưu trú. Khu vực này chỉ dùng để đối soát lịch sử.';
 }
 
 export function taoThongKeHangDoi(bookings) {
   return [
     {
-      label: 'Há»§y / hoÃ n tiá»n',
+      label: 'Hủy / hoàn tiền',
       value: demDonTheoTab(bookings, 'action'),
-      hint: 'YÃªu cáº§u quáº£n lÃ½ cáº§n quyáº¿t Ä‘á»‹nh.',
+      hint: 'Yêu cầu quản lý cần quyết định.',
       tone: 'text-rose-600',
       tabKey: 'action',
       group: 'action',
     },
     {
-      label: 'Check-in hÃ´m nay',
+      label: 'Check-in hôm nay',
       value: bookings.filter((b) => laDonNhanPhongHomNay(b)).length,
-      hint: 'Lá»… tÃ¢n cáº§n xá»­ lÃ½.',
+      hint: 'Lễ tân cần xử lý.',
       tone: 'text-sky-700',
       tabKey: 'today',
       group: 'action',
     },
     {
-      label: 'Äang lÆ°u trÃº',
+      label: 'Đang lưu trú',
       value: bookings.filter((b) => b.bookingStatus === TRANG_THAI_DAT_PHONG.CHECKED_IN).length,
-      hint: 'KhÃ¡ch Ä‘ang á»Ÿ vÃ  chá» check-out.',
+      hint: 'Khách đang ở và chờ check-out.',
       tone: 'text-sky-700',
       tabKey: 'today',
       group: 'monitor',
     },
     {
-      label: 'Chá» khÃ¡ch thanh toÃ¡n',
+      label: 'Chờ khách thanh toán',
       value: bookings.filter((b) => b.bookingStatus === TRANG_THAI_DAT_PHONG.HOLDING).length,
-      hint: 'ÄÆ¡n giá»¯ chá»—, khÃ¡ch chÆ°a xÃ¡c nháº­n QR.',
+      hint: 'Đơn giữ chỗ, khách chưa xác nhận QR.',
       tone: 'text-amber-700',
       tabKey: 'all',
       group: 'monitor',

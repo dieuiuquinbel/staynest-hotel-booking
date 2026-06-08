@@ -176,26 +176,35 @@ function AdminOperations() {
                     <p className="text-xs leading-5 font-semibold text-slate-600">{ticket.content}</p>
                   </div>
 
-                  <textarea
-                    value={replyByTicket[ticket.id] || ticket.adminReply || ''}
-                    onChange={(event) => setReplyByTicket((cur) => ({ ...cur, [ticket.id]: event.target.value }))}
-                    rows={3}
-                    placeholder="Phản hồi cho khách..."
-                    className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-sky-400"
-                  />
-                  <div className="mt-2 flex gap-2">
-                    <button
-                      onClick={() => handleTicket(ticket, 'processing')}
-                      className="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 active:scale-[.98]"
-                    >
-                      Đang xử lý
-                    </button>
-                    <button
-                      onClick={() => handleTicket(ticket, 'resolved')}
-                      className="flex-1 rounded-xl bg-slate-950 px-3 py-2 text-xs font-black text-white transition hover:bg-slate-800 active:scale-[.98]"
-                    >
-                      Phản hồi & đóng
-                    </button>
+                  <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <svg className="h-5 w-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                      </svg>
+                      <span className="text-xs font-black uppercase tracking-widest text-emerald-700">Soạn Email phản hồi (Gửi trực tiếp cho khách)</span>
+                    </div>
+                    <textarea
+                      value={replyByTicket[ticket.id] || ticket.adminReply || ''}
+                      onChange={(event) => setReplyByTicket((cur) => ({ ...cur, [ticket.id]: event.target.value }))}
+                      rows={4}
+                      placeholder="Viết nội dung phản hồi chuyên nghiệp và chân thành..."
+                      className="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+                    />
+                    <div className="mt-3 flex gap-3">
+                      <button
+                        onClick={() => handleTicket(ticket, 'processing')}
+                        className="flex-[0.8] rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-black text-slate-700 transition hover:bg-slate-50 active:scale-[.98]"
+                      >
+                        Đánh dấu Đang xử lý
+                      </button>
+                      <button
+                        onClick={() => handleTicket(ticket, 'resolved')}
+                        className="flex-1 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-black text-white transition hover:bg-emerald-700 active:scale-[.98] shadow-sm shadow-emerald-500/20"
+                      >
+                        Gửi Email & Đóng ticket
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}

@@ -1,9 +1,23 @@
-// Chức năng: Tiện ích điểm thưởng, đổi quà và kiểm tra voucher.
+// Chức năng: Tiện ích điểm thưởng, đổi quà, voucher và kiểm tra điều kiện áp dụng.
+// ──────────────────────────────────────────────────────────────────────────────
+// Hệ thống 2 loại điểm:
+//   • Điểm thành tích (diemThanhTich): tích lũy vĩnh viễn, dùng xếp hạng thành viên.
+//     KHÔNG BAO GIỜ GIẢM — kể cả khi đổi voucher.
+//   • Điểm tiêu dùng (diemTieuDung): tăng song song với thành tích, GIẢM khi đổi quà.
+//     Đây là loại điểm khách dùng để đổi voucher/phần thưởng.
+//
+// Migration: Nếu tồn tại khóa cũ `rewardPoints` mà chưa có 2 khóa mới,
+// hệ thống tự copy điểm cũ sang cả 2 loại mới trong lần load đầu tiên.
+// ──────────────────────────────────────────────────────────────────────────────
 import { KHOA_LUU_TRU } from './khoaLuuTru';
 
-const KHOA_DIEM_THUONG = KHOA_LUU_TRU.rewardPoints;
+// ─── Khóa lưu trữ ──────────────────────────────────────────────────────────
+const KHOA_CU = KHOA_LUU_TRU.rewardPoints;       // Legacy — chỉ dùng migration
+const KHOA_THANH_TICH = KHOA_LUU_TRU.diemThanhTich;
+const KHOA_TIEU_DUNG = KHOA_LUU_TRU.diemTieuDung;
 const KHOA_QUA_DA_DOI = KHOA_LUU_TRU.redeemedRewards;
 
+// ─── Danh sách phần thưởng đổi bằng điểm tiêu dùng ─────────────────────────
 export const QUA_THANH_VIEN = [
   {
     id: 'voucher-50k',
@@ -37,8 +51,33 @@ export const QUA_THANH_VIEN = [
     discountType: 'fixed',
     discountValue: 150000,
   },
+  {
+    id: 'vip-upgrade',
+    title: 'Nâng hạng phòng miễn phí',
+    description: 'Ưu đãi nâng hạng phòng trống miễn phí khi check-in.',
+    cost: 450,
+    discountType: 'service',
+    discountValue: 'room-upgrade',
+  },
+  {
+    id: 'discount-15',
+    title: 'Voucher giảm 15%',
+    description: 'Giảm sâu cho kỳ nghỉ tiếp theo của bạn.',
+    cost: 500,
+    discountType: 'percent',
+    discountValue: 0.15,
+  },
+  {
+    id: 'cash-200k',
+    title: 'Voucher giảm 200.000 đ',
+    description: 'Trừ trực tiếp tiền mặt vào hóa đơn lưu trú.',
+    cost: 350,
+    discountType: 'fixed',
+    discountValue: 200000,
+  },
 ];
 
+// ─── Danh sách voucher khuyến mãi (lưu miễn phí, không tốn điểm) ───────────
 export const VOUCHER_KHUYEN_MAI = [
   {
     id: 'first-booking-10',
@@ -146,11 +185,15 @@ export const VOUCHER_KHUYEN_MAI = [
   },
 ];
 
+// ─── Tiện ích đọc/ghi localStorage ──────────────────────────────────────────
+
+/** Đọc một số nguyên từ localStorage, trả 0 nếu không hợp lệ. */
 function docSo(key) {
   const value = Number(window.localStorage.getItem(key) || 0);
   return Number.isFinite(value) ? value : 0;
 }
 
+/** Đọc mảng JSON từ localStorage, trả [] nếu không hợp lệ. */
 function docMang(key) {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(key) || '[]');
@@ -160,20 +203,73 @@ function docMang(key) {
   }
 }
 
+// ─── Migration từ hệ thống cũ (1 loại điểm) sang 2 loại ────────────────────
+// Chạy 1 lần duy nhất khi phát hiện khóa cũ có giá trị mà 2 khóa mới chưa có.
+
+function chayMigrationNeuCan() {
+  const diemCu = docSo(KHOA_CU);
+  const daCoDiemMoi =
+    window.localStorage.getItem(KHOA_THANH_TICH) !== null ||
+    window.localStorage.getItem(KHOA_TIEU_DUNG) !== null;
+
+  if (diemCu > 0 && !daCoDiemMoi) {
+    window.localStorage.setItem(KHOA_THANH_TICH, String(diemCu));
+    window.localStorage.setItem(KHOA_TIEU_DUNG, String(diemCu));
+  }
+}
+
+// Tự chạy migration khi module được import lần đầu.
+chayMigrationNeuCan();
+
+// ─── API đọc / cộng / trừ 2 loại điểm ──────────────────────────────────────
+
+/** Đọc điểm thành tích (vĩnh viễn, dùng xếp hạng). */
+export function docDiemThanhTich() {
+  return docSo(KHOA_THANH_TICH);
+}
+
+/** Đọc điểm tiêu dùng (có thể dùng đổi voucher). */
+export function docDiemTieuDung() {
+  return docSo(KHOA_TIEU_DUNG);
+}
+
+/**
+ * Backwards-compatible: trả điểm tiêu dùng.
+ * Các consumer cũ gọi `docDiemThuong()` sẽ nhận diemTieuDung để logic đổi quà không thay đổi.
+ */
 export function docDiemThuong() {
-  return docSo(KHOA_DIEM_THUONG);
+  return docDiemTieuDung();
 }
 
+/**
+ * Cộng điểm cho CẢ HAI loại đồng thời.
+ * Gọi khi hoàn thành nhiệm vụ, đặt phòng, v.v.
+ * @returns {{ thanhTich: number, tieuDung: number }}
+ */
 export function congDiemThuong(points) {
-  const next = Math.max(0, docDiemThuong() + Number(points || 0));
-  window.localStorage.setItem(KHOA_DIEM_THUONG, String(next));
-  return next;
+  const delta = Math.max(0, Number(points || 0));
+  if (delta === 0) return { thanhTich: docDiemThanhTich(), tieuDung: docDiemTieuDung() };
+
+  const nextThanhTich = docDiemThanhTich() + delta;
+  const nextTieuDung = docDiemTieuDung() + delta;
+
+  window.localStorage.setItem(KHOA_THANH_TICH, String(nextThanhTich));
+  window.localStorage.setItem(KHOA_TIEU_DUNG, String(nextTieuDung));
+
+  // Cập nhật khóa cũ để đồng bộ (backward compat)
+  window.localStorage.setItem(KHOA_CU, String(nextTieuDung));
+
+  return { thanhTich: nextThanhTich, tieuDung: nextTieuDung };
 }
 
+// ─── Quà đã đổi ─────────────────────────────────────────────────────────────
+
+/** Đọc danh sách quà đã đổi từ localStorage. */
 export function docQuaDaDoi() {
   return docMang(KHOA_QUA_DA_DOI);
 }
 
+/** Đánh dấu một voucher đã dùng (sử dụng khi áp voucher vào đơn đặt phòng). */
 export function danhDauQuaDaDung(code) {
   const next = docQuaDaDoi().map((reward) =>
     reward.code === code ? { ...reward, used: true, usedAt: new Date().toISOString() } : reward,
@@ -182,11 +278,18 @@ export function danhDauQuaDaDung(code) {
   return next;
 }
 
+// ─── Kiểm tra & mô tả điều kiện voucher ─────────────────────────────────────
+
+/** Đọc số ngày hết hạn từ chuỗi expiresIn (ví dụ: "7 ngày" → 7). */
 function docSoNgayHetHan(voucher) {
   const match = String(voucher?.expiresIn || '').match(/\d+/);
   return match ? Number(match[0]) : null;
 }
 
+/**
+ * Kiểm tra voucher có hợp lệ cho đơn totalPrice hay không.
+ * @returns {{ hopLe: boolean, lyDo: string }}
+ */
 export function kiemTraDieuKienVoucher(voucher, totalPrice) {
   if (!voucher) {
     return { hopLe: true, lyDo: '' };
@@ -216,6 +319,7 @@ export function kiemTraDieuKienVoucher(voucher, totalPrice) {
   return { hopLe: true, lyDo: '' };
 }
 
+/** Trả chuỗi mô tả điều kiện áp dụng voucher (dùng hiển thị cho khách). */
 export function moTaDieuKienVoucher(voucher) {
   if (!voucher) return '';
 
@@ -230,33 +334,47 @@ export function moTaDieuKienVoucher(voucher) {
   return dieuKien.join(', ');
 }
 
+// ─── Nhiệm vụ nhận thưởng ───────────────────────────────────────────────────
+// Mỗi nhiệm vụ trả về `points` — khi hoàn thành sẽ cộng vào CẢ 2 loại điểm.
+
 export function docNhiemVuNhanThuong({ user, bookings = [], favoriteRooms = [], reviews = [] }) {
   return [
-    { id: 'verify_email', title: 'Xác minh email', points: 50, completed: Boolean(user?.email_verified) },
-    { id: 'first_booking', title: 'Đặt phòng đầu tiên', points: 100, completed: bookings.length > 0 },
+    { id: 'verify_email', title: 'Xác minh email', points: 150, completed: Boolean(user?.email_verified) },
+    { id: 'first_booking', title: 'Đặt phòng đầu tiên', points: 300, completed: bookings.length > 0 },
     {
       id: 'online_payment',
       title: 'Thanh toán online',
-      points: 50,
+      points: 150,
       completed: bookings.some((booking) => booking.paymentStatus === 'paid' || booking.paymentStatus === 'deposit_paid'),
     },
-    { id: 'write_review', title: 'Viết đánh giá sau checkout', points: 30, completed: reviews.length > 0 },
-    { id: 'save_3_rooms', title: 'Lưu 3 phòng yêu thích', points: 20, completed: favoriteRooms.length >= 3 },
+    { id: 'write_review', title: 'Viết đánh giá sau checkout', points: 90, completed: reviews.length > 0 },
+    { id: 'save_3_rooms', title: 'Lưu 3 phòng yêu thích', points: 60, completed: favoriteRooms.length >= 3 },
   ];
 }
 
-export function doiQuaThuong(reward) {
-  const currentPoints = docDiemThuong();
+// ─── Đổi quà thưởng ─────────────────────────────────────────────────────────
+// Chỉ TRỪ điểm tiêu dùng. Điểm thành tích KHÔNG GIẢM → hạng thành viên giữ nguyên.
 
-  if (!reward || currentPoints < reward.cost) {
+/**
+ * Đổi phần thưởng bằng điểm tiêu dùng.
+ * @returns {{ ok: boolean, thanhTich: number, tieuDung: number, redeemed: Array }}
+ */
+export function doiQuaThuong(reward) {
+  const currentTieuDung = docDiemTieuDung();
+  const currentThanhTich = docDiemThanhTich();
+
+  if (!reward || currentTieuDung < reward.cost) {
     return {
       ok: false,
-      points: currentPoints,
+      points: currentTieuDung,         // backward compat
+      thanhTich: currentThanhTich,
+      tieuDung: currentTieuDung,
       redeemed: docQuaDaDoi(),
     };
   }
 
-  const nextPoints = currentPoints - reward.cost;
+  // Chỉ trừ điểm tiêu dùng
+  const nextTieuDung = currentTieuDung - reward.cost;
   const redeemedReward = {
     ...reward,
     code: `DB-${reward.id.toUpperCase()}-${String(Date.now()).slice(-5)}`,
@@ -265,16 +383,22 @@ export function doiQuaThuong(reward) {
   };
   const nextRedeemed = [redeemedReward, ...docQuaDaDoi()].slice(0, 20);
 
-  window.localStorage.setItem(KHOA_DIEM_THUONG, String(nextPoints));
+  window.localStorage.setItem(KHOA_TIEU_DUNG, String(nextTieuDung));
+  window.localStorage.setItem(KHOA_CU, String(nextTieuDung)); // sync legacy
   window.localStorage.setItem(KHOA_QUA_DA_DOI, JSON.stringify(nextRedeemed));
 
   return {
     ok: true,
-    points: nextPoints,
+    points: nextTieuDung,              // backward compat
+    thanhTich: currentThanhTich,       // KHÔNG GIẢM
+    tieuDung: nextTieuDung,
     redeemed: nextRedeemed,
   };
 }
 
+// ─── Lưu voucher khuyến mãi (không tốn điểm) ───────────────────────────────
+
+/** Lưu voucher khuyến mãi vào kho voucher (trang chủ, banner, v.v.). */
 export function luuVoucherKhuyenMai(voucher) {
   if (!voucher) return docQuaDaDoi();
 

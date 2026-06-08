@@ -118,7 +118,7 @@ function BoDemKhach({ label, value, min = 0, onChange }) {
         <button
           type="button"
           onClick={() => onChange(Math.max(min, numberValue - 1))}
-          className="min-h-9 text-lg font-bold text-brand-700 transition hover:bg-sky-50"
+          className="min-h-9 text-lg font-bold text-brand-700 transition hover:bg-brand-50"
         >
           -
         </button>
@@ -126,7 +126,7 @@ function BoDemKhach({ label, value, min = 0, onChange }) {
         <button
           type="button"
           onClick={() => onChange(numberValue + 1)}
-          className="min-h-9 text-lg font-bold text-brand-700 transition hover:bg-sky-50"
+          className="min-h-9 text-lg font-bold text-brand-700 transition hover:bg-brand-50"
         >
           +
         </button>
@@ -137,8 +137,8 @@ function BoDemKhach({ label, value, min = 0, onChange }) {
 
 function NhomLoc({ title, children }) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-4">
-      <p className="text-xs font-black uppercase tracking-wide text-slate-500">{title}</p>
+    <section className="rounded-2xl border border-[#eadfe2] bg-white p-4 shadow-[0_12px_45px_-40px_rgba(146,23,77,0.42)]">
+      <p className="text-xs font-black uppercase tracking-wide text-[#6d6265]">{title}</p>
       <div className="mt-3 flex flex-wrap gap-2">{children}</div>
     </section>
   );
@@ -151,8 +151,8 @@ function LuaChonLoc({ active, children, onClick, className = '' }) {
       onClick={onClick}
       className={`rounded-xl border px-4 py-3 text-sm font-black transition ${
         active
-          ? 'border-brand-600 bg-brand-600 text-white shadow-sm shadow-brand-500/20'
-          : 'border-sky-100 bg-sky-50/70 text-slate-700 hover:border-brand-500 hover:bg-white hover:text-brand-700'
+          ? 'border-brand-600 bg-brand-600 text-white shadow-[0_12px_30px_-22px_rgba(255,56,92,0.8)]'
+          : 'border-[#eadfe2] bg-[#fff8f9] text-slate-700 hover:border-brand-300 hover:bg-white hover:text-brand-700'
       } ${className}`}
     >
       {children}
@@ -379,8 +379,8 @@ function ThanhTimKiem({
             <div
               className={
                 advancedMode === 'collapsible'
-                  ? 'mt-3 w-full min-w-[320px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10'
-                  : 'absolute left-0 top-[calc(100%+10px)] z-40 w-full min-w-[320px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-950/15'
+                  ? 'mt-3 w-full min-w-[320px] overflow-hidden rounded-2xl border border-[#eadfe2] bg-white shadow-xl shadow-brand-900/10'
+                  : 'absolute left-0 top-[calc(100%+10px)] z-40 w-full min-w-[320px] overflow-hidden rounded-2xl border border-[#eadfe2] bg-white shadow-2xl shadow-brand-900/15'
               }
             >
               <div className="border-b border-slate-100 px-4 py-3">
@@ -395,9 +395,9 @@ function ThanhTimKiem({
                       key={destination.value}
                       type="button"
                       onClick={() => handleDestinationSelect(destination)}
-                      className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-sky-50"
+                      className="flex w-full items-start gap-3 border-b border-slate-100 px-4 py-3 text-left transition last:border-b-0 hover:bg-brand-50/70"
                     >
-                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-sky-100 text-brand-700">
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-brand-100 bg-brand-50 text-brand-700">
                         ⌖
                       </span>
                       <span>
@@ -434,8 +434,8 @@ function ThanhTimKiem({
             <div
               className={
                 advancedMode === 'collapsible'
-                  ? 'mt-3 w-[min(700px,calc(100vw-2rem))] rounded-xl border border-slate-200 bg-white p-4 shadow-xl shadow-slate-950/10'
-                  : 'absolute left-1/2 top-[calc(100%+10px)] z-40 w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-4 shadow-2xl shadow-slate-950/15'
+                  ? 'mt-3 w-[min(700px,calc(100vw-2rem))] rounded-2xl border border-[#eadfe2] bg-white p-4 shadow-xl shadow-brand-900/10'
+                  : 'absolute left-1/2 top-[calc(100%+10px)] z-40 w-[min(720px,calc(100vw-2rem))] -translate-x-1/2 rounded-2xl border border-[#eadfe2] bg-white p-4 shadow-2xl shadow-brand-900/15'
               }
             >
               <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
@@ -443,7 +443,7 @@ function ThanhTimKiem({
                   type="button"
                   onClick={() => setDateView((current) => congThang(current, -1))}
                   disabled={dateView <= new Date(today.getFullYear(), today.getMonth(), 1)}
-                  className="rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  className="rounded-full border border-[#eadfe2] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   ←
                 </button>
@@ -454,7 +454,7 @@ function ThanhTimKiem({
                 <button
                   type="button"
                   onClick={() => setDateView((current) => congThang(current, 1))}
-                  className="rounded-full border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-sky-50"
+                  className="rounded-full border border-[#eadfe2] px-3 py-2 text-sm font-bold text-slate-700 transition hover:bg-brand-50"
                 >
                   →
                 </button>
@@ -490,10 +490,10 @@ function ThanhTimKiem({
                               selectedStart || selectedEnd
                                 ? 'bg-brand-600 text-white'
                                 : inRange
-                                  ? 'bg-sky-50 text-brand-700'
+                                  ? 'bg-brand-50 text-brand-700'
                                   : disabled
                                     ? 'cursor-not-allowed text-slate-300'
-                                    : 'text-slate-700 hover:bg-sky-50 hover:text-brand-700'
+                                    : 'text-slate-700 hover:bg-brand-50 hover:text-brand-700'
                             }`}
                           >
                             {date.getDate()}
@@ -546,8 +546,8 @@ function ThanhTimKiem({
             <div
               className={
                 advancedMode === 'collapsible'
-                  ? 'mt-3 w-full min-w-[300px] rounded-xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-950/10'
-                  : 'absolute right-0 top-[calc(100%+10px)] z-40 w-full min-w-[300px] rounded-xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-950/15'
+                  ? 'mt-3 w-full min-w-[300px] rounded-2xl border border-[#eadfe2] bg-white p-5 shadow-xl shadow-brand-900/10'
+                  : 'absolute right-0 top-[calc(100%+10px)] z-40 w-full min-w-[300px] rounded-2xl border border-[#eadfe2] bg-white p-5 shadow-2xl shadow-brand-900/15'
               }
             >
               <div className="grid gap-4">
@@ -558,7 +558,7 @@ function ThanhTimKiem({
               <button
                 type="button"
                 onClick={() => setGuestOpen(false)}
-                className="mt-5 w-full rounded-lg border border-brand-600 px-4 py-2 text-sm font-bold text-brand-700 transition hover:bg-sky-50"
+                className="mt-5 w-full rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-2 text-sm font-bold text-brand-700 transition hover:bg-brand-50"
               >
                 Xong
               </button>
@@ -578,7 +578,7 @@ function ThanhTimKiem({
                 }
               : undefined
           }
-          className="m-1 h-14 self-start rounded-[14px] bg-brand-600 px-7 text-base font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700 md:h-[62px]"
+          className="m-1 h-14 self-start rounded-[18px] bg-brand-600 px-7 text-base font-black text-white shadow-[0_16px_36px_-24px_rgba(255,56,92,0.9)] transition hover:-translate-y-0.5 hover:bg-brand-700 active:scale-[0.98] md:h-[62px]"
         >
           {advancedMode === 'collapsible' ? (advancedOpen ? 'Thu gọn' : submitLabel) : submitLabel}
         </button>
@@ -595,7 +595,7 @@ function ThanhTimKiem({
             type="button"
             onClick={() => handleToggle(field)}
             className={`rounded-full px-3 py-1.5 text-xs font-bold transition ${
-              form[field] ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600 hover:bg-sky-50'
+              form[field] ? 'bg-emerald-50 text-emerald-700' : 'bg-brand-50/70 text-slate-600 hover:bg-white hover:text-brand-700'
             }`}
           >
             {label}
@@ -604,7 +604,7 @@ function ThanhTimKiem({
       </div>
 
       {showAdvanced && (advancedMode !== 'collapsible' || advancedOpen) ? (
-        <div className="mt-5 rounded-3xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5">
+        <div className="mt-5 rounded-3xl border border-[#eadfe2] bg-[#fff8f9]/75 p-4 sm:p-5">
           <div className="grid gap-4 lg:grid-cols-2">
             <NhomLoc title="Mức giá mỗi đêm">
               {KHOANG_GIA.map((band) => (
@@ -646,7 +646,7 @@ function ThanhTimKiem({
             </NhomLoc>
           </div>
 
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="mt-4 rounded-2xl border border-[#eadfe2] bg-white p-4">
             <p className="text-xs font-black uppercase tracking-wide text-slate-500">Tiện nghi phổ biến</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {TIEN_NGHI.map((amenity) => {
@@ -670,7 +670,7 @@ function ThanhTimKiem({
             </button>
             <button
               type="submit"
-              className="rounded-xl bg-brand-600 px-5 py-3 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700"
+              className="btn-primary"
             >
               Tìm kiếm
             </button>

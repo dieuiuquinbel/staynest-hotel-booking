@@ -1,5 +1,5 @@
-﻿// Chá»©c nÄƒng: Hiá»ƒn thá»‹ chi tiáº¿t Ä‘Æ¡n Ä‘áº·t phÃ²ng vÃ  cÃ¡c thao tÃ¡c admin.
-// Panel chi tiáº¿t Ä‘Æ¡n Ä‘áº·t phÃ²ng cho quáº£n lÃ½ â€” 2 tab cá»¥c bá»™, ghi chÃº gá»™p vÃ o Tab 1.
+// Chức năng: Hiển thị chi tiết đơn đặt phòng và các thao tác admin.
+// Panel chi tiết đơn đặt phòng cho quản lý — 2 tab cục bộ, ghi chú gộp vào Tab 1.
 import { useState, useEffect } from 'react';
 import { dinhDangNgay, dinhDangNgayGio, dinhDangTien } from '../../../utils/dinhDang';
 import {
@@ -46,12 +46,12 @@ function IconCancel() {
 }
 
 const MILESTONES = [
-  ['Táº¡o Ä‘Æ¡n', 'createdAt'],
-  ['XÃ¡c nháº­n', 'confirmedAt'],
-  ['Thanh toÃ¡n', 'paidAt'],
+  ['Tạo đơn', 'createdAt'],
+  ['Xác nhận', 'confirmedAt'],
+  ['Thanh toán', 'paidAt'],
   ['Check-in', 'checkedInAt'],
   ['Check-out', 'checkedOutAt'],
-  ['Há»§y / no-show', 'cancelledAt'],
+  ['Hủy / no-show', 'cancelledAt'],
 ];
 
 export default function BookingDetail({
@@ -67,7 +67,7 @@ export default function BookingDetail({
 }) {
   const [localTab, setLocalTab] = useState('overview');
 
-  // Reset tab vá» overview khi Ä‘á»•i Ä‘Æ¡n hÃ ng khÃ¡c
+  // Reset tab về overview khi đổi đơn hàng khác
   useEffect(() => {
     setLocalTab('overview');
   }, [booking?.id]);
@@ -78,7 +78,7 @@ export default function BookingDetail({
         <svg viewBox="0 0 20 20" fill="currentColor" className="h-10 w-10 text-slate-300">
           <path fillRule="evenodd" d="M3 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4zm0 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6zm8 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-2zm0 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-2z" clipRule="evenodd" />
         </svg>
-        <p className="text-sm font-bold text-slate-400">Chá»n má»™t Ä‘Æ¡n á»Ÿ danh sÃ¡ch bÃªn trÃ¡i Ä‘á»ƒ kiá»ƒm tra chi tiáº¿t</p>
+        <p className="text-sm font-bold text-slate-400">Chọn một đơn ở danh sách bên trái để kiểm tra chi tiết</p>
       </aside>
     );
   }
@@ -103,11 +103,10 @@ export default function BookingDetail({
   return (
     <aside className="rounded-2xl border-2 border-slate-200 bg-white shadow-md overflow-hidden">
 
-      {/* 1. Header ÄÆ¡n HÃ ng */}
       <div className="border-b border-slate-100 p-5 bg-white">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">ThÃ´ng tin Ä‘iá»u hÃ nh</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Thông tin điều hành</p>
             <h3 className="mt-1 font-mono text-lg font-black tracking-wider text-slate-900 break-all">
               {booking.bookingCode || booking.id}
             </h3>
@@ -124,7 +123,6 @@ export default function BookingDetail({
         </div>
       </div>
 
-      {/* 2. Menu Chá»n Tab Cá»¥c Bá»™ */}
       <div className="border-b border-slate-100 bg-slate-50/50 p-2 flex gap-1.5">
         <button
           type="button"
@@ -135,7 +133,7 @@ export default function BookingDetail({
               : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
           }`}
         >
-          ðŸ“‹ ThÃ´ng tin phÃ²ng
+          📋 Thông tin phòng
         </button>
         <button
           type="button"
@@ -146,99 +144,92 @@ export default function BookingDetail({
               : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
           }`}
         >
-          ðŸ’³ TÃ i chÃ­nh & HoÃ n tiá»n
+          💳 Tài chính & Hoàn tiền
           {refundRequest?.status === 'pending' && (
             <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse" />
           )}
         </button>
       </div>
 
-      {/* 3. VÃ¹ng Ná»™i Dung */}
       <div className="p-5">
 
-        {/* Tab 1: ThÃ´ng tin phÃ²ng + HÃ nh Ä‘á»™ng + Ghi chÃº ná»™i bá»™ */}
         {localTab === 'overview' && (
           <div className="grid gap-4">
-            {/* Tháº» khÃ¡ch lÆ°u trÃº */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">KhÃ¡ch lÆ°u trÃº</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Khách lưu trú</p>
               <div className="mt-2.5 flex items-center gap-3">
-                <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-200/80 text-sm">ðŸ‘¤</div>
+                <div className="grid h-8 w-8 place-items-center rounded-full bg-slate-200/80 text-sm">👤</div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-black text-slate-800">{booking.guestName}</p>
                   <p className="text-[11px] font-bold text-slate-400 truncate mt-0.5">{booking.guestEmail}</p>
                   {booking.guestPhone && (
-                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">ðŸ“ž {booking.guestPhone}</p>
+                    <p className="text-[11px] font-bold text-slate-400 mt-0.5">📞 {booking.guestPhone}</p>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* NgÃ y nháº­n / ngÃ y tráº£ */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Nháº­n phÃ²ng ðŸ“…</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Nhận phòng 📅</p>
                 <p className="mt-1 text-sm font-black text-slate-800">{dinhDangNgay(booking.checkIn)}</p>
               </div>
               <div className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Tráº£ phÃ²ng ðŸ“…</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.1em] text-slate-400">Trả phòng 📅</p>
                 <p className="mt-1 text-sm font-black text-slate-800">{dinhDangNgay(booking.checkOut)}</p>
               </div>
             </div>
 
-            {/* Chi tiáº¿t phÃ²ng á»Ÿ */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Chi tiáº¿t phÃ²ng</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Chi tiết phòng</p>
               <div className="mt-2.5 grid grid-cols-2 gap-y-3 gap-x-4">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">KhÃ¡ch sáº¡n</p>
+                  <p className="text-[10px] font-bold text-slate-400">Khách sạn</p>
                   <p className="text-xs font-black text-slate-800 truncate mt-0.5">{booking.hotel_name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">PhÃ²ng á»Ÿ</p>
+                  <p className="text-[10px] font-bold text-slate-400">Phòng ở</p>
                   <p className="text-xs font-black text-slate-800 truncate mt-0.5">{booking.room_name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">Quy mÃ´ Ä‘áº·t</p>
-                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.rooms} phÃ²ng Â· {booking.guests} khÃ¡ch</p>
+                  <p className="text-[10px] font-bold text-slate-400">Quy mô đặt</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.rooms} phòng · {booking.guests} khách</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">MÃ£ phÃ²ng gÃ¡n</p>
-                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.roomCode || 'Há»‡ thá»‘ng xáº¿p khi Check-in'}</p>
+                  <p className="text-[10px] font-bold text-slate-400">Mã phòng gán</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">{booking.roomCode || 'Hệ thống xếp khi Check-in'}</p>
                 </div>
               </div>
             </div>
 
-            {/* Cáº£nh bÃ¡o ná»£ tiá»n phÃ²ng cho Ä‘Æ¡n cá»c 10% */}
             {canCheckIn && booking.paymentStatus === 'deposit_paid' && (
               <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 shadow-sm text-left">
                 <div className="flex gap-3">
-                  <span className="text-xl shrink-0">âš ï¸</span>
+                  <span className="text-xl shrink-0">⚠</span>
                   <div>
-                    <p className="text-xs font-black text-amber-950">ChÆ°a thanh toÃ¡n Ä‘á»§ tiá»n phÃ²ng!</p>
+                    <p className="text-xs font-black text-amber-950">Chưa thanh toán đủ tiền phòng!</p>
                     <p className="text-[11px] font-bold text-amber-800 mt-1 leading-relaxed">
-                      ÄÆ¡n nÃ y má»›i thanh toÃ¡n cá»c 10% ({dinhDangTien(booking.paidAmount)}). Lá»… tÃ¢n vui lÃ²ng thu ná»‘t <span className="font-black text-amber-950 text-xs">{dinhDangTien(booking.totalPrice - booking.paidAmount)}</span> tiá»n máº·t hoáº·c chuyá»ƒn khoáº£n QR táº¡i quáº§y trÆ°á»›c khi giao phÃ²ng!
+                      Đơn này mới thanh toán cọc 10% ({dinhDangTien(booking.paidAmount)}). Lễ tân vui lòng thu nốt <span className="font-black text-amber-950 text-xs">{dinhDangTien(booking.totalPrice - booking.paidAmount)}</span> tiền mặt hoặc chuyển khoản QR tại quầy trước khi giao phòng!
                     </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* HÃ nh Ä‘á»™ng chÃ­nh */}
             <div className="grid gap-2">
               {canCheckIn && (
                 <button
                   onClick={() => {
                     if (booking.paymentStatus === 'deposit_paid') {
-                      if (!window.confirm(`ÄÆ¡n nÃ y má»›i Ä‘áº·t cá»c 10%. Báº¡n xÃ¡c nháº­n Ä‘Ã£ thu Ä‘á»§ sá»‘ tiá»n ná»‘t 90% cÃ²n thiáº¿u lÃ  ${dinhDangTien(booking.totalPrice - booking.paidAmount)} tá»« khÃ¡ch vÃ  tiáº¿n hÃ nh nháº­n phÃ²ng?`)) {
+                      if (!window.confirm(`Đơn này mới đặt cọc 10%. Bạn xác nhận đã thu đủ số tiền nốt 90% còn thiếu là ${dinhDangTien(booking.totalPrice - booking.paidAmount)} từ khách và tiến hành nhận phòng?`)) {
                         return;
                       }
                     }
-                    onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN, 'Admin check-in táº¡i khÃ¡ch sáº¡n');
+                    onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_IN, 'Admin check-in tại khách sạn');
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-sky-700 active:scale-[.98]"
                 >
-                  <IconCheckin /> Nháº­n phÃ²ng (Check-in)
+                  <IconCheckin /> Nhận phòng (Check-in)
                 </button>
               )}
               {canVerifyLan && (
@@ -254,89 +245,84 @@ export default function BookingDetail({
                   onClick={() => onStatus(booking.id, TRANG_THAI_DAT_PHONG.CHECKED_OUT, 'Admin check-out')}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 active:scale-[.98]"
                 >
-                  <IconCheckout /> Tráº£ phÃ²ng (Check-out)
+                  <IconCheckout /> Trả phòng (Check-out)
                 </button>
               )}
               {canCancelHold && (
                 <button
                   onClick={() => {
-                    if (window.confirm(`XÃ¡c nháº­n há»§y giá»¯ chá»— Ä‘Æ¡n ${booking.bookingCode || booking.id}?`)) {
-                      onStatus(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'Admin há»§y giá»¯ chá»—');
+                    if (window.confirm(`Xác nhận hủy giữ chỗ đơn ${booking.bookingCode || booking.id}?`)) {
+                      onStatus(booking.id, TRANG_THAI_DAT_PHONG.CANCELLED, 'Admin hủy giữ chỗ');
                     }
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-300 bg-white px-4 py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50 active:scale-[.98]"
                 >
-                  <IconCancel /> Há»§y giá»¯ chá»—
+                  <IconCancel /> Hủy giữ chỗ
                 </button>
               )}
               {noAction && activeTab !== 'action' && (
                 <div className="rounded-xl border border-slate-100 bg-slate-50/50 py-3 text-center text-xs font-bold text-slate-400">
-                  ÄÆ¡n Ä‘Ã£ Ä‘Æ°á»£c xÃ¡c nháº­n thanh toÃ¡n tá»± Ä‘á»™ng
+                  Đơn đã được xác nhận thanh toán tự động
                 </div>
               )}
             </div>
 
-            {/* Ghi chÃº ná»™i bá»™ (gá»™p tá»« Tab 3 cÅ©) */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-2">Ghi chÃº ná»™i bá»™</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-2">Ghi chú nội bộ</p>
               <textarea
                 value={note}
                 onChange={(event) => setNote(event.target.value)}
                 rows={2}
-                placeholder="ThÃªm ghi chÃº lÆ°u Ã½ ná»™i bá»™..."
+                placeholder="Thêm ghi chú lưu ý nội bộ..."
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold outline-none transition focus:border-sky-400 resize-none"
               />
               <button
                 onClick={() => onSaveNote(booking.id)}
                 className="mt-2 w-full rounded-xl border border-slate-300 bg-white py-2 text-xs font-black text-slate-700 transition hover:bg-slate-50 active:scale-[.98]"
               >
-                ðŸ’¾ LÆ°u ghi chÃº
+                💾 Lưu ghi chú
               </button>
             </div>
           </div>
         )}
 
-        {/* Tab 2: TÃ i chÃ­nh & HoÃ n tiá»n + Timeline */}
         {localTab === 'finance' && (
           <div className="grid gap-4">
 
-            {/* LÆ°á»›i phÃ¢n tÃ­ch sá»‘ tiá»n */}
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Tá»•ng tiá»n</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-slate-400">Tổng tiền</p>
                 <p className="mt-1 text-[11px] font-black text-slate-900">{dinhDangTien(booking.totalPrice)}</p>
               </div>
               <div className="rounded-xl border border-emerald-200 bg-emerald-50/30 p-3 text-center shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-600">ÄÃ£ thu</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-emerald-600">Đã thu</p>
                 <p className="mt-1 text-[11px] font-black text-emerald-700">{dinhDangTien(booking.paidAmount)}</p>
               </div>
               <div className="rounded-xl border border-amber-200 bg-amber-50/30 p-3 text-center shadow-sm">
-                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-amber-600">CÃ²n láº¡i</p>
+                <p className="text-[9px] font-black uppercase tracking-[0.08em] text-amber-600">Còn lại</p>
                 <p className="mt-1 text-[11px] font-black text-amber-700">{dinhDangTien(booking.remainingAmount)}</p>
               </div>
             </div>
 
-            {/* PhÆ°Æ¡ng thá»©c thanh toÃ¡n */}
             <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">PhÆ°Æ¡ng thá»©c thanh toÃ¡n</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">Phương thức thanh toán</p>
               <div className="mt-2.5 grid grid-cols-2 gap-y-3 gap-x-4">
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">HÃ¬nh thá»©c GD</p>
-                  <p className="text-xs font-black text-slate-800 mt-0.5">MÃ£ QR</p>
+                  <p className="text-[10px] font-bold text-slate-400">Hình thức GD</p>
+                  <p className="text-xs font-black text-slate-800 mt-0.5">Mã QR</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400">Ná»n táº£ng</p>
+                  <p className="text-[10px] font-bold text-slate-400">Nền tảng</p>
                   <p className="text-xs font-black text-sky-700 mt-0.5 font-mono tracking-wider">VietQR</p>
                 </div>
               </div>
             </div>
 
-            {/* Khu vá»±c xá»­ lÃ½ hoÃ n tiá»n */}
             {refundRequest ? (
               <div className="rounded-xl border border-rose-200 bg-rose-50/40 p-3.5 grid gap-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-black text-rose-950">YÃªu cáº§u hoÃ n tiá»n</p>
+                    <p className="text-xs font-black text-rose-950">Yêu cầu hoàn tiền</p>
                     <p className="font-mono text-[10px] font-bold text-rose-500 mt-0.5">{refundRequest.code}</p>
                   </div>
                   <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-black ${MAU_TRANG_THAI_HOAN_TIEN[refundRequest.status]}`}>
@@ -346,29 +332,29 @@ export default function BookingDetail({
 
                 <div className="grid grid-cols-3 gap-1.5">
                   <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm">
-                    <p className="text-[9px] font-bold text-rose-500">ÄÃ£ cá»c</p>
+                    <p className="text-[9px] font-bold text-rose-500">Đã cọc</p>
                     <p className="mt-0.5 text-xs font-black text-rose-900">{dinhDangTien(refundRequest.paidAmount)}</p>
                   </div>
                   <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm">
-                    <p className="text-[9px] font-bold text-rose-500">PhÃ­ há»§y (20%)</p>
+                    <p className="text-[9px] font-bold text-rose-500">Phí hủy (20%)</p>
                     <p className="mt-0.5 text-xs font-black text-rose-900">{dinhDangTien(refundRequest.cancelFeeAmount)}</p>
                   </div>
                   <div className="rounded-lg bg-white/90 p-2 text-center shadow-sm border border-emerald-100">
-                    <p className="text-[9px] font-bold text-emerald-600">HoÃ n láº¡i (80%)</p>
+                    <p className="text-[9px] font-bold text-emerald-600">Hoàn lại (80%)</p>
                     <p className="mt-0.5 text-xs font-black text-emerald-700">{dinhDangTien(refundRequest.refundAmount)}</p>
                   </div>
                 </div>
 
                 <div className="rounded-lg bg-white p-2.5 border border-slate-200 text-slate-700">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">TÃ i khoáº£n nháº­n hoÃ n tiá»n</p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Tài khoản nhận hoàn tiền</p>
                   <p className="text-xs font-black text-slate-800 mt-1">{refundRequest.bankName}</p>
-                  <p className="text-xs font-bold text-slate-700 mt-0.5">Sá»‘ TK: {refundRequest.bankAccountNumber}</p>
-                  <p className="text-xs font-bold text-slate-700">Chá»§ TK: {refundRequest.bankAccountName}</p>
+                  <p className="text-xs font-bold text-slate-700 mt-0.5">Số TK: {refundRequest.bankAccountNumber}</p>
+                  <p className="text-xs font-bold text-slate-700">Chủ TK: {refundRequest.bankAccountName}</p>
                 </div>
 
                 {refundRequest.reason && (
                   <p className="text-xs font-semibold text-rose-800">
-                    LÃ½ do há»§y: <span className="italic">{refundRequest.reason}</span>
+                    Lý do hủy: <span className="italic">{refundRequest.reason}</span>
                   </p>
                 )}
 
@@ -378,29 +364,29 @@ export default function BookingDetail({
                       value={refundDecisionNote}
                       onChange={(event) => setRefundDecisionNote(event.target.value)}
                       rows={2}
-                      placeholder="Nháº­p ghi chÃº pháº£n há»“i..."
+                      placeholder="Nhập ghi chú phản hồi..."
                       className="w-full rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-semibold outline-none focus:border-rose-400 resize-none"
                     />
                     <div className="grid grid-cols-2 gap-2">
                       <button
                         onClick={() => {
-                          if (window.confirm(`Duyá»‡t hoÃ n ${dinhDangTien(refundRequest.refundAmount)} cho khÃ¡ch ${booking.guestName}?`)) {
+                          if (window.confirm(`Duyệt hoàn ${dinhDangTien(refundRequest.refundAmount)} cho khách ${booking.guestName}?`)) {
                             onRefundDecision(refundRequest.id, 'approved');
                           }
                         }}
                         className="rounded-xl bg-emerald-600 py-2.5 text-xs font-black text-white transition hover:bg-emerald-700 active:scale-95 shadow-sm"
                       >
-                        âœ“ Duyá»‡t hoÃ n
+                        ✓ Duyệt hoàn
                       </button>
                       <button
                         onClick={() => {
-                          if (window.confirm(`Tá»« chá»‘i hoÃ n tiá»n cho khÃ¡ch ${booking.guestName}?`)) {
+                          if (window.confirm(`Từ chối hoàn tiền cho khách ${booking.guestName}?`)) {
                             onRefundDecision(refundRequest.id, 'rejected');
                           }
                         }}
                         className="rounded-xl border border-rose-300 bg-white py-2.5 text-xs font-black text-rose-700 transition hover:bg-rose-50 active:scale-95"
                       >
-                        âœ• Tá»« chá»‘i
+                        ✕ Từ chối
                       </button>
                     </div>
                   </div>
@@ -408,14 +394,13 @@ export default function BookingDetail({
               </div>
             ) : (
               <div className="rounded-xl border border-slate-100 bg-slate-50/50 py-4 text-center text-xs font-bold text-slate-400">
-                KhÃ´ng cÃ³ yÃªu cáº§u há»§y / hoÃ n tiá»n cho Ä‘Æ¡n nÃ y
+                Không có yêu cầu hủy / hoàn tiền cho đơn này
               </div>
             )}
 
-            {/* DÃ²ng thá»i gian (gá»™p tá»« Tab 3 cÅ©) */}
             {activeMilestones.length > 0 && (
               <div className="rounded-xl border border-slate-200 bg-slate-50/40 p-3.5">
-                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-3">DÃ²ng thá»i gian</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-slate-400 mb-3">Dòng thời gian</p>
                 <div className="relative pl-5">
                   {activeMilestones.length > 1 && (
                     <div className="absolute left-[4px] top-2 bottom-2 w-px bg-slate-200" />

@@ -1,4 +1,4 @@
-// Danh sách khách hàng ở màn hình admin — phiên bản nâng cấp với Skeleton Loader.
+// Chức năng: Hiển thị danh sách khách hàng trong admin, gồm trạng thái, chi tiêu và skeleton loading.
 import { dinhDangTien } from '../../../utils/dinhDang';
 import { classTrangThaiKhach, nhanTrangThaiKhach } from './customerStatus';
 

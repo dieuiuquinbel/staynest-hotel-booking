@@ -1,0 +1,15 @@
+{
+  "name": "dieubel-hotel-booking",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack hotel booking demo with React, Express and MySQL.",
+  "scripts": {
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "lint": "npm run lint --prefix frontend",
+    "reset:test-data": "npm run reset:test-data --prefix backend",
+    "reset:test-data:dry-run": "npm run reset:test-data:dry-run --prefix backend"
+  }
+}

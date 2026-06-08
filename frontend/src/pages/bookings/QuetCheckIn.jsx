@@ -1,3 +1,4 @@
+// Chức năng: Trang dành cho nhân viên nội bộ quét mã QR của khách hàng để check-in trực tiếp qua mạng LAN.
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
@@ -68,7 +69,7 @@ export default function QuetCheckIn() {
   }[resultInfo.tone];
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4 py-8 text-white">
+    <main className="flex min-h-[100dvh] flex-col items-center justify-center bg-slate-900 px-4 py-8 text-white">
       <div className="w-full max-w-md overflow-hidden rounded-3xl border border-white/10 bg-slate-950/80 p-6 shadow-2xl backdrop-blur-md">
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">

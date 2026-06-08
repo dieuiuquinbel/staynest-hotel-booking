@@ -8,6 +8,7 @@ import {
   RevenueBreakdown,
   RevenueFilters,
   RevenueHeader,
+  RevenuePendingWarning,
   RevenueQuickAudit,
   RevenueRangeSection,
 } from '../../components/admin/revenue/RevenueCards';
@@ -46,6 +47,7 @@ export default function AdminRevenue() {
   const applyPreset = (nextPreset) => {
     setPreset(nextPreset);
 
+    // 'all' có range riêng (2020-01-01 → hôm nay), không bỏ qua
     if (nextPreset === 'custom') return;
 
     const range = buildRange(nextPreset);
@@ -54,9 +56,13 @@ export default function AdminRevenue() {
     refresh(range.dateFrom, range.dateTo);
   };
 
-  const period = useMemo(() => report?.period || {}, [report?.period]);
-  const lifetime = useMemo(() => report?.lifetime || {}, [report?.lifetime]);
+  const period   = useMemo(() => report?.period   || {}, [report?.period]);
+  const lifetime = useMemo(() => report?.lifetime  || {}, [report?.lifetime]);
   const inventory = useMemo(() => report?.inventory || {}, [report?.inventory]);
+
+  // Card "Doanh thu ròng dự kiến" — tính sau khi trừ toàn bộ pending refund (hệ thống)
+  const projectedNetRevenue = (period.netRevenue || 0) - (lifetime.pendingRefundAmount || 0);
+  const hasPendingRisk = (lifetime.pendingRefundAmount || 0) > 0;
 
   const periodCards = [
     {
@@ -64,6 +70,17 @@ export default function AdminRevenue() {
       value: dinhDangTien(period.netRevenue || 0),
       tone: 'text-brand-700',
       hint: 'Tiền khách trả trừ tiền đã hoàn',
+    },
+    {
+      label: 'Doanh thu ròng dự kiến',
+      value: dinhDangTien(projectedNetRevenue),
+      tone: hasPendingRisk ? 'text-rose-700' : 'text-emerald-700',
+      hint: hasPendingRisk
+        ? `Sau khi trừ ${dinhDangTien(lifetime.pendingRefundAmount)} hoàn chờ duyệt`
+        : 'Không có rủi ro hoàn tiền chờ duyệt',
+      badge: hasPendingRisk
+        ? { text: 'Rủi ro', cls: 'bg-rose-100 text-rose-700' }
+        : { text: 'An toàn', cls: 'bg-emerald-100 text-emerald-700' },
     },
     {
       label: 'Khách đã thanh toán',
@@ -110,6 +127,15 @@ export default function AdminRevenue() {
       hint: `${lifetime.pendingRefunds || 0} yêu cầu đang chờ`,
     },
     {
+      label: 'Tiền hoàn chờ duyệt',
+      value: dinhDangTien(lifetime.pendingRefundAmount || 0),
+      tone: (lifetime.pendingRefundAmount || 0) > 0 ? 'text-amber-700' : 'text-slate-950',
+      hint: `${lifetime.pendingRefunds || 0} yêu cầu chưa xử lý`,
+      badge: (lifetime.pendingRefunds || 0) > 0
+        ? { text: `${lifetime.pendingRefunds} chờ`, cls: 'bg-amber-100 text-amber-700' }
+        : null,
+    },
+    {
       label: 'Tổng còn phải thu',
       value: dinhDangTien(lifetime.receivableAmount || 0),
       tone: 'text-amber-700',
@@ -140,19 +166,25 @@ export default function AdminRevenue() {
       />
 
       {isLoading ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-6 text-sm font-bold text-slate-500">
+        <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm font-bold text-slate-500">
           Đang tải báo cáo...
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-6 text-sm font-bold text-rose-700">
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-6 text-sm font-bold text-rose-700">
           {error}
         </div>
       ) : null}
 
       {!isLoading && !error ? (
         <>
+          {/* Banner cảnh báo rủi ro thanh khoản */}
+          <RevenuePendingWarning
+            count={lifetime.pendingRefunds}
+            amount={lifetime.pendingRefundAmount}
+          />
+
           <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <RevenueRangeSection
               title="Doanh thu theo thời gian"

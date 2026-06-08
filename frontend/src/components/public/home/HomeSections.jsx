@@ -24,7 +24,7 @@ export function HeroTrangChu({
 }) {
   return (
     <section
-      className="relative bg-slate-950 text-white"
+      className="relative overflow-hidden bg-[#241f21] text-white"
       onMouseEnter={() => setIsHeroPaused(true)}
       onMouseLeave={() => setIsHeroPaused(false)}
       onFocusCapture={() => setIsHeroPaused(true)}
@@ -43,7 +43,7 @@ export function HeroTrangChu({
               className="h-full bg-cover bg-center"
               style={{
                 width: `${100 / SLIDE_HERO.length}%`,
-                backgroundImage: `linear-gradient(180deg, rgba(3,7,18,0.46) 0%, rgba(3,7,18,0.38) 48%, rgba(3,7,18,0.84) 100%), url(${slide.image})`,
+                backgroundImage: `linear-gradient(90deg, rgba(36,31,33,0.88) 0%, rgba(36,31,33,0.48) 42%, rgba(36,31,33,0.32) 70%), linear-gradient(180deg, rgba(36,31,33,0.2) 0%, rgba(36,31,33,0.78) 100%), url(${slide.image})`,
               }}
             />
           ))}
@@ -54,32 +54,32 @@ export function HeroTrangChu({
         type="button"
         aria-label="Ảnh trước"
         onClick={() => goToHero(activeHero - 1)}
-        className="absolute left-3 top-[44%] z-20 flex h-16 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-950/28 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-md transition hover:-translate-x-0.5 hover:border-white/50 hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20 sm:left-5 sm:h-20 sm:w-12 lg:left-6 lg:h-24 lg:w-14"
+        className="group absolute left-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-slate-950/22 text-white shadow-[0_18px_44px_-28px_rgba(0,0,0,0.95)] backdrop-blur-md transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-x-0.5 hover:scale-105 hover:border-white/45 hover:bg-white/20 active:scale-95 focus:outline-none focus:ring-4 focus:ring-white/20 sm:left-6 sm:h-12 sm:w-12 lg:left-8"
       >
-        <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true">
-          <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <svg viewBox="0 0 24 24" className="h-5 w-5 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-x-0.5" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
       <button
         type="button"
         aria-label="Ảnh tiếp theo"
         onClick={() => goToHero(activeHero + 1)}
-        className="absolute right-3 top-[44%] z-20 flex h-16 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-slate-950/28 text-white shadow-2xl shadow-slate-950/30 backdrop-blur-md transition hover:translate-x-0.5 hover:border-white/50 hover:bg-white/20 focus:outline-none focus:ring-4 focus:ring-white/20 sm:right-5 sm:h-20 sm:w-12 lg:right-6 lg:h-24 lg:w-14"
+        className="group absolute right-3 top-1/2 z-20 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/25 bg-slate-950/22 text-white shadow-[0_18px_44px_-28px_rgba(0,0,0,0.95)] backdrop-blur-md transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] hover:translate-x-0.5 hover:scale-105 hover:border-white/45 hover:bg-white/20 active:scale-95 focus:outline-none focus:ring-4 focus:ring-white/20 sm:right-6 sm:h-12 sm:w-12 lg:right-8"
       >
-        <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" aria-hidden="true">
-          <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round" />
+        <svg viewBox="0 0 24 24" className="h-5 w-5 transition duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.35" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 
-      <div className="absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-slate-950/80 to-transparent" />
-      <div className="relative z-10 mx-auto flex min-h-[660px] max-w-7xl flex-col items-center px-4 pb-36 pt-14 text-center sm:px-6 lg:min-h-[700px] lg:pt-16">
+      <div className="absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-[#241f21]/84 to-transparent" />
+      <div className="relative z-10 mx-auto flex min-h-[680px] max-w-7xl flex-col items-center justify-center px-4 pb-36 pt-14 text-center sm:px-6 lg:min-h-[720px] lg:pt-16">
         <span className="rounded-full border border-white/25 bg-white/15 px-4 py-2 text-sm font-bold text-white backdrop-blur">
           {SLIDE_HERO[activeHero].label}
         </span>
-        <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)] sm:text-6xl lg:text-[64px]">
+        <h1 className="mx-auto mt-5 max-w-4xl text-center text-4xl font-black leading-[1.02] tracking-tight text-white drop-shadow-[0_10px_30px_rgba(0,0,0,0.35)] sm:text-6xl lg:text-[72px]">
           {SLIDE_HERO[activeHero].title}
         </h1>
-        <p className="mt-4 max-w-2xl text-base leading-8 text-sky-50">{SLIDE_HERO[activeHero].description}</p>
+        <p className="mx-auto mt-5 max-w-2xl text-base font-medium leading-8 text-white/80">{SLIDE_HERO[activeHero].description}</p>
 
         <div className="relative z-30 mt-10 w-full max-w-5xl">
           <ThanhTimKiem onSubmit={handleSearch} submitLabel="Tìm kiếm" />
@@ -117,12 +117,12 @@ export function HeroTrangChu({
         </div>
       </div>
 
-      <div className="relative z-0 bg-gradient-to-r from-slate-950 via-brand-900 to-teal-800 px-4 py-8">
+      <div className="relative z-0 bg-[#241f21] px-4 py-8">
         <div className="mx-auto grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {THONG_KE_TIN_CAY.map((item) => (
             <div
               key={item.label}
-              className="rounded-2xl border border-white/15 bg-white/10 p-5 text-center shadow-2xl shadow-slate-950/20 backdrop-blur transition hover:-translate-y-1 hover:bg-white/15"
+              className="rounded-2xl border border-white/10 bg-white/[0.08] p-5 text-left shadow-2xl shadow-slate-950/20 transition hover:-translate-y-1 hover:bg-white/[0.12]"
             >
               <p className="text-4xl font-black text-white">{item.value}</p>
               <p className="mt-2 text-sm font-extrabold text-sky-50">{item.label}</p>
@@ -137,7 +137,7 @@ export function HeroTrangChu({
 
 export function BoSuuTapSection({ handleSearch }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="eyebrow">Bộ sưu tập lưu trú</span>
@@ -150,7 +150,7 @@ export function BoSuuTapSection({ handleSearch }) {
             key={item.title}
             type="button"
             onClick={() => handleSearch(item.query)}
-            className="group relative min-h-[230px] overflow-hidden rounded-2xl bg-slate-950 text-left shadow-sm"
+            className="group relative min-h-[260px] overflow-hidden rounded-[24px] bg-slate-950 text-left shadow-[0_24px_70px_-48px_rgba(36,31,33,0.55)] transition focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <img src={item.image} alt={item.title} className="absolute inset-0 h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent" />
@@ -168,16 +168,16 @@ export function BoSuuTapSection({ handleSearch }) {
 export function DanhGiaTinCaySection({ reviewGroup, visibleReviewCount, isReviewExiting }) {
   return (
     <section className="border-y border-slate-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
-        <div className="grid overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_24px_65px_-54px_rgba(15,23,42,0.45)] lg:grid-cols-[minmax(0,1.04fr)_minmax(340px,0.96fr)]">
-          <div className="review-stream-panel relative h-full overflow-hidden bg-slate-950 p-5 text-white sm:p-6">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+        <div className="grid overflow-hidden rounded-[28px] border border-[#eadfe2] bg-white shadow-[0_24px_80px_-54px_rgba(146,23,77,0.38)] lg:grid-cols-[minmax(0,1.04fr)_minmax(340px,0.96fr)]">
+          <div className="review-stream-panel relative h-full overflow-hidden bg-[#241f21] p-5 text-white sm:p-6">
             <div className="relative z-10 max-w-xl">
               <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-sm font-bold text-white/90">
                 Đánh giá khách hàng
               </span>
               <h2 className="mt-3 text-3xl font-black tracking-tight">Khách nói gì sau khi đặt phòng</h2>
               <p className="mt-2 max-w-lg text-sm leading-7 text-white/72">
-                Các phản hồi được đặt cạnh những ưu điểm chính để khách mới hiểu vì sao DieuBel được chọn nhiều hơn.
+                Phản hồi thực tế từ khách đã lưu trú — giúp bạn yên tâm hơn khi chọn chỗ ở.
               </p>
             </div>
 
@@ -212,7 +212,7 @@ export function DanhGiaTinCaySection({ reviewGroup, visibleReviewCount, isReview
 
             <div className="mt-5 grid gap-3">
               {DIEM_TIN_CAY.map((point, index) => (
-                <article key={point.title} className="rounded-xl border border-slate-200 bg-white p-3.5 shadow-sm">
+                <article key={point.title} className="rounded-2xl border border-[#eadfe2] bg-white p-3.5 shadow-[0_16px_55px_-46px_rgba(146,23,77,0.35)]">
                   <div className="flex items-start gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-600 text-sm font-black text-white">
                       {index + 1}
@@ -234,7 +234,7 @@ export function DanhGiaTinCaySection({ reviewGroup, visibleReviewCount, isReview
 
 export function DiemDenSection({ navigate, handleSearch }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="eyebrow">Điểm đến nổi bật</span>
@@ -243,7 +243,7 @@ export function DiemDenSection({ navigate, handleSearch }) {
         <button
           type="button"
           onClick={() => navigate('/rooms?sort=popular&limit=12')}
-          className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-bold text-brand-700 transition hover:bg-sky-50"
+          className="btn-secondary"
         >
           Xem toàn bộ
         </button>
@@ -255,7 +255,7 @@ export function DiemDenSection({ navigate, handleSearch }) {
             key={item.city}
             type="button"
             onClick={() => handleSearch({ city: item.city, guests: '2', adults: '2', rooms: '1', availableOnly: true })}
-            className="group relative min-h-[250px] overflow-hidden rounded-2xl bg-slate-900 text-left shadow-sm"
+            className="group relative min-h-[280px] overflow-hidden rounded-[24px] bg-slate-900 text-left shadow-[0_24px_70px_-48px_rgba(36,31,33,0.55)] transition focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <img src={item.image} alt={item.name} className="absolute inset-0 h-full w-full object-cover opacity-90 transition duration-500 group-hover:scale-105" />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent" />
@@ -274,7 +274,7 @@ export function DiemDenSection({ navigate, handleSearch }) {
 export function VoucherSection({ vouchers, savedCodes, openHopThoaiVoucher, handleSaveVoucher, voucherMessage }) {
   return (
     <section className="border-y border-slate-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <span className="eyebrow">Ưu đãi</span>
@@ -283,7 +283,7 @@ export function VoucherSection({ vouchers, savedCodes, openHopThoaiVoucher, hand
           <button
             type="button"
             onClick={openHopThoaiVoucher}
-            className="rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-black text-brand-700 transition hover:bg-sky-50"
+            className="btn-secondary"
           >
             Xem tất cả
           </button>
@@ -291,14 +291,21 @@ export function VoucherSection({ vouchers, savedCodes, openHopThoaiVoucher, hand
 
         <div className="mt-6 flex gap-5 overflow-x-auto pb-3">
           {vouchers.slice(0, 5).map((voucher) => (
-            <button
+            <article
               key={voucher.id}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={openHopThoaiVoucher}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  openHopThoaiVoucher();
+                }
+              }}
               className="group min-w-[290px] text-left sm:min-w-[360px]"
             >
               <HinhVoucher voucher={voucher} className="transition duration-300 group-hover:-translate-y-1 group-hover:shadow-xl" />
-            </button>
+            </article>
           ))}
         </div>
 
@@ -325,7 +332,7 @@ export function TimKiemGanDaySection({ searches, handleSearch, clearAll }) {
   if (!searches.length) return null;
 
   return (
-    <section className="bg-sky-50/70">
+    <section className="bg-brand-50/55">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -349,7 +356,7 @@ export function TimKiemGanDaySection({ searches, handleSearch, clearAll }) {
               key={search.id}
               type="button"
               onClick={() => handleSearch(search)}
-              className="rounded-2xl border border-sky-100 bg-white p-4 text-left transition hover:border-brand-500"
+              className="rounded-2xl border border-[#eadfe2] bg-white p-4 text-left shadow-[0_16px_55px_-48px_rgba(146,23,77,0.4)] transition hover:-translate-y-0.5 hover:border-brand-300"
             >
               <p className="text-sm font-bold text-brand-700">{search.city || 'Mọi điểm đến'}</p>
               <p className="mt-2 text-base font-extrabold text-slate-950">
@@ -368,7 +375,7 @@ export function TimKiemGanDaySection({ searches, handleSearch, clearAll }) {
 
 export function FeaturedRoomsSection({ navigate, isLoading, isError, data }) {
   return (
-    <section id="featured" className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <section id="featured" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="eyebrow">Được yêu thích</span>
@@ -377,7 +384,7 @@ export function FeaturedRoomsSection({ navigate, isLoading, isError, data }) {
         <button
           type="button"
           onClick={() => navigate('/rooms?sort=rating_desc&availableOnly=true&limit=12')}
-          className="rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-brand-500/20 transition hover:bg-brand-700"
+          className="btn-primary"
         >
           Xem toàn bộ khách sạn
         </button>

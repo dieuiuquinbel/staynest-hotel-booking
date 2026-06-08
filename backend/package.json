@@ -5,7 +5,9 @@
   "main": "src/mayChu.js",
   "scripts": {
     "dev": "node src/mayChu.js",
-    "start": "node src/mayChu.js"
+    "start": "node src/mayChu.js",
+    "reset:test-data": "node scripts/reset-test-data.js --yes",
+    "reset:test-data:dry-run": "node scripts/reset-test-data.js --dry-run"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

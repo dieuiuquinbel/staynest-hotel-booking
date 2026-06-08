@@ -20,6 +20,39 @@ function tinhSoDem(checkIn, checkOut) {
   return Math.max(1, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
+function layNgayHomNayYmd() {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function laNgayYmdHopLe(value) {
+  const text = String(value || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return false;
+
+  const [year, month, day] = text.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function kiemTraNgayDatPhong(checkIn, checkOut) {
+  if (!laNgayYmdHopLe(checkIn) || !laNgayYmdHopLe(checkOut)) {
+    throw taoLoi(400, "Ngay nhan phong va tra phong khong hop le.");
+  }
+
+  if (checkIn < layNgayHomNayYmd()) {
+    throw taoLoi(400, "Khong the dat phong cho ngay trong qua khu.");
+  }
+
+  if (checkOut <= checkIn) {
+    throw taoLoi(400, "Ngay tra phong phai sau ngay nhan phong.");
+  }
+}
+
 async function sinhMaDatPhongDuyNhat(connection) {
   const characters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // Removed easily confused characters: O, 0, I, 1, L
   let isUnique = false;
@@ -50,8 +83,8 @@ function chuanHoaDichVu(services = []) {
   return services
     .map((service) => ({
       title: String(service.title || service.service_name || "").trim(),
-      price: Number(service.price ?? service.priceValue ?? 0),
-      quantity: Math.max(Number(service.quantity || 1), 1),
+      price: Math.max(Number(service.price ?? service.priceValue ?? 0), 0),
+      quantity: Math.min(Math.max(Number(service.quantity || 1), 1), 20),
     }))
     .filter((service) => service.title);
 }
@@ -85,6 +118,11 @@ async function taoDatPhong({ user, payload }) {
     Number(payload.rooms || payload.roomsCount || 1),
     1,
   );
+  kiemTraNgayDatPhong(checkIn, checkOut);
+  if (guests > Number(room.max_guests || 1) * roomsCount) {
+    throw taoLoi(400, "So khach vuot qua suc chua cua so phong da chon.");
+  }
+
   const nights = tinhSoDem(checkIn, checkOut);
   const selectedServices = chuanHoaDichVu(payload.services);
   const servicePrice = selectedServices.reduce(

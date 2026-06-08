@@ -296,10 +296,10 @@ function DatPhong() {
         <div className="surface-card p-6 sm:p-8">
           <span className="eyebrow">Bước đặt phòng</span>
           <h1 className="mt-4 text-[28px] font-bold tracking-normal text-[#222222]">
-            Kiểm tra thông tin trước khi giữ chỗ
+            Xác nhận thông tin đặt phòng
           </h1>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
-            Chọn qua đêm hoặc trong ngày. Sau khi giữ chỗ, bạn sẽ thanh toán toàn bộ hoặc cọc 10% ở Đặt chỗ của tôi.
+            Vui lòng kiểm tra lại thông tin. Bạn có thể chọn thanh toán toàn bộ hoặc đặt cọc 10% ở bước tiếp theo.
           </p>
 
           {!user?.email_verified ? (
@@ -449,7 +449,7 @@ function DatPhong() {
             disabled={!canSubmit}
             className="mt-8 w-full rounded-lg bg-brand-600 px-5 py-4 text-sm font-medium text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-brand-100"
           >
-            {isSubmitting ? 'Đang giữ chỗ...' : 'Giữ chỗ và sang Đặt chỗ của tôi'}
+            {isSubmitting ? 'Đang xử lý...' : 'Xác nhận đặt phòng'}
           </button>
         </div>
 
@@ -476,7 +476,7 @@ function DatPhong() {
                 <span className="font-black text-slate-950">Tổng thanh toán</span>
                 <span className="text-2xl font-black text-brand-700">{dinhDangTien(totalPrice)}</span>
               </div>
-              <p className="mt-2 text-xs font-semibold text-slate-500">Thanh toán sẽ thực hiện ở trang Đặt chỗ của tôi sau khi giữ chỗ.</p>
+              <p className="mt-2 text-xs font-semibold text-slate-500">Thanh toán sẽ được thực hiện ở bước tiếp theo.</p>
             </div>
           </div>
 

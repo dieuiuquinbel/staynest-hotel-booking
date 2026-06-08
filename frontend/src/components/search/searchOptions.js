@@ -1,4 +1,4 @@
-// Ch?c n?ng: C?u h?nh l?a ch?n v? gi? tr? m?c ??nh cho thanh t?m ki?m ph?ng.
+// Chức năng: Cấu hình lựa chọn và giá trị mặc định cho thanh tìm kiếm phòng.
 export const DIEM_DEN = [
   { value: 'Ha Noi', label: 'Hà Nội', subtitle: 'Khách sạn trung tâm, căn hộ dịch vụ' },
   { value: 'Da Nang', label: 'Đà Nẵng', subtitle: 'Resort biển, suite gia đình' },
