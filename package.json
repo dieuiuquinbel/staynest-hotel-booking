@@ -11,5 +11,9 @@
     "lint": "npm run lint --prefix frontend",
     "reset:test-data": "npm run reset:test-data --prefix backend",
     "reset:test-data:dry-run": "npm run reset:test-data:dry-run --prefix backend"
+  },
+  "devDependencies": {
+    "jest": "^30.4.2",
+    "supertest": "^7.2.2"
   }
 }

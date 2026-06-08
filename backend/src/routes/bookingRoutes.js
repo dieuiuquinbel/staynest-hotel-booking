@@ -1,6 +1,7 @@
 // Chức năng: Định nghĩa các API đặt phòng, xem đơn của tôi, xác nhận thanh toán, check-in QR, hoàn tiền, phản hồi và đánh giá.
 const express = require("express");
 const { yeuCauDangNhap } = require("../middleware/xacThuc.middleware");
+const { taoLoiHttp } = require("../middleware/xuLyLoi.middleware");
 const { taoDatPhong } = require("../modules/bookings/datPhong.service");
 const {
   TRANG_THAI_DAT_PHONG,
@@ -15,7 +16,7 @@ const { taoDanhGiaPhong } = require("../modules/rooms/danhGia.service");
 
 const router = express.Router();
 
-router.post("/", yeuCauDangNhap, async (req, res) => {
+router.post("/", yeuCauDangNhap, async (req, res, next) => {
   try {
     const result = await taoDatPhong({
       user: req.user,
@@ -27,41 +28,34 @@ router.post("/", yeuCauDangNhap, async (req, res) => {
       data: result,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the dat phong",
-    });
+    return next(error);
   }
 });
 
-router.post("/public-checkin", async (req, res) => {
+router.post("/public-checkin", async (req, res, next) => {
   const { token } = req.body;
   if (!token) {
-    return res.status(400).json({ message: "Thieu ma token check-in." });
+    return next(taoLoiHttp(400, "Thiếu mã token check-in."));
   }
 
   try {
     const result = await xacMinhCheckInCongKhai({ token });
     return res.json(result);
   } catch (error) {
-    return res.status(error.status || 500).json({
-      message: error.message || "Loi he thong khi check-in.",
-      error: error.message,
-    });
+    return next(error);
   }
 });
 
-router.get("/my", yeuCauDangNhap, async (req, res) => {
+router.get("/my", yeuCauDangNhap, async (req, res, next) => {
   try {
     const data = await layDatPhongCuaNguoiDung(req.user.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai danh sach dat phong",
-    });
+    return next(error);
   }
 });
 
-router.post("/:id/feedbacks", yeuCauDangNhap, async (req, res) => {
+router.post("/:id/feedbacks", yeuCauDangNhap, async (req, res, next) => {
   try {
     const data = await guiPhanHoiKhachHang({
       user: req.user,
@@ -74,13 +68,11 @@ router.post("/:id/feedbacks", yeuCauDangNhap, async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the gui phan hoi",
-    });
+    return next(error);
   }
 });
 
-router.post("/:id/reviews", yeuCauDangNhap, async (req, res) => {
+router.post("/:id/reviews", yeuCauDangNhap, async (req, res, next) => {
   try {
     const { rating, content } = req.body;
     const data = await taoDanhGiaPhong({
@@ -95,13 +87,11 @@ router.post("/:id/reviews", yeuCauDangNhap, async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Không thể gửi đánh giá phòng.",
-    });
+    return next(error);
   }
 });
 
-router.post("/:id/refund-requests", yeuCauDangNhap, async (req, res) => {
+router.post("/:id/refund-requests", yeuCauDangNhap, async (req, res, next) => {
   try {
     const data = await taoYeuCauHoanTien({
       user: req.user,
@@ -114,22 +104,18 @@ router.post("/:id/refund-requests", yeuCauDangNhap, async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tao yeu cau hoan tien",
-    });
+    return next(error);
   }
 });
 
-router.patch("/:id/status", yeuCauDangNhap, async (req, res) => {
+router.patch("/:id/status", yeuCauDangNhap, async (req, res, next) => {
   try {
     const trangThaiKhachDuocTuCapNhat = [
       TRANG_THAI_DAT_PHONG.CANCELLED,
       TRANG_THAI_DAT_PHONG.CHECKED_OUT,
     ];
     if (!trangThaiKhachDuocTuCapNhat.includes(req.body.status)) {
-      return res.status(403).json({
-        message: "Ban khong co quyen cap nhat trang thai nay.",
-      });
+      return next(taoLoiHttp(403, "Bạn không có quyền cập nhật trạng thái này."));
     }
 
     const data = await capNhatTrangThaiDatPhong({
@@ -141,13 +127,11 @@ router.patch("/:id/status", yeuCauDangNhap, async (req, res) => {
 
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat trang thai",
-    });
+    return next(error);
   }
 });
 
-router.post("/:id/payments/confirm", yeuCauDangNhap, async (req, res) => {
+router.post("/:id/payments/confirm", yeuCauDangNhap, async (req, res, next) => {
   try {
     const data = await xacNhanThanhToan({
       bookingCode: req.params.id,
@@ -159,9 +143,7 @@ router.post("/:id/payments/confirm", yeuCauDangNhap, async (req, res) => {
 
     res.status(201).json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the xac nhan thanh toan",
-    });
+    return next(error);
   }
 });
 

@@ -1,6 +1,7 @@
 // Chức năng: Định nghĩa các API quản trị để xem danh sách hóa đơn và tải file hóa đơn HTML.
 const express = require("express");
 const { yeuCauDangNhap } = require("../middleware/xacThuc.middleware");
+const { taoLoiHttp } = require("../middleware/xuLyLoi.middleware");
 const {
   THU_MUC_HOA_DON,
   damBaoHoaDonTrongThuMucAdmin,
@@ -16,9 +17,7 @@ const router = express.Router();
 
 function yeuCauQuanTri(req, res, next) {
   if (req.user?.role !== "admin") {
-    return res.status(403).json({
-      message: "Ban khong co quyen han nay.",
-    });
+    return next(taoLoiHttp(403, "Bạn không có quyền hạn này."));
   }
   return next();
 }
@@ -26,7 +25,7 @@ function yeuCauQuanTri(req, res, next) {
 router.use(yeuCauDangNhap);
 router.use(yeuCauQuanTri);
 
-router.get("/", async (req, res) => {
+router.get("/", async (req, res, next) => {
   try {
     const invoices = await layDanhSachHoaDon();
     res.json({
@@ -36,15 +35,12 @@ router.get("/", async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({
-      message: "Khong the tai danh sach hoa don",
-      error: error.message,
-    });
+    return next(error);
   }
 });
 
 // Preview: render HTML trực tiếp từ database, không phụ thuộc file trên ổ cứng
-router.get("/:id/preview", async (req, res) => {
+router.get("/:id/preview", async (req, res, next) => {
   try {
     const [rows] = await ketNoiDb.query(
       `SELECT
@@ -80,7 +76,7 @@ router.get("/:id/preview", async (req, res) => {
     );
 
     if (!rows.length) {
-      return res.status(404).json({ message: "Khong tim thay hoa don." });
+      throw taoLoiHttp(404, "Không tìm thấy hóa đơn.");
     }
 
     const row = rows[0];
@@ -111,31 +107,23 @@ router.get("/:id/preview", async (req, res) => {
 
     return res.type("html").send(html);
   } catch (error) {
-    return res.status(500).json({
-      message: "Khong the tai hoa don",
-      error: error.message,
-    });
+    return next(error);
   }
 });
 
-router.get("/:id/download", async (req, res) => {
+router.get("/:id/download", async (req, res, next) => {
   try {
     const invoice = await layHoaDonTheoId(req.params.id);
 
     if (!invoice) {
-      return res.status(404).json({
-        message: "Khong tim thay hoa don",
-      });
+      throw taoLoiHttp(404, "Không tìm thấy hóa đơn.");
     }
 
     const duongDanDaLuu = await damBaoHoaDonTrongThuMucAdmin(invoice);
     res.setHeader("X-Invoice-Admin-Path", duongDanDaLuu);
     return res.download(duongDanDaLuu, `${invoice.invoice_code}.html`);
   } catch (error) {
-    return res.status(500).json({
-      message: "Khong the tai hoa don",
-      error: error.message,
-    });
+    return next(error);
   }
 });
 

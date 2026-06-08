@@ -104,9 +104,11 @@ Database và demo:
 ### Hệ thống
 
 - Backend có endpoint health check.
+- Backend có global error handler để chuẩn hóa JSON lỗi `401/403/404/500` và tránh mỗi route tự trả lỗi khác nhau.
 - Vite proxy từ frontend `/api` sang backend.
 - CORS cấu hình cho frontend.
 - Scanner nền đồng bộ trạng thái booking theo chu kỳ.
+- Backend đã có bộ test tự động bước đầu bằng Jest + Supertest cho error handling, auth và payment/voucher.
 - `.env.example` cho backend và frontend.
 - `.gitignore` bỏ qua thư viện, build, upload, storage, hóa đơn sinh tự động và artifact phân tích.
 
@@ -130,6 +132,18 @@ Kiểm tra nhanh:
 
 ```bash
 curl http://127.0.0.1:5000/api/health
+```
+
+Nếu backend báo cổng `5000` đang được tiến trình khác sử dụng, kiểm tra PID đang giữ port:
+
+```powershell
+Get-NetTCPConnection -LocalPort 5000 -State Listen | Select-Object LocalAddress,LocalPort,OwningProcess
+```
+
+Tắt đúng process Node đang giữ port:
+
+```powershell
+taskkill /PID <PID> /F
 ```
 
 ### Frontend
@@ -212,7 +226,47 @@ Dữ liệu bị xóa gồm tài khoản khách hàng, đặt phòng, hóa đơn
 
 Script giữ lại tài khoản admin, danh sách phòng, dịch vụ và voucher gốc. Tồn kho phòng mẫu và số lượt dùng voucher sẽ được đưa về trạng thái sạch để tiếp tục test.
 
-## 8. Điểm mạnh khi trình bày demo
+## 8. Test tự động backend
+
+Backend đã có bộ test bước đầu để dễ bảo trì các luồng rủi ro cao.
+
+Công cụ:
+
+- `Jest`: chạy unit/integration test.
+- `Supertest`: gọi API Express mà không cần mở trình duyệt.
+- MySQL test database riêng, tự ép tên database kết thúc bằng `_test` để tránh chạy nhầm vào database dev.
+
+Các file cấu hình/test chính:
+
+- `backend/jest.config.js`
+- `backend/.env.test.example`
+- `backend/tests/setupEnv.js`
+- `backend/tests/globalSetup.js`
+- `backend/tests/__tests__/errorHandling.test.js`
+- `backend/tests/__tests__/auth.test.js`
+- `backend/tests/__tests__/payment.test.js`
+
+Chạy test backend:
+
+```bash
+cd backend
+npm test
+```
+
+Test hiện có kiểm tra:
+
+- Global error handler: API không tồn tại trả `404`, route cần token trả `401`.
+- Auth: đăng ký, xác minh OTP test, đăng nhập, email trùng trả `409`.
+- Payment: xác nhận thanh toán full, áp voucher `DIEUBEL10`, cập nhật booking/invoice/payment transaction và chặn xác nhận lại bằng `409`.
+
+Lưu ý:
+
+- Test dùng database riêng dạng `hotel_booking_db_test`.
+- Nếu có `backend/.env.test`, file này sẽ override `.env` khi chạy test.
+- Không chạy test bằng database production hoặc database dev chính.
+- SMTP bị tắt trong môi trường test; OTP được trả qua `devOtp`.
+
+## 9. Điểm mạnh khi trình bày demo
 
 - Luồng đặt phòng có đủ vòng đời từ tìm phòng, đặt phòng, thanh toán, nhận phòng, trả phòng.
 - QR LAN tạo được tình huống thực tế: khách mở QR, lễ tân dùng thiết bị khác quét trong cùng mạng.
@@ -220,10 +274,10 @@ Script giữ lại tài khoản admin, danh sách phòng, dịch vụ và vouche
 - Admin có màn hình riêng, chứng minh hệ thống không chỉ là giao diện khách hàng.
 - Hóa đơn, doanh thu, voucher, hỗ trợ và đánh giá giúp demo có chiều sâu nghiệp vụ.
 
-## 9. Giới hạn hiện tại
+## 10. Giới hạn hiện tại
 
 - Thanh toán là demo, chưa kết nối cổng thanh toán thật.
 - Email phụ thuộc SMTP.
 - Scanner nền là cơ chế demo, chưa phải cron/queue production.
 - Tồn kho phòng phù hợp demo; nếu dùng thật cần mở rộng theo từng phòng vật lý và lịch trùng ngày.
-- Chưa có bộ test tự động đầy đủ cho booking state machine.
+- Đã có lớp test tự động đầu tiên cho backend, nhưng chưa bao phủ đầy đủ booking state machine và chưa có frontend component test.

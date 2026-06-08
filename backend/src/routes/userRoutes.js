@@ -1,6 +1,7 @@
 // Chức năng: Định nghĩa các API cá nhân của người dùng đã đăng nhập như yêu thích, voucher, hoàn tiền và hỗ trợ.
 const express = require("express");
 const { yeuCauDangNhap } = require("../middleware/xacThuc.middleware");
+const { taoLoiHttp } = require("../middleware/xuLyLoi.middleware");
 const {
   layDanhSachYeuThich,
   toggleYeuThich,
@@ -21,77 +22,65 @@ const router = express.Router();
 
 router.use(yeuCauDangNhap);
 
-router.get("/favorites", async (req, res) => {
+router.get("/favorites", async (req, res, next) => {
   try {
     const data = await layDanhSachYeuThich(req.user.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Không thể tải danh sách yêu thích",
-    });
+    return next(error);
   }
 });
 
-router.post("/favorites", async (req, res) => {
+router.post("/favorites", async (req, res, next) => {
   try {
     const roomId = req.body.roomId;
     if (!roomId) {
-      return res.status(400).json({ message: "Thiếu ID phòng" });
+      return next(taoLoiHttp(400, "Thiếu ID phòng."));
     }
     const data = await toggleYeuThich(req.user.id, roomId);
     res.status(200).json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Không thể cập nhật yêu thích",
-    });
+    return next(error);
   }
 });
 
-router.get("/vouchers", async (req, res) => {
+router.get("/vouchers", async (req, res, next) => {
   try {
     const data = await layVoucherCuaNguoiDung(req.user.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai kho voucher",
-    });
+    return next(error);
   }
 });
 
-router.post("/vouchers", async (req, res) => {
+router.post("/vouchers", async (req, res, next) => {
   try {
     const data = await luuVoucherChoNguoiDung(req.user.id, req.body.code);
     res.status(201).json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the luu voucher",
-    });
+    return next(error);
   }
 });
 
-router.get("/refund-requests", async (req, res) => {
+router.get("/refund-requests", async (req, res, next) => {
   try {
     const data = await layYeuCauHoanTienCuaToi(req.user.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai danh sach yeu cau hoan tien",
-    });
+    return next(error);
   }
 });
 
-router.get("/support-tickets", async (req, res) => {
+router.get("/support-tickets", async (req, res, next) => {
   try {
     const data = await layYeuCauHoTroCuaToi(req.user.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai yeu cau ho tro",
-    });
+    return next(error);
   }
 });
 
-router.post("/support-tickets", async (req, res) => {
+router.post("/support-tickets", async (req, res, next) => {
   try {
     const data = await guiYeuCauHoTro({
       user: req.user,
@@ -103,9 +92,7 @@ router.post("/support-tickets", async (req, res) => {
       data,
     });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the gui yeu cau ho tro",
-    });
+    return next(error);
   }
 });
 

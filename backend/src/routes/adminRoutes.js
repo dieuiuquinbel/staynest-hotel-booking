@@ -2,6 +2,7 @@
 const express = require("express");
 const { yeuCauDangNhap } = require("../middleware/xacThuc.middleware");
 const { taiAnhPhong } = require("../middleware/taiAnhPhong.middleware");
+const { taoLoiHttp } = require("../middleware/xuLyLoi.middleware");
 const {
   layTongQuanQuanTri,
   layDanhSachKhachHang,
@@ -31,9 +32,7 @@ const router = express.Router();
 
 function yeuCauQuanTri(req, res, next) {
   if (req.user?.role !== "admin") {
-    return res.status(403).json({
-      message: "Ban khong co quyen han nay.",
-    });
+    return next(taoLoiHttp(403, "Bạn không có quyền hạn này."));
   }
   return next();
 }
@@ -41,29 +40,25 @@ function yeuCauQuanTri(req, res, next) {
 router.use(yeuCauDangNhap);
 router.use(yeuCauQuanTri);
 
-router.get("/overview", async (req, res) => {
+router.get("/overview", async (req, res, next) => {
   try {
     const data = await layTongQuanQuanTri();
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai tong quan quan tri",
-    });
+    return next(error);
   }
 });
 
-router.get("/customers", async (req, res) => {
+router.get("/customers", async (req, res, next) => {
   try {
     const data = await layDanhSachKhachHang(req.query);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai danh sach khach hang",
-    });
+    return next(error);
   }
 });
 
-router.post("/customers", async (req, res) => {
+router.post("/customers", async (req, res, next) => {
   try {
     const data = await taoKhachHang({
       payload: req.body,
@@ -71,24 +66,20 @@ router.post("/customers", async (req, res) => {
     });
     res.status(201).json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tao khach hang",
-    });
+    return next(error);
   }
 });
 
-router.get("/customers/:id", async (req, res) => {
+router.get("/customers/:id", async (req, res, next) => {
   try {
     const data = await layChiTietKhachHang(req.params.id);
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai thong tin khach hang",
-    });
+    return next(error);
   }
 });
 
-router.patch("/customers/:id", async (req, res) => {
+router.patch("/customers/:id", async (req, res, next) => {
   try {
     const data = await capNhatKhachHang({
       userId: req.params.id,
@@ -97,13 +88,11 @@ router.patch("/customers/:id", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat khach hang",
-    });
+    return next(error);
   }
 });
 
-router.patch("/customers/:id/status", async (req, res) => {
+router.patch("/customers/:id/status", async (req, res, next) => {
   try {
     const data = await capNhatTrangThaiKhachHang({
       userId: req.params.id,
@@ -112,13 +101,11 @@ router.patch("/customers/:id/status", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat trang thai khach hang",
-    });
+    return next(error);
   }
 });
 
-router.delete("/customers/:id", async (req, res) => {
+router.delete("/customers/:id", async (req, res, next) => {
   try {
     const data = await xoaKhachHang({
       userId: req.params.id,
@@ -126,24 +113,20 @@ router.delete("/customers/:id", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the xoa khach hang",
-    });
+    return next(error);
   }
 });
 
-router.get("/bookings", async (req, res) => {
+router.get("/bookings", async (req, res, next) => {
   try {
     const data = await layTatCaDatPhong();
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai danh sach dat phong",
-    });
+    return next(error);
   }
 });
 
-router.patch("/bookings/:id/status", async (req, res) => {
+router.patch("/bookings/:id/status", async (req, res, next) => {
   try {
     const data = await capNhatTrangThaiDatPhong({
       bookingCode: req.params.id,
@@ -153,13 +136,11 @@ router.patch("/bookings/:id/status", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat trang thai",
-    });
+    return next(error);
   }
 });
 
-router.patch("/bookings/:id/note", async (req, res) => {
+router.patch("/bookings/:id/note", async (req, res, next) => {
   try {
     const data = await luuGhiChuAdmin({
       bookingCode: req.params.id,
@@ -168,18 +149,14 @@ router.patch("/bookings/:id/note", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the luu ghi chu",
-    });
+    return next(error);
   }
 });
 
-router.post("/rooms", async (req, res) => {
+router.post("/rooms", async (req, res, next) => {
   taiAnhPhong(req, res, async (uploadError) => {
     if (uploadError) {
-      return res.status(400).json({
-        message: uploadError.message || "Khong tai len duoc anh phong",
-      });
+      return next(taoLoiHttp(400, uploadError.message || "Không tải lên được ảnh phòng."));
     }
 
     try {
@@ -196,25 +173,21 @@ router.post("/rooms", async (req, res) => {
       });
       res.status(201).json({ data });
     } catch (error) {
-      res.status(error.status || 500).json({
-        message: error.message || "Khong the tao phong",
-      });
+      return next(error);
     }
   });
 });
 
-router.get("/refund-requests", async (req, res) => {
+router.get("/refund-requests", async (req, res, next) => {
   try {
     const data = await layTatCaYeuCauHoanTien();
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai yeu cau hoan tien",
-    });
+    return next(error);
   }
 });
 
-router.patch("/refund-requests/:id", async (req, res) => {
+router.patch("/refund-requests/:id", async (req, res, next) => {
   try {
     const data = await capNhatYeuCauHoanTien({
       refundId: req.params.id,
@@ -225,24 +198,20 @@ router.patch("/refund-requests/:id", async (req, res) => {
 
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat yeu cau hoan tien",
-    });
+    return next(error);
   }
 });
 
-router.get("/support-tickets", async (req, res) => {
+router.get("/support-tickets", async (req, res, next) => {
   try {
     const data = await layTatCaYeuCauHoTro();
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai yeu cau ho tro",
-    });
+    return next(error);
   }
 });
 
-router.patch("/support-tickets/:id", async (req, res) => {
+router.patch("/support-tickets/:id", async (req, res, next) => {
   try {
     const data = await capNhatYeuCauHoTro({
       ticketId: req.params.id,
@@ -253,13 +222,11 @@ router.patch("/support-tickets/:id", async (req, res) => {
 
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the cap nhat yeu cau ho tro",
-    });
+    return next(error);
   }
 });
 
-router.get("/revenue-report", async (req, res) => {
+router.get("/revenue-report", async (req, res, next) => {
   try {
     const data = await layBaoCaoDoanhThu({
       dateFrom: req.query.date_from,
@@ -267,9 +234,7 @@ router.get("/revenue-report", async (req, res) => {
     });
     res.json({ data });
   } catch (error) {
-    res.status(error.status || 500).json({
-      message: error.message || "Khong the tai bao cao doanh thu",
-    });
+    return next(error);
   }
 });
 

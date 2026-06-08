@@ -6,6 +6,11 @@ const cors = require("cors");
 const ketNoiDb = require("./config/coSoDuLieu");
 const { uploadsRoot } = require("./middleware/taiAnhPhong.middleware");
 const { taoMiddlewareChuanHoaThongBao } = require("./utils/thongBaoTiengViet");
+const {
+  batLoiAsync,
+  middlewareKhongTimThay,
+  middlewareXuLyLoi,
+} = require("./middleware/xuLyLoi.middleware");
 
 const authRoutes = require("./routes/authRoutes");
 const roomRoutes = require("./routes/roomRoutes");
@@ -60,21 +65,17 @@ ungDung.use(express.json());
 ungDung.use(taoMiddlewareChuanHoaThongBao());
 ungDung.use("/uploads", express.static(uploadsRoot));
 
-ungDung.get("/api/health", async (req, res) => {
-  try {
+ungDung.get(
+  "/api/health",
+  batLoiAsync(async (req, res) => {
     const [rows] = await ketNoiDb.query("SELECT 1 AS ok");
     res.json({
-      message: "Backend is running",
+      message: "Backend đang hoạt động.",
       database: "connected",
       result: rows[0],
     });
-  } catch (error) {
-    res.status(500).json({
-      message: "Backend is running, but database connection failed",
-      error: error.message,
-    });
-  }
-});
+  }),
+);
 
 // Gắn các routes
 ungDung.use("/api/auth", authRoutes);
@@ -84,5 +85,7 @@ ungDung.use("/api/vouchers", voucherRoutes);
 ungDung.use("/api/bookings", bookingRoutes);
 ungDung.use("/api/admin/invoices", invoiceRoutes);
 ungDung.use("/api/admin", adminRoutes);
+ungDung.use(middlewareKhongTimThay);
+ungDung.use(middlewareXuLyLoi);
 
 module.exports = ungDung;
